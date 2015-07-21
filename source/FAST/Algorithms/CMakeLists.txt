@@ -1,0 +1,16 @@
+fast_add_subdirectories(
+    AddTransformation
+    GaussianSmoothingFilter
+    LaplacianOfGaussian
+    SeededRegionGrowing
+    SurfaceExtraction
+    Skeletonization
+    BinaryThresholding
+    ImageGradient
+    IterativeClosestPoint
+)
+fast_add_sources(
+    SegmentationAlgorithm.cpp
+    SegmentationAlgorithm.hpp
+)
+fast_add_test_sources()
