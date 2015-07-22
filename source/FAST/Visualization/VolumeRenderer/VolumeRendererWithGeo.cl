@@ -188,8 +188,7 @@ d_render(__global uint *d_output,
 		float2 color_transfer_pos = (float2)((sample - colorFuncMins[0]) / colorFuncDefs[0], 0.5f); //make the sample between 0.0 and 1.0
 		float2 opacity_transfer_pos = (float2)((sample - opacityFuncMins[0]) / opacityFuncDefs[0], 0.5f); //make the sample between 0.0 and 1.0
 		float4 col = read_imagef(transferFunc, transferFuncSampler, color_transfer_pos);
-		float4 alpha = read_imagef(opacityFunc, transferFuncSampler, opacity_transfer_pos);
-		col.w=alpha.w;
+		col.w = read_imagef(opacityFunc, transferFuncSampler, opacity_transfer_pos).x;
         // accumulate result
         float a = col.w*density;
         volumeColor = mix(volumeColor, col, (float4)(a, a, a, a));
@@ -210,8 +209,7 @@ d_render(__global uint *d_output,
 			float2 color_transfer_pos = (float2)((sample - colorFuncMins[1]) / colorFuncDefs[1], 0.5f); //make the sample between 0.0 and 1.0
 			float2 opacity_transfer_pos = (float2)((sample - opacityFuncMins[1]) / opacityFuncDefs[1], 0.5f); //make the sample between 0.0 and 1.0
 			col = read_imagef(transferFunc2, transferFuncSampler, color_transfer_pos);
-			alpha = read_imagef(opacityFunc2, transferFuncSampler, opacity_transfer_pos);
-			col.w=alpha.w;
+			col.w = read_imagef(opacityFunc2, transferFuncSampler, opacity_transfer_pos).x;
 			a = col.w*density; //Mehdi
 			volumeColor = mix(volumeColor, col, (float4)(a, a, a, a)); //Mehdi
 		}
@@ -233,8 +231,7 @@ d_render(__global uint *d_output,
 			float2 color_transfer_pos = (float2)((sample - colorFuncMins[2]) / colorFuncDefs[2], 0.5f);
 			float2 opacity_transfer_pos = (float2)((sample - opacityFuncMins[2]) / opacityFuncDefs[2], 0.5f);
 			col = read_imagef(transferFunc3, transferFuncSampler, color_transfer_pos);
-			alpha = read_imagef(opacityFunc3, transferFuncSampler, opacity_transfer_pos);
-			col.w=alpha.w;
+			col.w = read_imagef(opacityFunc3, transferFuncSampler, opacity_transfer_pos).x;
 			a = col.w*density; //Mehdi
 			volumeColor = mix(volumeColor, col, (float4)(a, a, a, a)); //Mehdi
 		}
@@ -256,8 +253,7 @@ d_render(__global uint *d_output,
 			float2 color_transfer_pos = (float2)((sample - colorFuncMins[3]) / colorFuncDefs[3], 0.5f);
 			float2 opacity_transfer_pos = (float2)((sample - opacityFuncMins[3]) / opacityFuncDefs[3], 0.5f);
 			col = read_imagef(transferFunc4, transferFuncSampler, color_transfer_pos);
-			alpha = read_imagef(opacityFunc4, transferFuncSampler, opacity_transfer_pos);
-			col.w=alpha.w;
+			col.w = read_imagef(opacityFunc4, transferFuncSampler, opacity_transfer_pos).x;
 			a = col.w*density; //Mehdi
 			volumeColor = mix(volumeColor, col, (float4)(a, a, a, a)); //Mehdi
 		}
@@ -279,8 +275,7 @@ d_render(__global uint *d_output,
 			float2 color_transfer_pos = (float2)((sample - colorFuncMins[4]) / colorFuncDefs[4], 0.5f);
 			float2 opacity_transfer_pos = (float2)((sample - opacityFuncMins[4]) / opacityFuncDefs[4], 0.5f);
 			col = read_imagef(transferFunc5, transferFuncSampler, color_transfer_pos);
-			alpha = read_imagef(opacityFunc5, transferFuncSampler, opacity_transfer_pos);
-			col.w=alpha.w;
+			col.w = read_imagef(opacityFunc5, transferFuncSampler, opacity_transfer_pos).x;
 			a = col.w*density; //Mehdi
 			volumeColor = mix(temp, col, (float4)(a, a, a, a)); //Mehdi
 		}		

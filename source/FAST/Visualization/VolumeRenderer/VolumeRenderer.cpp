@@ -67,7 +67,7 @@ void VolumeRenderer::setOpacityTransferFunction(int volumeIndex, OpacityTransfer
 	double xMax = otf->getXMax();
 	unsigned int XDef = static_cast<unsigned int>(xMax - xMin);
 
-	if(((OpenCLDevice::pointer)getMainDevice())->isImageFormatSupported(CL_A, CL_FLOAT, CL_MEM_OBJECT_IMAGE2D)) {
+/*	if(((OpenCLDevice::pointer)getMainDevice())->isImageFormatSupported(CL_A, CL_FLOAT, CL_MEM_OBJECT_IMAGE2D)) {
         opacityFunc=(float *)(malloc(sizeof(float)*XDef));
 
         for (unsigned int c=0; c<otf->v.size()-1; c++)
@@ -86,7 +86,7 @@ void VolumeRenderer::setOpacityTransferFunction(int volumeIndex, OpacityTransfer
                 }
         }
         d_opacityFuncArray[volumeIndex]=cl::Image2D(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, cl::ImageFormat(CL_A, CL_FLOAT), XDef, 1, 0, opacityFunc, 0);
-	} else {
+	} else */{
 		// Single channel images is not support on all platforms (e.g. Mac), thus use regular 4 channel images if it is not supported
         opacityFunc=(float *)(malloc(sizeof(float)*XDef*4));
 
