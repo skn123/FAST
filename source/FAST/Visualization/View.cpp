@@ -885,7 +885,16 @@ void View::getDepthBufferFromGeo()
 
 void View::resizeGL(int width, int height) {
 
-    glMatrixMode(GL_PROJECTION);
+	glBindTexture(GL_TEXTURE_2D, renderedDepthText);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, this->width(), this->height(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	glBindTexture(GL_TEXTURE_2D, renderedTexture0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, this->width(), this->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+	glBindTexture(GL_TEXTURE_2D, renderedTexture1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, this->width(), this->height(), 0, GL_RGBA, GL_FLOAT, NULL);
+
+	glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     if(mIsIn2DMode) {
         glViewport(0, 0, width, height);
