@@ -10,7 +10,7 @@ namespace fast {
 
 class Image;
 
-class MeanValueCoordinatesModel : public ShapeModel {
+class FAST_EXPORT  MeanValueCoordinatesModel : public ShapeModel {
 	FAST_OBJECT(MeanValueCoordinatesModel)
 	public:
 		void loadMeshes(std::string surfaceMeshFilename, std::string controlMeshFilename);
@@ -48,6 +48,8 @@ class MeanValueCoordinatesModel : public ShapeModel {
 
 		Mesh::pointer mSurfaceMesh;
 		Mesh::pointer mControlMesh;
+		std::unordered_map<uint, std::vector<uint>> mModelVertexTrianglesMap;
+		std::unordered_map<uint, std::vector<uint>> mControlVertexTrianglesMap;
 		Vector3f mCentroid;
 
 		UniquePointer<float[]> mNormalizedWeights;

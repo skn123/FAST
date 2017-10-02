@@ -347,6 +347,192 @@ cl::Program ProcessObject::getOpenCLProgram(
 ProcessObject::~ProcessObject() {
 }
 
+void ProcessObject::setAttributes(std::vector<std::shared_ptr<Attribute>> attributes) {
+    for(std::shared_ptr<Attribute> attribute : attributes) {
+        std::string name = attribute->getName();
+        if(mAttributes.count(name) == 0) {
+            throw Exception("Attribute " + name + " not found for process object " + getNameOfClass());
+        }
+
+        std::shared_ptr<Attribute> localAttribute = mAttributes.at(name);
+        if(localAttribute->getType() != attribute->getType())
+            throw Exception("Attribute " + name + " for process object " + getNameOfClass() + " had different type then the one loaded.");
+
+        localAttribute->setValues(attribute->getValues());
+    }
+}
+
+void ProcessObject::loadAttributes() {
+    //throw Exception("The process object " + getNameOfClass() + " has not implemented the loadAttributes method and therefore cannot be loaded from fast pipeline files (.fpl).");
+}
+
+void ProcessObject::createFloatAttribute(std::string id, std::string name, std::string description, float initialValue) {
+    std::shared_ptr<Attribute> attribute = std::make_shared<Attribute>(id, name, description, ATTRIBUTE_TYPE_FLOAT);
+    std::shared_ptr<AttributeValue> value = std::make_shared<AttributeValueFloat>(initialValue);
+    attribute->setValue(value);
+    mAttributes[id] = attribute;
+}
+
+void ProcessObject::createIntegerAttribute(std::string id, std::string name, std::string description, int initialValue) {
+    std::shared_ptr<Attribute> attribute = std::make_shared<Attribute>(id, name, description, ATTRIBUTE_TYPE_INTEGER);
+    std::shared_ptr<AttributeValue> value = std::make_shared<AttributeValueInteger>(initialValue);
+    attribute->setValue(value);
+    mAttributes[id] = attribute;
+}
+
+void ProcessObject::createBooleanAttribute(std::string id, std::string name, std::string description, bool initialValue) {
+    std::shared_ptr<Attribute> attribute = std::make_shared<Attribute>(id, name, description, ATTRIBUTE_TYPE_BOOLEAN);
+    std::shared_ptr<AttributeValue> value = std::make_shared<AttributeValueBoolean>(initialValue);
+    attribute->setValue(value);
+    mAttributes[id] = attribute;
+}
+
+void ProcessObject::createStringAttribute(std::string id, std::string name, std::string description, std::string initialValue) {
+    std::shared_ptr<Attribute> attribute = std::make_shared<Attribute>(id, name, description, ATTRIBUTE_TYPE_STRING);
+    std::shared_ptr<AttributeValue> value = std::make_shared<AttributeValueString>(initialValue);
+    attribute->setValue(value);
+    mAttributes[id] = attribute;
+}
+
+std::shared_ptr<Attribute> ProcessObject::getAttribute(std::string id) {
+    if(mAttributes.count(id) == 0)
+        throw Exception("Attribute " + id + " not found for process object " + getNameOfClass() +
+                                ". Did you forget to define it in the constructor?");
+
+    return mAttributes[id];
+}
+
+float ProcessObject::getFloatAttribute(std::string id) {
+    auto attribute = getAttribute(id);
+    if(attribute->getType() != ATTRIBUTE_TYPE_FLOAT)
+        throw Exception("Attribute " + id + " is not of type float in process object " + getNameOfClass());
+
+    std::shared_ptr<AttributeValueFloat> value = std::dynamic_pointer_cast<AttributeValueFloat>(attribute->getValue());
+    return value->get();
+}
+
+std::vector<float> ProcessObject::getFloatListAttribute(std::string id) {
+    auto attribute = getAttribute(id);
+    if(attribute->getType() != ATTRIBUTE_TYPE_FLOAT)
+        throw Exception("Attribute " + id + " is not of type float in process object " + getNameOfClass());
+
+    std::vector<std::shared_ptr<AttributeValue>> values = attribute->getValues();
+    std::vector<float> list;
+    for(auto &&value : values) {
+        auto floatValue = std::dynamic_pointer_cast<AttributeValueFloat>(value);
+        list.push_back(floatValue->get());
+    }
+    return list;
+}
+
+int ProcessObject::getIntegerAttribute(std::string id) {
+    auto attribute = getAttribute(id);
+    if(attribute->getType() != ATTRIBUTE_TYPE_INTEGER)
+        throw Exception("Attribute " + id + " is not of type integer in process object " + getNameOfClass());
+
+    std::shared_ptr<AttributeValueInteger> value = std::dynamic_pointer_cast<AttributeValueInteger>(attribute->getValue());
+    return value->get();
+}
+
+std::vector<int> ProcessObject::getIntegerListAttribute(std::string id) {
+    auto attribute = getAttribute(id);
+    if(attribute->getType() != ATTRIBUTE_TYPE_INTEGER)
+        throw Exception("Attribute " + id + " is not of type integer in process object " + getNameOfClass());
+
+    std::vector<std::shared_ptr<AttributeValue>> values = attribute->getValues();
+    std::vector<int> list;
+    for(auto &&value : values) {
+        auto floatValue = std::dynamic_pointer_cast<AttributeValueInteger>(value);
+        list.push_back(floatValue->get());
+    }
+    return list;
+}
+
+bool ProcessObject::getBooleanAttribute(std::string id) {
+    auto attribute = getAttribute(id);
+    if(attribute->getType() != ATTRIBUTE_TYPE_BOOLEAN)
+        throw Exception("Attribute " + id + " is not of type boolean in process object " + getNameOfClass());
+
+    std::shared_ptr<AttributeValueBoolean> value = std::dynamic_pointer_cast<AttributeValueBoolean>(attribute->getValue());
+    return value->get();
+}
+
+
+std::vector<bool> ProcessObject::getBooleanListAttribute(std::string id) {
+    auto attribute = getAttribute(id);
+    if(attribute->getType() != ATTRIBUTE_TYPE_BOOLEAN)
+        throw Exception("Attribute " + id + " is not of type boolean in process object " + getNameOfClass());
+
+    std::vector<std::shared_ptr<AttributeValue>> values = attribute->getValues();
+    std::vector<bool> list;
+    for(auto &&value : values) {
+        auto floatValue = std::dynamic_pointer_cast<AttributeValueBoolean>(value);
+        list.push_back(floatValue->get());
+    }
+    return list;
+}
+
+std::string ProcessObject::getStringAttribute(std::string id) {
+    auto attribute = getAttribute(id);
+    if(attribute->getType() != ATTRIBUTE_TYPE_STRING)
+        throw Exception("Attribute " + id + " is not of type string in process object " + getNameOfClass());
+
+    std::shared_ptr<AttributeValueString> value = std::dynamic_pointer_cast<AttributeValueString>(attribute->getValue());
+    return value->get();
+}
+
+
+std::vector<std::string> ProcessObject::getStringListAttribute(std::string id) {
+    auto attribute = getAttribute(id);
+    if(attribute->getType() != ATTRIBUTE_TYPE_STRING)
+        throw Exception("Attribute " + id + " is not of type string in process object " + getNameOfClass());
+
+    std::vector<std::shared_ptr<AttributeValue>> values = attribute->getValues();
+    std::vector<std::string> list;
+    for(auto &&value : values) {
+        auto floatValue = std::dynamic_pointer_cast<AttributeValueString>(value);
+        list.push_back(floatValue->get());
+    }
+    return list;
+}
+
+std::unordered_map<std::string, std::shared_ptr<Attribute>> ProcessObject::getAttributes() {
+    return mAttributes;
+}
+
+DynamicData::pointer ProcessObject::getDynamicOutputData(uint outputNumber) {
+    DynamicData::pointer data;
+
+    // If output data is not created
+    if(mOutputData.count(outputNumber) == 0) {
+        // Is output dependent on any input?
+        if(mOutputDynamicDependsOnInput.count(outputNumber) > 0) {
+            uint inputNumber = mOutputDynamicDependsOnInput[outputNumber];
+            if(mInputConnections.count(inputNumber) == 0)
+                throw Exception("Must call input before output.");
+            ProcessObjectPort port = mInputConnections[inputNumber];
+            DataObject::pointer objectDependsOn = port.getData();
+            data = DynamicData::New();
+            data->setStreamer(objectDependsOn->getStreamer());
+            mOutputData[outputNumber].push_back(data);
+        } else {
+            // Create dynamic data
+            data = DynamicData::New();
+            mOutputData[outputNumber].push_back(data);
+        }
+    } else {
+        data = mOutputData[outputNumber][0];
+    }
+
+    return data;
+}
+
+DynamicData::pointer ProcessObject::getDynamicOutputData() {
+    return getDynamicOutputData(0);
+}
+
+
+
 } // namespace fast
 
 namespace std {

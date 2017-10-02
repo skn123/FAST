@@ -1,6 +1,6 @@
 #include "LineRenderer.hpp"
-#include "FAST/Data/Access/LineSetAccess.hpp"
-#include "FAST/Data/LineSet.hpp"
+#include "FAST/Data/Access/MeshAccess.hpp"
+#include "FAST/Data/Mesh.hpp"
 #include "FAST/SceneGraph.hpp"
 
 #if defined(__APPLE__) || defined(__MACOSX)
@@ -16,15 +16,15 @@ void LineRenderer::draw() {
     std::lock_guard<std::mutex> lock(mMutex);
 
     // For all input data
-    std::unordered_map<uint, LineSet::pointer>::iterator it;
-    for(it = mLineSetsToRender.begin(); it != mLineSetsToRender.end(); it++) {
-        LineSet::pointer points = it->second;
-        LineSetAccess::pointer access = points->getAccess(ACCESS_READ);
+    std::unordered_map<uint, Mesh::pointer>::iterator it;
+    for(it = mMeshsToRender.begin(); it != mMeshsToRender.end(); it++) {
+        Mesh::pointer points = it->second;
+        MeshAccess::pointer access = points->getMeshAccess(ACCESS_READ);
 
         AffineTransformation::pointer transform = SceneGraph::getAffineTransformationFromData(points);
 
         glPushMatrix();
-        glMultMatrixf(transform->data());
+        glMultMatrixf(transform->getTransform().data());
 
         ProcessObjectPort port = getInputPort(it->first);
 
@@ -49,10 +49,9 @@ void LineRenderer::draw() {
         if(drawOnTop)
             glDisable(GL_DEPTH_TEST);
         glBegin(GL_LINES);
-        for(uint i = 0; i < access->getNrOfLines(); i++) {
-            Vector2ui line = access->getLine(i);
-            Vector3f a = access->getPoint(line.x());
-            Vector3f b = access->getPoint(line.y());
+        for(MeshLine line : access->getLines()) {
+            Vector3f a = access->getVertex(line.getEndpoint1()).getPosition();
+            Vector3f b = access->getVertex(line.getEndpoint2()).getPosition();
             glVertex3f(a.x(), a.y(), a.z());
             glVertex3f(b.x(), b.y(), b.z());
         }
@@ -67,7 +66,7 @@ void LineRenderer::draw() {
 BoundingBox LineRenderer::getBoundingBox() {
     std::vector<Vector3f> coordinates;
     for(uint i = 0; i < getNrOfInputData(); i++) {
-        BoundingBox transformedBoundingBox = getStaticInputData<LineSet>(i)->getTransformedBoundingBox();
+        BoundingBox transformedBoundingBox = getStaticInputData<Mesh>(i)->getTransformedBoundingBox();
         MatrixXf corners = transformedBoundingBox.getCorners();
         for(uint j = 0; j < 8; j++) {
             coordinates.push_back((Vector3f)corners.row(j));
@@ -77,7 +76,7 @@ BoundingBox LineRenderer::getBoundingBox() {
 }
 
 LineRenderer::LineRenderer() {
-    createInputPort<LineSet>(0, false);
+    createInputPort<Mesh>(0, false);
     mDefaultLineWidth = 2;
     mDefaultColor = Color::Blue();
     mDefaultDrawOnTop = false;
@@ -88,9 +87,8 @@ void LineRenderer::execute() {
 
     // This simply gets the input data for each connection and puts it into a data structure
     for(uint inputNr = 0; inputNr < getNrOfInputData(); inputNr++) {
-        LineSet::pointer input = getStaticInputData<LineSet>(inputNr);
-
-        mLineSetsToRender[inputNr] = input;
+        Mesh::pointer input = getStaticInputData<Mesh>(inputNr);
+        mMeshsToRender[inputNr] = input;
     }
 }
 
@@ -98,9 +96,10 @@ void LineRenderer::execute() {
 void LineRenderer::addInputConnection(ProcessObjectPort port) {
     uint nr = getNrOfInputData();
     if(nr > 0)
-        createInputPort<LineSet>(nr);
+        createInputPort<Mesh>(nr);
     releaseInputAfterExecute(nr, false);
     setInputConnection(nr, port);
+    mIsModified = true;
 }
 
 void LineRenderer::addInputConnection(ProcessObjectPort port, Color color,
@@ -121,7 +120,6 @@ void LineRenderer::setDefaultLineWidth(float width) {
 void LineRenderer::setDefaultDrawOnTop(bool drawOnTop) {
     mDefaultDrawOnTop = drawOnTop;
 }
-
 
 void LineRenderer::setDrawOnTop(ProcessObjectPort port, bool drawOnTop) {
     mInputDrawOnTop[port] = drawOnTop;

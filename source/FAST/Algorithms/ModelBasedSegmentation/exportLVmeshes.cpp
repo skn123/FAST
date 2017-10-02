@@ -1,7 +1,7 @@
 #include "FAST/Testing.hpp"
 #include "FAST/Streamers/ImageFileStreamer.hpp"
 #include "KalmanFilter.hpp"
-#include "FAST/Visualization/MeshRenderer/MeshRenderer.hpp"
+#include "FAST/Visualization/TriangleRenderer/TriangleRenderer.hpp"
 #include "FAST/Visualization/ImageRenderer/ImageRenderer.hpp"
 #include "FAST/Visualization/SimpleWindow.hpp"
 #include "AppearanceModels/StepEdge/StepEdgeModel.hpp"
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    Reporter::setGlobalReportMethod(Reporter::COUT);
+    //Reporter::setGlobalReportMethod(Reporter::COUT);
     std::vector<std::string> paths = getPaths("/media/extra/GRUE_MHD/left_ventricle_segmentation_list.txt");
 
     for(std::string path : paths) {
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
         CardinalSplineModel::pointer shapeModel = CardinalSplineModel::New();
         shapeModel->setControlPoints(controlPoints);
         // Increasing these will put more weight on the measurements instead of the model, and vica versa
-        shapeModel->setGlobalProcessError(0.000001f);
+        shapeModel->setGlobalProcessError(0.00001f);
         shapeModel->setLocalProcessError(0.001f);
         shapeModel->initializeShapeToImageCenter();
         KalmanFilter::pointer segmentation = KalmanFilter::New();
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
          */
         StepEdgeModel::pointer appearanceModel = StepEdgeModel::New();
         appearanceModel->setEdgeType(StepEdgeModel::EDGE_TYPE_BLACK_INSIDE_WHITE_OUTSIDE);
-        appearanceModel->setIntensityDifferenceThreshold(20);
+        appearanceModel->setIntensityDifferenceThreshold(15);
 
         appearanceModel->setLineLength(30.0);
         appearanceModel->setLineSampleSpacing(30.0 / 48.0);
@@ -134,9 +134,9 @@ int main(int argc, char** argv) {
 
         if(visualize) {
             streamer2->enableLooping();
-            MeshRenderer::pointer meshRenderer = MeshRenderer::New();
-            meshRenderer->addInputConnection(segmentation->getOutputPort());
-            meshRenderer->addInputConnection(segmentation->getDisplacementsOutputPort(), Color::Red(), 1.0);
+            TriangleRenderer::pointer TriangleRenderer = TriangleRenderer::New();
+            TriangleRenderer->addInputConnection(segmentation->getOutputPort());
+            //TriangleRenderer->addInputConnection(segmentation->getDisplacementsOutputPort(), Color::Red(), 1.0);
 
             ImageRenderer::pointer imageRenderer = ImageRenderer::New();
             imageRenderer->addInputConnection(streamer2->getOutputPort());
@@ -144,7 +144,7 @@ int main(int argc, char** argv) {
             SimpleWindow::pointer window = SimpleWindow::New();
             window->getView()->setBackgroundColor(Color::Black());
             window->addRenderer(imageRenderer);
-            window->addRenderer(meshRenderer);
+            window->addRenderer(TriangleRenderer);
             window->setSize(1024, 1024);
             window->set2DMode();
             window->setTimeout(10000);
@@ -167,7 +167,6 @@ int main(int argc, char** argv) {
             streamer2->update();
             DynamicData::pointer dynamicMeshData = segmentation->getOutputData<Mesh>();
             int i = 0;
-            Reporter::setGlobalReportMethod(Reporter::COUT);
             Mesh::pointer previous;
             VTKMeshFileExporter::pointer dummyExporter = VTKMeshFileExporter::New();
             while(!dynamicMeshData->hasReachedEnd()) {
@@ -176,7 +175,6 @@ int main(int argc, char** argv) {
                     Mesh::pointer mesh = dynamicMeshData->getNextFrame(dummyExporter);
                     if(mesh == previous)
                         continue;
-                    std::cout << "Exporting frame " << i << std::endl;
                     MeshToSegmentation::pointer meshToSeg = MeshToSegmentation::New();
                     meshToSeg->setInputData(0, mesh);
                     meshToSeg->setInputData(1, image);
@@ -186,13 +184,6 @@ int main(int argc, char** argv) {
                     exporter->setFilename(path + "segmentation_" + std::to_string(i) + ".mhd");
                     exporter->update();
 
-                    /*
-                    VTKMeshFileExporter::pointer exporter = VTKMeshFileExporter::New();
-                    exporter->setInputData(mesh);
-                    exporter->setFilename(path + "segmentation_mesh_" + std::to_string(i) + ".vtk");
-                    exporter->update();
-                     */
-                    std::cout << "Finished exporting." << std::endl;
                     previous = mesh;
                     i++;
                 } catch(Exception &e) {

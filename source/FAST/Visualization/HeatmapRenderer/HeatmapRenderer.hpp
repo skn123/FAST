@@ -8,9 +8,11 @@ namespace fast {
 
 class Image;
 
-class HeatmapRenderer : public Renderer {
+class FAST_EXPORT  HeatmapRenderer : public Renderer {
     FAST_OBJECT(HeatmapRenderer);
     public:
+        void setMinConfidence(float confidence);
+        void setMaxOpacity(float opacity);
         void addInputConnection(ProcessObjectPort port, Color color = Color::Red());
         BoundingBox getBoundingBox();
     private:
@@ -21,7 +23,7 @@ class HeatmapRenderer : public Renderer {
                 cl::Buffer PBO,
                 uint width,
                 uint height,
-                Eigen::Transform<float, 3, Eigen::Affine> pixelToViewportTransform,
+                Affine3f pixelToViewportTransform,
                 float PBOspacing,
                 Vector2f translation
         );
@@ -29,6 +31,8 @@ class HeatmapRenderer : public Renderer {
         std::unordered_map<uint, SharedPointer<Image> > mImagesToRender;
         std::unordered_map<uint, Color> mColors;
         std::mutex mMutex;
+        float mMaxOpacity = 0.4;
+        float mMinConfidence = 0.0f;
 };
 
 }

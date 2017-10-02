@@ -2,13 +2,12 @@
 #include "FAST/RuntimeMeasurementManager.hpp"
 #include "FAST/Utility.hpp"
 #include <mutex>
-#include <QDir>
 #include <fstream>
 #include "FAST/Config.hpp"
 
 #if defined(__APPLE__) || defined(__MACOSX)
 #include <OpenCL/cl_gl.h>
-#include <OpenGL/OpenGL.h>
+
 #else
 #if _WIN32
 #else
@@ -83,7 +82,7 @@ bool OpenCLDevice::isWritingTo3DTexturesSupported() {
 }
 
 OpenCLDevice::~OpenCLDevice() {
-     //reportInfo() << "DESTROYING opencl device object..." << Reporter::end;
+     //reportInfo() << "DESTROYING opencl device object..." << Reporter::end();
      // Make sure that all queues are finished
      getQueue(0).finish();
 }
@@ -269,10 +268,10 @@ cl::Program OpenCLDevice::buildSources(cl::Program::Sources source, std::string 
     } catch(cl::Error &error) {
         if(error.err() == CL_BUILD_PROGRAM_FAILURE) {
             for(unsigned int i=0; i<devices.size(); i++){
-            	reportError() << "Build log, device " << i << "\n" << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[i]) << Reporter::end;
+            	reportError() << "Build log, device " << i << "\n" << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[i]) << Reporter::end();
             }
         }
-        reportError() << getCLErrorString(error.err()) << Reporter::end;
+        reportError() << getCLErrorString(error.err()) << Reporter::end();
 
         throw error;
     }
@@ -308,10 +307,11 @@ cl::Program OpenCLDevice::writeBinary(std::string filename, std::string buildOpt
     // Create directories if they don't exist
     if(binaryFilename.rfind("/") != std::string::npos) {
         std::string directoryPath = binaryFilename.substr(0, binaryFilename.rfind("/"));
-        QDir dir(directoryPath.c_str());
-        if (!dir.exists()) {
-            dir.mkpath(".");
-        }
+//        QDir dir(directoryPath.c_str());
+//        if (!dir.exists()) {
+//            dir.mkpath(".");
+//        }
+        createDirectories(directoryPath);
     }
     FILE * file = fopen(binaryFilename.c_str(), "wb");
     if(!file)
@@ -420,7 +420,7 @@ cl::Program OpenCLDevice::buildProgramFromBinary(std::string filename, std::stri
         }
 
         if(outOfDate || wrongDeviceID || buildOptionsChanged) {
-            Reporter::warning() << "Kernel binary " << filename.substr(kernelSourcePath.size()) << " is out of date. Compiling..." << Reporter::end;
+            Reporter::warning() << "Kernel binary " << filename.substr(kernelSourcePath.size()) << " is out of date. Compiling..." << Reporter::end();
             program = writeBinary(filename, buildOptions);
         } else {
             //std::cout << "Binary is not out of date." << std::endl;

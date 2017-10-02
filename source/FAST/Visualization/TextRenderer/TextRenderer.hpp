@@ -12,7 +12,7 @@ class View;
 
 FAST_SIMPLE_DATA_OBJECT(Text, std::string)
 
-class TextRenderer : public Renderer {
+class FAST_EXPORT  TextRenderer : public Renderer {
     FAST_OBJECT(TextRenderer)
     public:
         BoundingBox getBoundingBox();
@@ -28,9 +28,9 @@ class TextRenderer : public Renderer {
         void setStyle(TextStyleType);
 
     void
-    draw2D(cl::Buffer PBO, uint width, uint height, Eigen::Transform<float, 3, Eigen::Affine> pixelToViewportTransform,
+    draw2D(cl::Buffer PBO, uint width, uint height, Affine3f pixelToViewportTransform,
            float PBOspacing, Vector2f translation) override;
-
+    void loadAttributes();
 private:
         TextRenderer();
         void execute();

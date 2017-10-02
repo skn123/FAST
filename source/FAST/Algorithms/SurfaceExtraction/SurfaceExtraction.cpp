@@ -5,7 +5,9 @@
 #include "FAST/Utility.hpp"
 #include "FAST/Utility.hpp"
 #include "FAST/SceneGraph.hpp"
+#ifdef FAST_MODULE_VISUALIZATION
 #include <QOpenGLFunctions_3_3_Core>
+#endif
 
 namespace fast {
 
@@ -282,12 +284,14 @@ void SurfaceExtraction::execute() {
     BoundingBox box = input->getBoundingBox();
     // Apply spacing scaling to BB
     AffineTransformation::pointer T = AffineTransformation::New();
-    T->scale(input->getSpacing());
+    Affine3f transform = T->getTransform();
+    transform.scale(input->getSpacing());
+    T->setTransform(transform);
     output->create(totalSum);
     output->setBoundingBox(box.getTransformedBoundingBox(T));
 
     if(totalSum == 0) {
-        reportInfo() << "No triangles were extracted. Check isovalue." << Reporter::end;
+        reportInfo() << "No triangles were extracted. Check isovalue." << Reporter::end();
         return;
     }
     reportInfo() << totalSum << " nr of triangles were extracted with the SurfaceExtraction algorithm." << reportEnd();
@@ -311,7 +315,7 @@ void SurfaceExtraction::execute() {
         i += 2;
     }
 
-    VertexBufferObjectAccess::pointer VBOaccess = output->getVertexBufferObjectAccess(ACCESS_READ_WRITE, device);
+    VertexBufferObjectAccess::pointer VBOaccess = output->getVertexBufferObjectAccess(ACCESS_READ_WRITE);
     GLuint* VBO_ID = VBOaccess->get();
     cl::Buffer VBOBuffer;
     std::vector<cl::Memory> v;
@@ -343,6 +347,7 @@ void SurfaceExtraction::execute() {
         queue.finish();
     } else {
         // Transfer OpenCL buffer data to CPU
+#ifdef FAST_MODULE_VISUALIZATION
         float *data = new float[18 * totalSum];
         queue.enqueueReadBuffer(
                 VBOBuffer,
@@ -361,6 +366,9 @@ void SurfaceExtraction::execute() {
         glFinish();
 
         delete[] data;
+#else
+        throw Exception("SurfaceExtraction algorithm is disabled since FAST module visualization is disabled");
+#endif
     }
 
 }

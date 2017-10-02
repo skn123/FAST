@@ -8,7 +8,7 @@ namespace fast {
 
 class Image;
 
-class ImageAccess {
+class FAST_EXPORT  ImageAccess {
     public:
         ImageAccess(void* data, SharedPointer<Image> image);
         void* get();
@@ -17,6 +17,7 @@ class ImageAccess {
         Vector4f getVector(VectorXi position) const;
         void setScalar(uint position, float value, uchar channel = 0);
         void setScalar(VectorXi position, float value, uchar channel = 0);
+		void setVector(uint position, Vector4f value);
         void setVector(VectorXi position, Vector4f value);
         void release();
         ~ImageAccess();

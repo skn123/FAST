@@ -13,6 +13,7 @@
 #include "FAST/DeviceManager.hpp"
 #include "FAST/Data/DynamicData.hpp"
 #include "FAST/Config.hpp"
+#include "FAST/Attribute.hpp"
 
 namespace fast{
     class ProcessObjectPort;
@@ -33,7 +34,7 @@ enum OutputDataType { OUTPUT_STATIC, OUTPUT_DYNAMIC, OUTPUT_DEPENDS_ON_INPUT };
 class OpenCLProgram;
 class ProcessObject;
 
-class ProcessObjectPort {
+class FAST_EXPORT  ProcessObjectPort {
     public:
         ProcessObjectPort(uint portID, SharedPointer<ProcessObject> processObject);
         ProcessObjectPort() {};
@@ -51,7 +52,7 @@ class ProcessObjectPort {
         std::size_t mDataPointer;
 };
 
-class ProcessObject : public virtual Object {
+class FAST_EXPORT  ProcessObject : public virtual Object {
     public:
         virtual ~ProcessObject();
         void update();
@@ -136,12 +137,19 @@ class ProcessObject : public virtual Object {
         template <class DataType>
         std::vector<typename DataType::pointer> getMultipleOutputData();
 
+        DynamicData::pointer getDynamicOutputData(uint portID);
+        DynamicData::pointer getDynamicOutputData();
+
         bool inputPortExists(uint portID) const;
         bool outputPortExists(uint portID) const;
         virtual std::string getNameOfClass() const = 0;
         static std::string getStaticNameOfClass() {
             return "ProcessObject";
         }
+        virtual void loadAttributes();
+        std::shared_ptr<Attribute> getAttribute(std::string id);
+        std::unordered_map<std::string, std::shared_ptr<Attribute>> getAttributes();
+        void setAttributes(std::vector<std::shared_ptr<Attribute>> attributes);
     protected:
         ProcessObject();
         // Flag to indicate whether the object has been modified
@@ -173,6 +181,18 @@ class ProcessObject : public virtual Object {
                 std::string buildOptions = ""
         );
 
+        void createFloatAttribute(std::string id, std::string name, std::string description, float initialValue);
+        void createIntegerAttribute(std::string id, std::string name, std::string description, int initialValue);
+        void createBooleanAttribute(std::string id, std::string name, std::string description, bool initialValue);
+        void createStringAttribute(std::string id, std::string name, std::string description, std::string initialValue);
+        float getFloatAttribute(std::string id);
+        int getIntegerAttribute(std::string id);
+        bool getBooleanAttribute(std::string id);
+        std::string getStringAttribute(std::string id);
+        std::vector<float> getFloatListAttribute(std::string id);
+        std::vector<int> getIntegerListAttribute(std::string id);
+        std::vector<bool> getBooleanListAttribute(std::string id);
+        std::vector<std::string> getStringListAttribute(std::string id);
     private:
         void updateTimestamp(DataObject::pointer data);
         void changeDeviceOnInputs(uint deviceNumber, ExecutionDevice::pointer device);
@@ -203,6 +223,8 @@ class ProcessObject : public virtual Object {
         std::unordered_map<uint, bool> mOutputPortMultipleData;
 
         std::unordered_map<std::string, SharedPointer<OpenCLProgram> > mOpenCLPrograms;
+
+        std::unordered_map<std::string, std::shared_ptr<Attribute>> mAttributes;
 
         friend class DynamicData;
         friend class ProcessObjectPort;
@@ -498,6 +520,8 @@ void ProcessObject::createOutputPort(uint portID, OutputDataType outputDataType,
         setOutputDataDynamicDependsOnInputData(portID, inputPortID);
     }
 }
+
+
 
 }; // end namespace fast
 

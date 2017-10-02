@@ -5,10 +5,12 @@ install(TARGETS FAST
 	DESTINATION fast/lib
 )
 
-# Install test executable
-install(TARGETS testFAST
-	DESTINATION fast/bin
-)
+if(FAST_BUILD_TESTS)
+    # Install test executable
+    install(TARGETS testFAST
+        DESTINATION fast/bin
+    )
+endif()
 
 # Examples are installed in the macro fast_add_example
 
@@ -17,6 +19,9 @@ if(WIN32)
 	file(GLOB DLLs ${PROJECT_BINARY_DIR}/bin/*.dll)
 	install(FILES ${DLLs}
 		DESTINATION fast/bin
+	)
+	install(FILES ${PROJECT_BINARY_DIR}/FASTExport.hpp
+		DESTINATION fast/include
 	)
 else()
 	file(GLOB SOs ${PROJECT_BINARY_DIR}/lib/*.so*)
@@ -52,6 +57,15 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/source/CL/
 	DESTINATION fast/include/CL/
 	FILES_MATCHING PATTERN "*.hpp"
 )
+install(DIRECTORY ${PROJECT_BINARY_DIR}/include/
+    DESTINATION fast/include/
+)
+
+
+# Install created headers
+install(FILES ${PROJECT_BINARY_DIR}/ProcessObjectList.hpp
+    DESTINATION fast/include/FAST/
+)
 
 # Install OpenCL kernels
 install(DIRECTORY ${FAST_SOURCE_DIR}
@@ -60,8 +74,18 @@ install(DIRECTORY ${FAST_SOURCE_DIR}
 )
 
 # Install CMake files
-install(FILES ${PROJECT_BINARY_DIR}/FASTConfig.cmake
+install(FILES ${PROJECT_BINARY_DIR}/FASTConfig.cmake ${PROJECT_BINARY_DIR}/FASTUse.cmake
     DESTINATION fast/cmake
+)
+
+# Install docs
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/doc/
+    DESTINATION fast/doc/
+)
+
+# Install pipelines
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/pipelines/
+    DESTINATION fast/pipelines/
 )
 
 # Install Python wrapper
@@ -82,7 +106,9 @@ endif()
 
 set(CONFIG_KERNEL_SOURCE_PATH "KernelSourcePath = @ROOT@/kernels/")
 set(CONFIG_KERNEL_BINARY_PATH "KernelBinaryPath = @ROOT@/kernel_binaries/")
-set(CONFIG_KERNEL_TEST_PATH "")
+set(CONFIG_DOCUMENTATION_PATH "DocumentationPath = @ROOT@/doc/")
+set(CONFIG_PIPELINE_PATH "PipelinePath = @ROOT@/pipelines/")
+set(CONFIG_TEST_DATA_PATH "TestDataPath = @ROOT@/data/")
 configure_file(
     "${PROJECT_SOURCE_DIR}/source/fast_configuration.txt.in"
     "${PROJECT_BINARY_DIR}/fast_configuration_install.txt"
@@ -97,9 +123,17 @@ install(FILES ${PROJECT_SOURCE_DIR}/LICENSE
     DESTINATION fast/licenses/fast/
 )
 # Install README
-install(FILES ${PROJECT_SOURCE_DIR}/cmake/InstallFiles/README.md
-    DESTINATION fast/
-)
+if(FAST_MODULE_NeuralNetwork)
+	install(FILES ${PROJECT_SOURCE_DIR}/cmake/InstallFiles/README_neural_network.md
+        DESTINATION fast/
+        RENAME README.md
+    )
+else()
+    install(FILES ${PROJECT_SOURCE_DIR}/cmake/InstallFiles/README_default.md
+        DESTINATION fast/
+        RENAME README.md
+    )
+endif()
 
 # Install license files for depedencies
 # Qt5
@@ -131,3 +165,16 @@ install(FILES ${PROJECT_SOURCE_DIR}/cmake/InstallFiles/NumPy_LICENSE.txt
 install(FILES ${PROJECT_SOURCE_DIR}/cmake/InstallFiles/Semaphore_LICENSE.txt
 		DESTINATION fast/licenses/semaphore/
 )
+
+if(FAST_MODULE_NeuralNetwork)
+    # Tensorflow license
+	install(FILES ${FAST_EXTERNAL_BUILD_DIR}/tensorflow/src/tensorflow/LICENSE
+        DESTINATION fast/licenses/tensorflow/
+    )
+endif()
+
+if(FAST_BUILD_DOCS)
+	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
+        DESTINATION fast/doc
+    )
+endif()

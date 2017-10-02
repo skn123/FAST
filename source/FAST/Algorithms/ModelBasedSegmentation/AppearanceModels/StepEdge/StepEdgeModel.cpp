@@ -104,12 +104,11 @@ std::vector<Measurement> StepEdgeModel::getMeasurements(SharedPointer<Image> ima
 	// Return set of displacements and uncertainties
 	if(image->getDimensions() == 3) {
 		AffineTransformation::pointer transformMatrix = SceneGraph::getAffineTransformationFromData(image);
-		transformMatrix->scale(image->getSpacing());
-		Matrix4f inverseTransformMatrix = transformMatrix->matrix().inverse();
+		Matrix4f inverseTransformMatrix = transformMatrix->getTransform().scale(image->getSpacing()).matrix().inverse();
 
 		// Get model scene graph transform
 		AffineTransformation::pointer modelTransformation = SceneGraph::getAffineTransformationFromData(shape->getMesh());
-		MatrixXf modelTransformMatrix = modelTransformation->affine();
+		MatrixXf modelTransformMatrix = modelTransformation->getTransform().affine();
 
 		// Do edge detection for each vertex
 		int counter = 0;
@@ -166,7 +165,7 @@ std::vector<Measurement> StepEdgeModel::getMeasurements(SharedPointer<Image> ima
 			unsigned int startPos = 0;
 			bool startFound = false;
 			for(float d = -mLineLength/2; d < mLineLength/2; d += mLineSampleSpacing) {
-				Vector2f position = points[i].getPosition() + points[i].getNormal()*d;
+				Vector2f position = points[i].getPosition().head(2) + points[i].getNormal().head(2)*d;
 				const Vector2i pixelPosition(round(position.x() / spacing.x()), round(position.y() / spacing.y()));
 				if(position.y() < mMinimumDepth)
 					continue;
@@ -191,10 +190,10 @@ std::vector<Measurement> StepEdgeModel::getMeasurements(SharedPointer<Image> ima
 				DetectedEdge edge = findEdge(intensityProfile, mIntensityDifferenceThreshold, mEdgeType);
 				if(edge.edgeIndex != -1) {
 					float d = -mLineLength/2.0f + (startPos + edge.edgeIndex)*mLineSampleSpacing;
-					const Vector2f position = points[i].getPosition() + points[i].getNormal()*d;
+					const Vector2f position = points[i].getPosition().head(2) + points[i].getNormal().head(2)*d;
 					m.uncertainty = edge.uncertainty;
-					const Vector2f normal = points[i].getNormal();
-					m.displacement = normal.dot(position-points[i].getPosition());
+					const Vector2f normal = points[i].getNormal().head(2);
+					m.displacement = normal.dot(position-points[i].getPosition().head(2));
 					counter++;
 				}
 			}

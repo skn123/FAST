@@ -5,7 +5,7 @@ namespace fast {
 
 HeatmapRenderer::HeatmapRenderer() {
     createInputPort<Image>(0, false);
-    mColors[0] = Color::Red();
+    mColors[0] = Color::Green();
     createOpenCLProgram(Config::getKernelSourcePath() + "/Visualization/HeatmapRenderer/HeatmapRenderer.cl");
     mIsModified = false;
 }
@@ -29,7 +29,6 @@ void HeatmapRenderer::execute() {
             throw Exception("Data type of image given to HeatmapRenderer must be FLOAT");
         }
 
-        std::cout << "HEATMAP recieved input" << std::endl;
         mImagesToRender[inputNr] = input;
     }
 }
@@ -42,6 +41,7 @@ void HeatmapRenderer::draw2D(cl::Buffer PBO, uint width, uint height,
                              Eigen::Transform<float, 3, Eigen::Affine> pixelToViewportTransform, float PBOspacing,
                              Vector2f translation) {
 
+    mRuntimeManager->startRegularTimer("draw2D");
     std::lock_guard<std::mutex> lock(mMutex);
     OpenCLDevice::pointer device = getMainDevice();
 
@@ -59,14 +59,13 @@ void HeatmapRenderer::draw2D(cl::Buffer PBO, uint width, uint height,
             sizeof(float)*width*height*4
     );
 
+    cl::Kernel kernel(getOpenCLProgram(device), "render2D");
     std::unordered_map<uint, Image::pointer>::iterator it;
     for(it = mImagesToRender.begin(); it != mImagesToRender.end(); it++) {
         Image::pointer input = it->second;
 
 
         if(input->getDimensions() == 2) {
-            std::string kernelName = "render2D";
-            cl::Kernel kernel(getOpenCLProgram(device), kernelName.c_str());
             // Run kernel to fill the texture
 
             OpenCLImageAccess::pointer access = input->getOpenCLImageAccess(ACCESS_READ, device);
@@ -80,6 +79,8 @@ void HeatmapRenderer::draw2D(cl::Buffer PBO, uint width, uint height,
             kernel.setArg(6, mColors[it->first].getRedValue());
             kernel.setArg(7, mColors[it->first].getGreenValue());
             kernel.setArg(8, mColors[it->first].getBlueValue());
+            kernel.setArg(9, mMinConfidence);
+            kernel.setArg(10, mMaxOpacity);
 
             // Run the draw 2D kernel
             queue.enqueueNDRangeKernel(
@@ -100,6 +101,7 @@ void HeatmapRenderer::draw2D(cl::Buffer PBO, uint width, uint height,
     }
     queue.finish();
 
+    mRuntimeManager->stopRegularTimer("draw2D");
 }
 
 BoundingBox HeatmapRenderer::getBoundingBox() {
@@ -116,6 +118,18 @@ BoundingBox HeatmapRenderer::getBoundingBox() {
         }
     }
     return BoundingBox(coordinates);
+}
+
+void HeatmapRenderer::setMinConfidence(float confidence) {
+    if(confidence < 0 || confidence > 1)
+        throw Exception("Confidence given to setMinimumConfidence has to be within [0, 1]", __LINE__, __FILE__);
+    mMinConfidence = confidence;
+}
+
+void HeatmapRenderer::setMaxOpacity(float opacity) {
+    if(opacity < 0 || opacity > 1)
+        throw Exception("Opacity given to setMaxOpacity has to be within [0, 1]", __LINE__, __FILE__);
+    mMaxOpacity = opacity;
 }
 
 }

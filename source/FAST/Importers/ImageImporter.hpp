@@ -6,14 +6,17 @@
 
 namespace fast {
 
-class ImageImporter : public Importer {
+class FAST_EXPORT  ImageImporter : public Importer {
     FAST_OBJECT(ImageImporter)
     public:
         void setFilename(std::string filename);
+        void setGrayscale(bool grayscale);
         ~ImageImporter() {};
     private:
         ImageImporter();
+        uchar* readBMPFile(std::string filename, int &width, int &height);
         std::string mFilename;
+        bool mGrayscale;
         void execute();
 
 };

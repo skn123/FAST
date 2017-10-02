@@ -14,7 +14,7 @@ namespace fast {
 
 class ComputationThread;
 
-class View : public QGLWidget, public ProcessObject {
+class FAST_EXPORT  View : public QGLWidget, public ProcessObject {
     //FAST_OBJECT(View)
     Q_OBJECT
     public:
@@ -32,8 +32,6 @@ class View : public QGLWidget, public ProcessObject {
         void setViewingPlane(Plane plane);
         void setLookAt(Vector3f cameraPosition, Vector3f targetPosition, Vector3f cameraUpVector, float zNear = 0.1, float zFar = 1000);
         void updateAllRenderers();
-        void stopPipelineUpdateThread();
-        void resumePipelineUpdateThread();
         void quit();
         void reinitialize();
         bool hasQuit() const;
@@ -46,6 +44,7 @@ class View : public QGLWidget, public ProcessObject {
 		    return "View";
 		};
         View();
+		float get2DPixelSpacing();
     private:
 
 		std::vector<Renderer::pointer> mNonVolumeRenderers;
@@ -62,10 +61,10 @@ class View : public QGLWidget, public ProcessObject {
 		void renderVolumes();
 
 		Plane mViewingPlane;
-        Eigen::Affine3f m2DViewingTransformation;
+        Affine3f m2DViewingTransformation;
 
         // Camera
-        AffineTransformation m3DViewingTransformation;
+        Affine3f m3DViewingTransformation;
 		Vector3f mRotationPoint;
 		Vector3f mCameraPosition;
 		bool mCameraSet;

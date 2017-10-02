@@ -12,6 +12,7 @@
 #include <tensorflow/core/platform/types.h>
 #include <tensorflow/core/public/session.h>
 #include <tensorflow/core/graph/default_device.h>
+#include <tensorflow/core/platform/init_main.h>
 
 namespace fast {
 
@@ -19,6 +20,10 @@ namespace fast {
 
 void NeuralNetwork::load(std::string networkFilename) {
 
+	char** argv = new char*[1];
+	argv[0] = new char[255];
+    int argc = 1;
+    tensorflow::port::InitMain(argv[0], &argc, &argv);
 	tensorflow::SessionOptions options;
 	tensorflow::ConfigProto &config = options.config;
 	mSession.reset(tensorflow::NewSession(options));
@@ -37,11 +42,11 @@ void NeuralNetwork::load(std::string networkFilename) {
 	//std::cout << attributes["shape"].shape() << std::endl;
     for(int i = 0; i < tensorflow_graph.node_size(); ++i) {
 		tensorflow::NodeDef node = tensorflow_graph.node(i);
+        //reportInfo() << "Node " << i << " with name " << node.name() << reportEnd();
+        //reportInfo() << "Op name " << node.op() << reportEnd();
+        //reportInfo() << "inputs: " << node.input_size() << reportEnd();
         if(node.name() == "keras_learning_phase") {
 			mHasKerasLearningPhaseTensor = true;
-			//reportInfo() << "Node " << i << " with name " << node.name() << reportEnd();
-			//reportInfo() << "Op name " << node.op() << reportEnd();
-			//reportInfo() << "inputs: " << node.input_size() << reportEnd();
 		}
 	}
 
@@ -73,6 +78,10 @@ NeuralNetwork::NeuralNetwork() {
 	mHeight = -1;
 	mScaleFactor = 1.0f;
 	createOpenCLProgram(Config::getKernelSourcePath() + "Algorithms/NeuralNetwork/NeuralNetwork.cl");
+	createStringAttribute("model", "Model path", "Path to neural network tensorflow model", "");
+	createIntegerAttribute("input_size", "Input size", "Image input size", 128);
+	createFloatAttribute("scale_factor", "Scale factor", "Scale factor", mScaleFactor);
+	createStringAttribute("output_names", "Output names", "Name of output nodes", "");
 }
 
 void NeuralNetwork::execute() {
@@ -166,6 +175,7 @@ void NeuralNetwork::executeNetwork(const std::vector<Image::pointer>& images) {
 
 	std::vector <tensorflow::Tensor> output_tensors;
 
+	reportInfo() << "Running network" << reportEnd();
 	tensorflow::Status s;
 	mRuntimeManager->startRegularTimer("network_execution");
 	s = mSession->Run(input_tensors, mOutputNames, {}, &output_tensors);
@@ -206,5 +216,13 @@ std::vector<SharedPointer<Image>> NeuralNetwork::resizeImages(const std::vector<
 	return resizedImages;
 }
 
+void NeuralNetwork::loadAttributes() {
+	load(getStringAttribute("model"));
+	std::vector<int> inputSize = getIntegerListAttribute("input_size");
+	setInputSize(inputSize.at(0), inputSize.at(1));
+	std::vector<std::string> outputNames = getStringListAttribute("output_names");
+	setOutputParameters(outputNames);
+	setScaleFactor(getFloatAttribute("scale_factor"));
+}
 
 };

@@ -45,7 +45,11 @@ class WeakPointer {
             return SharedPointer<T>(mWeakPtr.lock());
         };
         std::weak_ptr<T> getPtr() const { return mWeakPtr; };
-        WeakPointer<T> &operator=(const SharedPointer<T> &other);
+        WeakPointer<T> &operator=(const SharedPointer<T> &other) {
+            mWeakPtr = other.getPtr();
+            return *this;
+        }
+
         bool operator==(const WeakPointer<T> &other) const {
             // Check if the two weak pointers, point to the same objecs
             SharedPointer<T> object1 = mWeakPtr.lock();
@@ -86,29 +90,26 @@ class SharedPointer {
         SharedPointer(SharedPointer<U> object) {
             if(!object.isValid())
                 throw Exception("Cast from " + U::getStaticNameOfClass() + " to " + T::getStaticNameOfClass() + " failed because object was invalid (uninitialized or deleted).");
-            std::shared_ptr<T> ptr = std::dynamic_pointer_cast<T>(object.getPtr());
-            if(ptr == NULL)
+            mSmartPtr = std::dynamic_pointer_cast<T>(object.getPtr());
+            if(mSmartPtr == NULL)
                 throw Exception("Illegal cast from " + U::getStaticNameOfClass() + " to " + T::getStaticNameOfClass());
-            mSmartPtr = std::shared_ptr<T>(ptr);
         }
         template <class U>
         SharedPointer(WeakPointer<U> object) {
             if(!object.isValid())
                 throw Exception("Cast from " + U::getStaticNameOfClass() + " to " + T::getStaticNameOfClass() + " failed because object was invalid (uninitialized or deleted).");
-            std::shared_ptr<T> ptr = std::dynamic_pointer_cast<T>(object.getPtr().lock());
-            if(ptr == NULL)
+            mSmartPtr = std::dynamic_pointer_cast<T>(object.getPtr().lock());
+            if(mSmartPtr == NULL)
                 throw Exception("Illegal cast from " + U::getStaticNameOfClass() + " to " + T::getStaticNameOfClass());
-            mSmartPtr = std::shared_ptr<T>(ptr);
         }
 
         template <class U>
         SharedPointer<T> &operator=(const SharedPointer<U> &other) {
             if(!other.isValid())
                 throw Exception("Cast from " + U::getStaticNameOfClass() + " to " + T::getStaticNameOfClass() + " failed because object was invalid (uninitialized or deleted).");
-            std::shared_ptr<T> ptr = std::dynamic_pointer_cast<T>(other.getPtr());
-            if(ptr == NULL)
+            mSmartPtr = std::dynamic_pointer_cast<T>(other.getPtr());
+            if(mSmartPtr == NULL)
                 throw Exception("Illegal cast from " + U::getStaticNameOfClass() + " to " + T::getStaticNameOfClass());
-            mSmartPtr = std::shared_ptr<T>(ptr);
             return *this;
         }
 
@@ -150,11 +151,6 @@ class SharedPointer {
 template <class T>
 using UniquePointer = std::unique_ptr<T>;
 
-template <class T>
-WeakPointer<T> &WeakPointer<T>::operator=(const SharedPointer<T> &other) {
-    mWeakPtr = other.getPtr();
-    return *this;
-}
 
 } // end namespace fast
 

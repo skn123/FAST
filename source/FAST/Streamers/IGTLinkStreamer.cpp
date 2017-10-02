@@ -21,6 +21,20 @@ void IGTLinkStreamer::setConnectionPort(uint port) {
     mIsModified = true;
 }
 
+ProcessObjectPort IGTLinkStreamer::getOutputPort() {
+	uint portID;
+	if (mOutputPortDeviceNames.count("") == 0) {
+		portID = getNrOfOutputPorts();
+		createOutputPort<Image>(portID, OUTPUT_DYNAMIC);
+		getOutputData<Image>(portID); // This initializes the output data
+		mOutputPortDeviceNames[""] = portID;
+	}
+	else {
+		portID = mOutputPortDeviceNames[""];
+	}
+	return ProcessObject::getOutputPort(portID);
+}
+
 void IGTLinkStreamer::setStreamingMode(StreamingMode mode) {
     if(mode == STREAMING_MODE_STORE_ALL_FRAMES && !mMaximumNrOfFramesSet)
         setMaximumNumberOfFrames(0);
@@ -37,6 +51,36 @@ bool IGTLinkStreamer::hasReachedEnd() const {
 
 uint IGTLinkStreamer::getNrOfFrames() const {
     return mNrOfFrames;
+}
+
+std::set<std::string> IGTLinkStreamer::getImageStreamNames() {
+    return mImageStreamNames;
+}
+
+std::set<std::string> IGTLinkStreamer::getTransformStreamNames() {
+    return mTransformStreamNames;
+}
+
+std::string IGTLinkStreamer::getStreamDescription(std::string streamName) {
+    return mStreamDescriptions.at(streamName);
+}
+
+std::vector<std::string> IGTLinkStreamer::getActiveImageStreamNames() {
+    std::vector<std::string> activeStreams;
+    for(auto stream : mOutputPortDeviceNames) {
+        if(mImageStreamNames.count(stream.first) > 0)
+            activeStreams.push_back(stream.first);
+    }
+    return activeStreams;
+}
+
+std::vector<std::string> IGTLinkStreamer::getActiveTransformStreamNames() {
+    std::vector<std::string> activeStreams;
+    for(auto stream : mOutputPortDeviceNames) {
+        if(mTransformStreamNames.count(stream.first) > 0)
+            activeStreams.push_back(stream.first);
+    }
+    return activeStreams;
 }
 
 inline Image::pointer createFASTImageFromMessage(igtl::ImageMessage::Pointer message, ExecutionDevice::pointer device) {
@@ -80,13 +124,13 @@ inline Image::pointer createFASTImageFromMessage(igtl::ImageMessage::Pointer mes
     message->GetMatrix(matrix);
     image->setSpacing(Vector3f(spacing[0], spacing[1], spacing[2]));
     AffineTransformation::pointer T = AffineTransformation::New();
-    T->translation() = Vector3f(offset[0], offset[1], offset[2]);
+    T->getTransform().translation() = Vector3f(offset[0], offset[1], offset[2]);
     Matrix3f fastMatrix;
     for(int i = 0; i < 3; i++) {
     for(int j = 0; j < 3; j++) {
         fastMatrix(i,j) = matrix[i][j];
     }}
-    T->linear() = fastMatrix;
+    T->getTransform().linear() = fastMatrix;
     image->getSceneGraphNode()->setTransformation(T);
 
 
@@ -111,31 +155,13 @@ void IGTLinkStreamer::updateFirstFrameSetFlag() {
         }
         mFirstFrameCondition.notify_one();
     } else {
-        reportInfo() << "ALL HAVE NOT GOT DATA" << Reporter::end;
+        reportInfo() << "ALL HAVE NOT GOT DATA" << Reporter::end();
     }
 }
 
 void IGTLinkStreamer::producerStream() {
-    mSocket = igtl::ClientSocket::New();
-    reportInfo() << "Trying to connect to Open IGT Link server " << mAddress << ":" << std::to_string(mPort) << Reporter::end;;
-    //mSocket->SetTimeout(3); // try to connect for 3 seconds
-    int r = mSocket->ConnectToServer(mAddress.c_str(), mPort);
-    if(r != 0) {
-		reportInfo() << "Failed to connect to Open IGT Link server " << mAddress << ":" << std::to_string(mPort) << Reporter::end;;
-        mIsModified = true;
-        mStreamIsStarted = false;
-        mStop = true;
-        //connectionLostSignal();
-        {
-            std::lock_guard<std::mutex> lock(mFirstFrameMutex);
-			mFirstFrameIsInserted = true;
-        }
-        mFirstFrameCondition.notify_one();
-        reportInfo() << "Connection lost signal sent" << reportEnd();
-        //throw Exception("Cannot connect to the Open IGT Link server.");
-        return;
-    }
-    reportInfo() << "Connected to Open IGT Link server" << Reporter::end;;
+
+    reportInfo() << "Connected to Open IGT Link server" << Reporter::end();;
 
     // Create a message buffer to receive header
     igtl::MessageHeader::Pointer headerMsg;
@@ -177,11 +203,13 @@ void IGTLinkStreamer::producerStream() {
         // Get time stamp
         headerMsg->GetTimeStamp(ts);
 
-        reportInfo() << "Device name: " << headerMsg->GetDeviceName() << Reporter::end;
+        reportInfo() << "Device name: " << headerMsg->GetDeviceName() << Reporter::end();
 
         unsigned long timestamp = round(ts->GetTimeStamp()*1000); // convert to milliseconds
         reportInfo() << "TIMESTAMP converted: " << timestamp << reportEnd();
         if(strcmp(headerMsg->GetDeviceType(), "TRANSFORM") == 0) {
+            mTransformStreamNames.insert(headerMsg->GetDeviceName());
+            mStreamDescriptions[headerMsg->GetDeviceName()] = "Transform";
             if(mInFreezeMode) {
                 //unfreezeSignal();
                 mInFreezeMode = false;
@@ -207,24 +235,24 @@ void IGTLinkStreamer::producerStream() {
                 for(int j = 0; j < 4; j++) {
                     fastMatrix(i,j) = matrix[i][j];
                 }}
-                reportInfo() << fastMatrix << Reporter::end;
+                reportInfo() << fastMatrix << Reporter::end();
                 DynamicData::pointer ptr;
                 try {
                      ptr = getOutputDataFromDeviceName<AffineTransformation>(headerMsg->GetDeviceName());
                      ptr->setStreamer(mPtr.lock());
                 } catch(Exception &e) {
-                    reportInfo() << "Output port with device name " << headerMsg->GetDeviceName() << " not found" << Reporter::end;
+                    reportInfo() << "Output port with device name " << headerMsg->GetDeviceName() << " not found" << Reporter::end();
                     continue;
                 }
                 try {
                     AffineTransformation::pointer T = AffineTransformation::New();
-                    T->matrix() = fastMatrix;
+                    T->getTransform().matrix() = fastMatrix;
                     T->setCreationTimestamp(timestamp);
                     ptr->addFrame(T);
                 } catch(NoMoreFramesException &e) {
                     throw e;
                 } catch(Exception &e) {
-                    reportInfo() << "streamer has been deleted, stop" << Reporter::end;
+                    reportInfo() << "streamer has been deleted, stop" << Reporter::end();
                     break;
                 }
                 if(!mFirstFrameIsInserted) {
@@ -233,12 +261,13 @@ void IGTLinkStreamer::producerStream() {
                 mNrOfFrames++;
             }
         } else if(strcmp(headerMsg->GetDeviceType(), "IMAGE") == 0) {
+            mImageStreamNames.insert(headerMsg->GetDeviceName());
             if(mInFreezeMode) {
                 //unfreezeSignal();
                 mInFreezeMode = false;
             }
             statusMessageCounter = 0;
-            reportInfo() << "Receiving IMAGE data type." << Reporter::end;
+            reportInfo() << "Receiving IMAGE data type from device " << headerMsg->GetDeviceName() << Reporter::end();
 
             // Create a message buffer to receive transform data
             igtl::ImageMessage::Pointer imgMsg;
@@ -253,6 +282,11 @@ void IGTLinkStreamer::producerStream() {
             // If you want to skip CRC check, call Unpack() without argument.
             int c = imgMsg->Unpack(1);
             if(c & igtl::MessageHeader::UNPACK_BODY) { // if CRC check is OK
+                if(mOutputPortDeviceNames.count("") > 0) {
+                    // If no specific output ports have been specified, choose this first one
+                    mOutputPortDeviceNames[headerMsg->GetDeviceName()] = mOutputPortDeviceNames[""];
+                    mOutputPortDeviceNames.erase("");
+                }
                 // Retrive the image data
                 int size[3]; // image dimension
                 float spacing[3]; // spacing (mm/pixel)
@@ -264,12 +298,21 @@ void IGTLinkStreamer::producerStream() {
                 imgMsg->GetSpacing(spacing);
                 imgMsg->GetSubVolume(svsize, svoffset);
 
+                std::string description = "";
+                if(size[2] == 1) {
+                    description = "2D, " + std::to_string(size[0]) + "x" + std::to_string(size[1]);
+                } else {
+                    description = "3D, " + std::to_string(size[0]) + "x" + std::to_string(size[1]) + "x" + std::to_string(size[2]);
+                }
+                description += ", " + std::to_string(imgMsg->GetNumComponents()) + " channels, " + std::to_string(imgMsg->GetScalarSize()*8) + "bit";
+                mStreamDescriptions[headerMsg->GetDeviceName()] = description;
+
                 DynamicData::pointer ptr;
                 try {
                      ptr = getOutputDataFromDeviceName<Image>(headerMsg->GetDeviceName());
                      ptr->setStreamer(mPtr.lock());
                 } catch(Exception &e) {
-                    reportInfo() << "Output port with device name " << headerMsg->GetDeviceName() << " not found" << Reporter::end;
+                    reportInfo() << "Output port with device name " << headerMsg->GetDeviceName() << " not found" << Reporter::end();
                     continue;
                 }
                 try {
@@ -279,7 +322,7 @@ void IGTLinkStreamer::producerStream() {
                 } catch(NoMoreFramesException &e) {
                     throw e;
                 } catch(Exception &e) {
-                    reportInfo() << "streamer has been deleted, stop" << Reporter::end;
+                    reportInfo() << "streamer has been deleted, stop" << Reporter::end();
                     break;
                 }
                 if(!mFirstFrameIsInserted) {
@@ -289,7 +332,7 @@ void IGTLinkStreamer::producerStream() {
             }
         } else if(strcmp(headerMsg->GetDeviceType(), "STATUS") == 0) {
             ++statusMessageCounter;
-            reportInfo() << "STATUS MESSAGE recieved" << Reporter::end;
+            reportInfo() << "STATUS MESSAGE recieved" << Reporter::end();
             // Receive generic message
             igtl::MessageBase::Pointer message;
             message = igtl::MessageBase::New();
@@ -299,7 +342,7 @@ void IGTLinkStreamer::producerStream() {
             // Receive transform data from the socket
             mSocket->Receive(message->GetPackBodyPointer(), message->GetPackBodySize());
             if(statusMessageCounter > 3 && !mInFreezeMode) {
-                reportInfo() << "3 STATUS MESSAGE received, freeze detected" << Reporter::end;
+                reportInfo() << "3 STATUS MESSAGE received, freeze detected" << Reporter::end();
                 mInFreezeMode = true;
                 //freezeSignal();
 
@@ -336,6 +379,7 @@ void IGTLinkStreamer::producerStream() {
     }
     mFirstFrameCondition.notify_one();
     mSocket->CloseSocket();
+    reportInfo() << "OpenIGTLink socket closed" << reportEnd();
 }
 
 IGTLinkStreamer::~IGTLinkStreamer() {
@@ -377,6 +421,13 @@ void IGTLinkStreamer::execute() {
         for(uint i = 0; i < getNrOfOutputPorts(); i++) {
             DynamicData::pointer data = ProcessObject::getOutputPort(i).getData();
             data->setMaximumNumberOfFrames(mMaximumNrOfFrames);
+        }
+
+        mSocket = igtl::ClientSocket::New();
+        reportInfo() << "Trying to connect to Open IGT Link server " << mAddress << ":" << std::to_string(mPort) << Reporter::end();
+        int r = mSocket->ConnectToServer(mAddress.c_str(), mPort);
+        if(r != 0) {
+            throw Exception("Failed to connect to Open IGT Link server " + mAddress + ":" + std::to_string(mPort));
         }
 
         mStreamIsStarted = true;
