@@ -255,6 +255,7 @@ MeshAccess::pointer Mesh::getMeshAccess(accessType type) {
                 MeshVertex vertex(position, normal);
                 vertex.addConnection(t);
 
+                /*
                 // Only add if not a duplicate
                 if(vertexList.count(vertex) > 0) {
                     // Found a duplicate
@@ -266,11 +267,12 @@ MeshAccess::pointer Mesh::getMeshAccess(accessType type) {
                     // Add the vertex to this triangle
                     triangle[v] = duplicateIndex;
                 } else {
+                 */
                     // If duplicate was not found, add it to the list
                     vertices.push_back(vertex);
                     triangle[v] = vertices.size()-1;
-                    vertexList[vertex] = vertices.size()-1;
-                }
+                    //vertexList[vertex] = vertices.size()-1;
+                //}
             }
             triangles.push_back(triangle);
         }
