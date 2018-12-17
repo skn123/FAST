@@ -24,19 +24,56 @@ Mesh::pointer getPointCloud(std::string filename=std::string("Surface_LV.vtk")) 
     return port->getNextFrame<Mesh>();
 }
 
+void normalizePointCloud(Mesh::pointer &pointCloud) {
 
-void modifyPointCloud(Mesh::pointer &pointCloud, double fractionOfPointsToKeep, double noiseSampleRatio=0.0) {
+    MeshAccess::pointer accessCloud = pointCloud->getMeshAccess(ACCESS_READ);
+    std::vector<MeshVertex> vertices = accessCloud->getVertices();
+
+    // Set dimensions of point sets
+    unsigned int numDimensions = (unsigned int)vertices[0].getPosition().size();
+    auto numPoints = (unsigned int)vertices.size();
+
+    // Store point sets in matrices
+    MatrixXf points = MatrixXf::Zero(numPoints, numDimensions);
+    for(int i = 0; i < numPoints; ++i) {
+        points.row(i) = vertices[i].getPosition();
+
+    }
+
+    // Center point clouds around origin, i.e. zero mean
+    MatrixXf mean = points.colwise().sum() / numPoints;
+    points -= mean.replicate(numPoints, 1);
+
+    // Scale point clouds to have unit variance
+    double scale = sqrt(points.cwiseProduct(points).sum() / (double)numPoints);
+    points /= scale;
+
+    // Create new vertices
+    std::vector<MeshVertex> newVertices;
+    for(int i = 0; i < numPoints; ++i) {
+//        newVertices[i].setPosition(Vector3f(points.row(i)[0], points.row(i)[1], points.row(i)[2]));
+        newVertices.push_back(Vector3f(points.row(i)));
+    }
+
+    pointCloud->create(newVertices);
+}
+
+void modifyPointCloud(Mesh::pointer &pointCloud,
+        int numbers[3], float fractionOfPointsToKeep,
+        float outlierLevel=0.0, float noiseLevel=0.0,
+        float noiseVariance=0.1, float noiseMean=0.0) {
+
     MeshAccess::pointer accessFixedSet = pointCloud->getMeshAccess(ACCESS_READ);
     std::vector<MeshVertex> vertices = accessFixedSet->getVertices();
 
     // Sample the preferred amount of points from the point cloud
     auto numVertices = (unsigned int) vertices.size();
-    auto numSamplePoints = (unsigned int) ceil(fractionOfPointsToKeep * numVertices);
+    auto numSamplePoints = (unsigned int) ceilf(fractionOfPointsToKeep * numVertices);
     std::vector<MeshVertex> newVertices;
 
     std::unordered_set<int> movingIndices;
     unsigned int sampledPoints = 0;
-    std::default_random_engine distributionEngine;
+    std::default_random_engine distributionEngine((unsigned long)omp_get_wtime());
     std::uniform_int_distribution<unsigned int> distribution(0, numVertices-1);
     while (sampledPoints < numSamplePoints) {
         unsigned int index = distribution(distributionEngine);
@@ -47,8 +84,8 @@ void modifyPointCloud(Mesh::pointer &pointCloud, double fractionOfPointsToKeep, 
         }
     }
 
-    // Add noise to point cloud
-    auto numNoisePoints = (unsigned int) ceil(noiseSampleRatio * numSamplePoints);
+    // Add uniformly distributed outliers
+    auto numOutliers = (unsigned int) ceilf(outlierLevel * numSamplePoints);
     float minX, minY, minZ;
     Vector3f position0 = vertices[0].getPosition();
     minX = position0[0];
@@ -65,21 +102,60 @@ void modifyPointCloud(Mesh::pointer &pointCloud, double fractionOfPointsToKeep, 
         if (position[2] > maxZ) {maxZ = position[2]; }
     }
 
-    std::uniform_real_distribution<float> distributionNoiseX(minX, maxX);
-    std::uniform_real_distribution<float> distributionNoiseY(minY, maxY);
-    std::uniform_real_distribution<float> distributionNoiseZ(minZ, maxZ);
+    std::uniform_real_distribution<float> distributionOutliersX(minX, maxX);
+    std::uniform_real_distribution<float> distributionOutliersY(minY, maxY);
+    std::uniform_real_distribution<float> distributionOutliersZ(minZ, maxZ);
+
+    for (int outliersAdded = 0; outliersAdded < numOutliers; outliersAdded++) {
+        float outlierX = distributionOutliersX (distributionEngine);
+        float outlierY = distributionOutliersY (distributionEngine);
+        float outlierZ = distributionOutliersZ (distributionEngine);
+        Vector3f outlierPosition = Vector3f(outlierX, outlierY, outlierZ);
+        MeshVertex outlier = MeshVertex(outlierPosition, Vector3f(1, 0, 0), Color::Black());
+        newVertices.push_back(outlier);
+    }
+
+    // Add random gaussian noise
+    auto numNoisePoints = (unsigned int) ceilf(noiseLevel * numSamplePoints);
+
+    std::normal_distribution<float> distributionNoiseX(noiseMean, noiseVariance);
+    std::normal_distribution<float> distributionNoiseY(noiseMean, noiseVariance);
+    std::normal_distribution<float> distributionNoiseZ(noiseMean, noiseVariance);
 
     for (int noiseAdded = 0; noiseAdded < numNoisePoints; noiseAdded++) {
         float noiseX = distributionNoiseX (distributionEngine);
         float noiseY = distributionNoiseY (distributionEngine);
         float noiseZ = distributionNoiseZ (distributionEngine);
         Vector3f noisePosition = Vector3f(noiseX, noiseY, noiseZ);
+//        Vector3f noisePosition = Vector3f((maxX-minX)*noiseX, (maxY-minY)*noiseY, (maxZ-minZ)*noiseZ);
         MeshVertex noise = MeshVertex(noisePosition, Vector3f(1, 0, 0), Color::Black());
         newVertices.push_back(noise);
     }
 
     // Update point cloud to include the removed points and added noise
     pointCloud->create(newVertices);
+
+    // Return number of points, noise and outliers
+    numbers[0] = numSamplePoints;
+    numbers[1] = numOutliers;
+    numbers[2] = numNoisePoints;
+}
+
+
+void keepPartOfPointCloud(Mesh::pointer &pointCloud, unsigned int startPoint, unsigned endPoint) {
+    MeshAccess::pointer accessFixedSet = pointCloud->getMeshAccess(ACCESS_READ);
+    std::vector<MeshVertex> vertices = accessFixedSet->getVertices();
+
+    // Sample the preferred amount of points from the point cloud
+    auto numVertices = (unsigned int) vertices.size();
+    endPoint = min<unsigned int>(endPoint, numVertices);
+    std::vector<MeshVertex> newVertices;
+
+    for (int index = 0; index < endPoint - startPoint; index++) {
+        if (vertices.at(index).getPosition().array().isNaN().sum() == 0) {
+            newVertices.push_back(vertices.at(index));
+        }
+    }
 }
 
 void saveAbdominalSurfaceExtraction(int threshold=-500) {
@@ -127,13 +203,21 @@ TEST_CASE("cpd", "[fast][coherentpointdrift][visual][cpd]") {
     auto cloud2 = getPointCloud(dataset2);
     auto cloud3 = getPointCloud(dataset2);
 
+    // Normalize point clouds
+    normalizePointCloud(cloud1);
+    normalizePointCloud(cloud2);
+    normalizePointCloud(cloud3);
+
     // Modify point clouds
-    modifyPointCloud(cloud1, 0.80, 0.25);
-    modifyPointCloud(cloud2, 0.75, 0.15);
-    modifyPointCloud(cloud3, 0.75, 0.15);
+
+    int numbersCloud1[3];
+    int numbersCloud2[3];
+    modifyPointCloud(cloud1, numbersCloud1, 0.80, 0.0, 0.5, 0.4);
+    modifyPointCloud(cloud2, numbersCloud2, 0.75, 0.0, 0.0);
+    modifyPointCloud(cloud3, numbersCloud2, 0.75, 0.0, 0.0, 0.0);
 
     // Set registration settings
-    float uniformWeight = 0.5;
+    float uniformWeight = 0.8;
     double tolerance = 1e-6;
     bool applyTransform = true;
 
@@ -146,9 +230,9 @@ TEST_CASE("cpd", "[fast][coherentpointdrift][visual][cpd]") {
     shearing(1, 0) = 0.0;
     Affine3f affine = Affine3f::Identity();
     affine.rotate(Eigen::AngleAxisf(3.141592f / 180.0f * 50.0f, Eigen::Vector3f::UnitY()));
-    affine.scale(0.5);
-    affine.translate(translation);
-    affine.linear() += shearing;
+//    affine.scale(0.5);
+//    affine.translate(translation);
+//    affine.linear() += shearing;
     transform->setTransform(affine);
 
     if (applyTransform) {
@@ -163,7 +247,7 @@ TEST_CASE("cpd", "[fast][coherentpointdrift][visual][cpd]") {
     for(auto maxIterations : iterations) {
 
         // Run Coherent Point Drift
-        auto cpd = CoherentPointDriftAffine::New();
+        auto cpd = CoherentPointDriftRigid::New();
         cpd->setFixedMesh(cloud1);
         cpd->setMovingMesh(cloud2);
         cpd->setMaximumIterations(maxIterations);

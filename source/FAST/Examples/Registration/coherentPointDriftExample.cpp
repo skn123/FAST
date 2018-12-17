@@ -16,6 +16,39 @@
 
 using namespace fast;
 
+
+void normalizePointCloud(Mesh::pointer &pointCloud) {
+
+    MeshAccess::pointer accessCloud = pointCloud->getMeshAccess(ACCESS_READ);
+    std::vector<MeshVertex> vertices = accessCloud->getVertices();
+
+    // Set dimensions of point sets
+    unsigned int numDimensions = (unsigned int)vertices[0].getPosition().size();
+    auto numPoints = (unsigned int)vertices.size();
+
+    // Store point sets in matrices
+    MatrixXf points = MatrixXf::Zero(numPoints, numDimensions);
+    for(int i = 0; i < numPoints; ++i) {
+        points.row(i) = vertices[i].getPosition();
+
+    }
+
+    // Center point clouds around origin, i.e. zero mean
+    MatrixXf mean = points.colwise().sum() / numPoints;
+    points -= mean.replicate(numPoints, 1);
+
+    // Scale point clouds to have unit variance
+    double scale = sqrt(points.cwiseProduct(points).sum() / (double)numPoints);
+    points /= scale;
+
+    // Create new vertices
+    std::vector<MeshVertex> newVertices;
+    for(int i = 0; i < numPoints; ++i) {
+        newVertices[i].setPosition(points.row(i));
+    }
+    pointCloud->create(newVertices);
+}
+
 void modifyPointCloud(Mesh::pointer &pointCloud, double fractionOfPointsToKeep, double noiseSampleRatio=0.0) {
     MeshAccess::pointer accessFixedSet = pointCloud->getMeshAccess(ACCESS_READ);
     std::vector<MeshVertex> vertices = accessFixedSet->getVertices();
@@ -27,7 +60,7 @@ void modifyPointCloud(Mesh::pointer &pointCloud, double fractionOfPointsToKeep, 
 
     std::unordered_set<int> movingIndices;
     unsigned int sampledPoints = 0;
-    std::default_random_engine distributionEngine;
+    std::default_random_engine distributionEngine((unsigned long)omp_get_wtime());
     std::uniform_int_distribution<unsigned int> distribution(0, numVertices - 1);
     while (sampledPoints < numSamplePoints) {
         unsigned int index = distribution(distributionEngine);

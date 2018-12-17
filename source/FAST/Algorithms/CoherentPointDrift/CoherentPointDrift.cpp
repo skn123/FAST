@@ -221,12 +221,13 @@ namespace fast {
         addOutputData(0, mMovingMesh);
 
         // Print some matrices
-//        std::cout << "\n*****************************************\n";
-//        std::cout << "Existing transform: \n" << existingTransform.matrix() << std::endl;
-//        std::cout << "Registration matrix: \n" << registration.matrix() << std::endl;
-//        std::cout << "Final registration matrix: \n" << registrationTransformTotal.matrix() << std::endl;
-//        std::cout << "Registered transform * existingTransform (should be identity): \n"
-//            << registrationTransformTotal * existingTransform.matrix() << std::endl;
+        std::cout << "\n*****************************************\n";
+        std::cout << "Existing transform: \n" << existingTransform.matrix() << std::endl;
+        std::cout << "Registration matrix: \n" << registration.matrix() << std::endl;
+        std::cout << "Registration matrix inverse: \n" << registration.matrix().inverse() << std::endl;
+        std::cout << "Final registration matrix: \n" << registrationTransformTotal.matrix() << std::endl;
+        std::cout << "Registered transform * existingTransform (should be identity): \n"
+            << registrationTransformTotal * existingTransform.matrix() << std::endl;
     }
 
 
