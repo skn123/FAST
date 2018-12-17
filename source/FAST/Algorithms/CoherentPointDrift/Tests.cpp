@@ -134,7 +134,7 @@ TEST_CASE("cpd", "[fast][coherentpointdrift][visual][cpd]") {
 
     // Set registration settings
     float uniformWeight = 0.5;
-    double tolerance = 1e-2;
+    double tolerance = 1e-6;
     bool applyTransform = true;
 
     // Transform one of the point clouds

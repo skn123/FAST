@@ -124,8 +124,6 @@ int main() {
         cloud3->getSceneGraphNode()->setTransformation(transform);
     }
 
-    // Run for different numbers of iterations
-
 
     // Run Coherent Point Drift
     auto cpd = CoherentPointDriftAffine::New();

@@ -41,7 +41,8 @@ namespace fast {
         double mTolerance;                      // Convergence criteria for EM iterations
         double mScale;                          // s
         double mVariance;                       // sigma^2
-        double mObjectiveFunction;              // Q
+//        double mObjectiveFunction;              // Q
+        double mIterationError;
         double mFixedNormalizationScale;
         double mMovingNormalizationScale;
         AffineTransformation::pointer mTransformation;

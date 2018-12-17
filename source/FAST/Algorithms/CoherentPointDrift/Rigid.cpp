@@ -19,8 +19,7 @@ namespace fast {
                      2.0 * mFixedPoints.colwise().sum() * mMovingPoints.colwise().sum().transpose()) /
                     (double) (mNumFixedPoints * mNumMovingPoints * mNumDimensions);
 
-        mIterationError = mTolerance + 10.0;
-        mObjectiveFunction = std::numeric_limits<double>::max();
+        mIterationError = 10*mTolerance;
         mResponsibilityMatrix = MatrixXf::Zero(mNumMovingPoints, mNumFixedPoints);
         mPt1 = VectorXf::Zero(mNumFixedPoints);
         mP1 = VectorXf::Zero(mNumMovingPoints);
@@ -86,6 +85,7 @@ namespace fast {
         mTranslation = fixedMean - mScale * mRotation * movingMean;
 
         // Update variance
+        double varianceOld = mVariance;
         mVariance = ( traceXPX - mScale * traceAtR ) / (mNp * mNumDimensions);
         if (mVariance < 0) {
             mVariance = std::fabs(mVariance);
@@ -118,16 +118,11 @@ namespace fast {
         movingPoints = movingPointsTransformed;
 
 
-        /* ******************************************
-         * Calculate change in the objective function
-         * *****************************************/
-        double objectiveFunctionOld = mObjectiveFunction;
-        mObjectiveFunction =
-                (traceXPX - 2 * mScale * ARt.trace() + mScale * mScale * traceYPY) / (2 * mVariance)
-                + (mNp * mNumDimensions)/2 * log(mVariance);
-        mIterationError = std::fabs( (mObjectiveFunction - objectiveFunctionOld) / objectiveFunctionOld);
+        /* **************************************************
+         * Calculate change in error and check for convergence
+         * **************************************************/
+        mIterationError = std::fabs(mVariance - varianceOld);
         mRegistrationConverged =  mIterationError <= mTolerance;
-
 
         double endM = omp_get_wtime();
         timeM += endM - startM;

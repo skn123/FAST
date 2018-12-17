@@ -18,9 +18,10 @@ namespace fast {
                         2.0 * mFixedPoints.colwise().sum() * mMovingPoints.colwise().sum().transpose()  ) /
                     (double)(mNumFixedPoints * mNumMovingPoints * mNumDimensions);
 
-        mIterationError = mTolerance + 10.0;
-        mObjectiveFunction = mObjectiveFunction = std::numeric_limits<double>::max();
+        mIterationError = 10*mTolerance;
         mResponsibilityMatrix = MatrixXf::Zero(mNumMovingPoints, mNumFixedPoints);
+        mPt1 = VectorXf::Zero(mNumFixedPoints);
+        mP1 = VectorXf::Zero(mNumMovingPoints);
     }
 
     void CoherentPointDriftAffine::maximization(Eigen::MatrixXf &fixedPoints, Eigen::MatrixXf &movingPoints) {
@@ -28,9 +29,9 @@ namespace fast {
         double startM = omp_get_wtime();
 
         // Define some useful matrix sums
-        mPt1 = mResponsibilityMatrix.transpose().rowwise().sum();      // mNumFixedPoints x 1
-        mP1 = mResponsibilityMatrix.rowwise().sum();                   // mNumMovingPoints x 1
-        mNp = mPt1.sum();                                           // 1 (sum of all P elements)
+        mPt1 = mResponsibilityMatrix.transpose().rowwise().sum();       // mNumFixedPoints x 1
+        mP1 = mResponsibilityMatrix.rowwise().sum();                    // mNumMovingPoints x 1
+        mNp = mPt1.sum();                                               // 1 (sum of all P elements)
         double timeEndMUseful = omp_get_wtime();
 
         // Estimate new mean vectors
@@ -53,6 +54,7 @@ namespace fast {
         mTranslation = fixedMean - mAffineMatrix * movingMean;
 
         // Update variance
+        double varianceOld = mVariance;
         MatrixXf ABt = A * mAffineMatrix.transpose();
         mVariance = ( XPX.trace() - ABt.trace() ) / (mNp * mNumDimensions);
         if (mVariance < 0) {
@@ -85,14 +87,10 @@ namespace fast {
         movingPoints = movingPointsTransformed;
 
 
-        /* ******************************************
-         * Calculate change in the objective function
-         * *****************************************/
-        double objectiveFunctionOld = mObjectiveFunction;
-        mObjectiveFunction =
-                (XPX.trace() - 2 * ABt.trace() + YPY.trace() ) / (2 * mVariance)
-                + (mNp * mNumDimensions)/2 * log(mVariance);
-        mIterationError = std::fabs( (mObjectiveFunction - objectiveFunctionOld) / objectiveFunctionOld);
+        /* ***************************************************
+         * Calculate iteration error and check for convergence
+         * **************************************************/
+        mIterationError = std::fabs(varianceOld - mVariance);
         mRegistrationConverged =  mIterationError <= mTolerance;
 
         double endM = omp_get_wtime();

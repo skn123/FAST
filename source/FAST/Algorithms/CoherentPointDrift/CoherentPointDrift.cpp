@@ -19,11 +19,12 @@ namespace fast {
         createOutputPort<Mesh>(0);
         mMaxIterations = 100;
         mIteration = 0;
-        mTolerance = 1e-4;
+        mTolerance = 1e-6;
         mUniformWeight = 0.5;
         mTransformation = AffineTransformation::New();
         mRegistrationConverged = false;
         mScale = 1.0;
+        mIterationError = 100*mTolerance;
 
         timeE = 0.0;
         timeEDistances = 0.0;
