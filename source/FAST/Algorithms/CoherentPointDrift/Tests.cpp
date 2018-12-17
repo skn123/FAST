@@ -142,7 +142,7 @@ void modifyPointCloud(Mesh::pointer &pointCloud,
 }
 
 
-void keepPartOfPointCloud(Mesh::pointer &pointCloud, unsigned int startPoint, unsigned endPoint) {
+void keepPartOfPointCloud(Mesh::pointer &pointCloud, unsigned int startPoint, unsigned int endPoint) {
     MeshAccess::pointer accessFixedSet = pointCloud->getMeshAccess(ACCESS_READ);
     std::vector<MeshVertex> vertices = accessFixedSet->getVertices();
 
@@ -151,11 +151,35 @@ void keepPartOfPointCloud(Mesh::pointer &pointCloud, unsigned int startPoint, un
     endPoint = min<unsigned int>(endPoint, numVertices);
     std::vector<MeshVertex> newVertices;
 
-    for (int index = 0; index < endPoint - startPoint; index++) {
+    assert(endPoint > startPoint);
+    for (unsigned long index = startPoint; index < endPoint; index++) {
         if (vertices.at(index).getPosition().array().isNaN().sum() == 0) {
             newVertices.push_back(vertices.at(index));
         }
     }
+    pointCloud->create(newVertices);
+}
+
+void downsample(Mesh::pointer &pointCloud, unsigned int desiredNumberOfPoints) {
+
+    MeshAccess::pointer accessFixedSet = pointCloud->getMeshAccess(ACCESS_READ);
+    std::vector<MeshVertex> vertices = accessFixedSet->getVertices();
+
+    // Sample the preferred amount of points from the point cloud
+    auto numVertices = (unsigned int) vertices.size();
+    auto numSamplePoints = min<unsigned int>(numVertices, desiredNumberOfPoints);
+    std::vector<MeshVertex> newVertices;
+
+    auto step = (int) floor((double) numVertices / (double)numSamplePoints);
+
+    unsigned int sampledPoints = 0;
+    for (unsigned long i = 0; i < numVertices; i += step) {
+        if (vertices.at(i).getPosition().array().isNaN().sum() == 0 ) {
+            newVertices.push_back(vertices.at(i));
+            ++sampledPoints;
+        }
+    }
+    pointCloud->create(newVertices);
 }
 
 void saveAbdominalSurfaceExtraction(int threshold=-500) {
@@ -195,8 +219,8 @@ void visualizeSurfaceExtraction(int threshold=-500) {
 
 TEST_CASE("cpd", "[fast][coherentpointdrift][visual][cpd]") {
 
-    auto dataset1 = "Surface_LV.vtk";
-    auto dataset2 = "Surface_LV.vtk";
+    auto dataset1 = "GM_test_1.vtk";
+    auto dataset2 = "GM_test_1.vtk";
 
     // Load point clouds
     auto cloud1 = getPointCloud(dataset1);
@@ -204,20 +228,25 @@ TEST_CASE("cpd", "[fast][coherentpointdrift][visual][cpd]") {
     auto cloud3 = getPointCloud(dataset2);
 
     // Normalize point clouds
-    normalizePointCloud(cloud1);
-    normalizePointCloud(cloud2);
-    normalizePointCloud(cloud3);
+//    normalizePointCloud(cloud1);
+//    normalizePointCloud(cloud2);
+//    normalizePointCloud(cloud3);
 
     // Modify point clouds
 
     int numbersCloud1[3];
     int numbersCloud2[3];
-    modifyPointCloud(cloud1, numbersCloud1, 0.80, 0.0, 0.5, 0.4);
-    modifyPointCloud(cloud2, numbersCloud2, 0.75, 0.0, 0.0);
-    modifyPointCloud(cloud3, numbersCloud2, 0.75, 0.0, 0.0, 0.0);
+//    modifyPointCloud(cloud1, numbersCloud1, 0.01, 0.0, 0.0, 0.4);
+//    modifyPointCloud(cloud2, numbersCloud2, 0.01, 0.0, 0.0);
+//    modifyPointCloud(cloud3, numbersCloud2, 0.75, 0.0, 0.0, 0.0);
+
+    downsample(cloud1, 3000);
+    downsample(cloud2, 3000);
+    keepPartOfPointCloud(cloud1, 0, 3000);
+    keepPartOfPointCloud(cloud2, 1000, 2500);
 
     // Set registration settings
-    float uniformWeight = 0.8;
+    float uniformWeight = 0.5;
     double tolerance = 1e-6;
     bool applyTransform = true;
 
@@ -256,7 +285,7 @@ TEST_CASE("cpd", "[fast][coherentpointdrift][visual][cpd]") {
 
         auto renderer = VertexRenderer::New();
         renderer->addInputData(cloud1, Color::Green(), 3.0);                        // Fixed points
-        renderer->addInputData(cloud3, Color::Blue(), 2.0);                         // Moving points
+//        renderer->addInputData(cloud3, Color::Blue(), 2.0);                         // Moving points
         renderer->addInputConnection(cpd->getOutputPort(), Color::Red(), 2.0);      // Moving points registered
 
         auto window = SimpleWindow::New();
