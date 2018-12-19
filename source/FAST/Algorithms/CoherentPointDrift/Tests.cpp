@@ -24,6 +24,20 @@ Mesh::pointer getPointCloud(std::string filename=std::string("Surface_LV.vtk")) 
     return port->getNextFrame<Mesh>();
 }
 
+MatrixXf getPointCloudFromMesh(Mesh::pointer &pointCloud) {
+
+    MeshAccess::pointer accessPointCloud = pointCloud->getMeshAccess(ACCESS_READ);
+    std::vector<MeshVertex> vertices = accessPointCloud->getVertices();
+
+    unsigned int numDimensions = (unsigned int)vertices[0].getPosition().size();
+    auto numPoints = (unsigned int)vertices.size();
+    MatrixXf points = MatrixXf::Zero(numPoints, numDimensions);
+    for(int i = 0; i < numPoints; ++i) {
+        points.row(i) = vertices[i].getPosition();
+    }
+    return points;
+}
+
 void normalizePointCloud(Mesh::pointer &pointCloud) {
 
     MeshAccess::pointer accessCloud = pointCloud->getMeshAccess(ACCESS_READ);
@@ -37,7 +51,6 @@ void normalizePointCloud(Mesh::pointer &pointCloud) {
     MatrixXf points = MatrixXf::Zero(numPoints, numDimensions);
     for(int i = 0; i < numPoints; ++i) {
         points.row(i) = vertices[i].getPosition();
-
     }
 
     // Center point clouds around origin, i.e. zero mean
@@ -58,30 +71,61 @@ void normalizePointCloud(Mesh::pointer &pointCloud) {
     pointCloud->create(newVertices);
 }
 
-void modifyPointCloud(Mesh::pointer &pointCloud,
-        int numbers[3], float fractionOfPointsToKeep,
-        float outlierLevel=0.0, float noiseLevel=0.0,
-        float noiseVariance=0.1, float noiseMean=0.0) {
+void addGaussianNoise(Mesh::pointer &pointCloud, float variance) {
+    MeshAccess::pointer accessFixedSet = pointCloud->getMeshAccess(ACCESS_READ);
+    std::vector<MeshVertex> vertices = accessFixedSet->getVertices();
+    std::vector<MeshVertex> newVertices;
+
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+    auto numVertices = (unsigned int) vertices.size();
+    std::default_random_engine distributionEngine(seed);
+
+    // Add random gaussian noise to each point
+    std::normal_distribution<float> distributionNoiseX(0, variance);
+    std::normal_distribution<float> distributionNoiseY(0, variance);
+    std::normal_distribution<float> distributionNoiseZ(0, variance);
+
+    for (unsigned int i = 0; i < numVertices; i++) {
+        float noiseX = distributionNoiseX (distributionEngine);
+        float noiseY = distributionNoiseY (distributionEngine);
+        float noiseZ = distributionNoiseZ (distributionEngine);
+        Vector3f noisePosition = Vector3f(noiseX, noiseY, noiseZ);
+        Vector3f position = vertices.at(i).getPosition();
+        MeshVertex noise = MeshVertex(position+noisePosition, Vector3f(1, 0, 0), Color::Black());
+        newVertices.push_back(noise);
+    }
+
+    pointCloud->create(newVertices);
+}
+
+void modifyPointCloud(Mesh::pointer &pointCloud, float fractionOfPointsToKeep,
+        float outlierLevel=0.0) {
 
     MeshAccess::pointer accessFixedSet = pointCloud->getMeshAccess(ACCESS_READ);
     std::vector<MeshVertex> vertices = accessFixedSet->getVertices();
-
-    // Sample the preferred amount of points from the point cloud
-    auto numVertices = (unsigned int) vertices.size();
-    auto numSamplePoints = (unsigned int) ceilf(fractionOfPointsToKeep * numVertices);
     std::vector<MeshVertex> newVertices;
 
-    std::unordered_set<int> movingIndices;
-    unsigned int sampledPoints = 0;
-    std::default_random_engine distributionEngine((unsigned long)omp_get_wtime());
-    std::uniform_int_distribution<unsigned int> distribution(0, numVertices-1);
-    while (sampledPoints < numSamplePoints) {
-        unsigned int index = distribution(distributionEngine);
-        if (movingIndices.count(index) < 1 && vertices.at(index).getPosition().array().isNaN().sum() == 0 ) {
-            newVertices.push_back(vertices.at(index));
-            movingIndices.insert(index);
-            ++sampledPoints;
+    auto numVertices = (unsigned int) vertices.size();
+    auto numSamplePoints = numVertices;
+    std::default_random_engine distributionEngine((unsigned long) omp_get_wtime());
+
+    // Sample the preferred amount of points from the point cloud
+    if (fractionOfPointsToKeep <= 1) {
+        numSamplePoints = (unsigned int) ceilf(fractionOfPointsToKeep * numVertices);
+        std::unordered_set<int> movingIndices;
+        unsigned int sampledPoints = 0;
+        std::uniform_int_distribution<unsigned int> distribution(0, numVertices - 1);
+        while (sampledPoints < numSamplePoints) {
+            unsigned int index = distribution(distributionEngine);
+            if (movingIndices.count(index) < 1 && vertices.at(index).getPosition().array().isNaN().sum() == 0) {
+                newVertices.push_back(vertices.at(index));
+                movingIndices.insert(index);
+                ++sampledPoints;
+            }
         }
+    } else {
+        newVertices = vertices;
     }
 
     // Add uniformly distributed outliers
@@ -115,30 +159,8 @@ void modifyPointCloud(Mesh::pointer &pointCloud,
         newVertices.push_back(outlier);
     }
 
-    // Add random gaussian noise
-    auto numNoisePoints = (unsigned int) ceilf(noiseLevel * numSamplePoints);
-
-    std::normal_distribution<float> distributionNoiseX(noiseMean, noiseVariance);
-    std::normal_distribution<float> distributionNoiseY(noiseMean, noiseVariance);
-    std::normal_distribution<float> distributionNoiseZ(noiseMean, noiseVariance);
-
-    for (int noiseAdded = 0; noiseAdded < numNoisePoints; noiseAdded++) {
-        float noiseX = distributionNoiseX (distributionEngine);
-        float noiseY = distributionNoiseY (distributionEngine);
-        float noiseZ = distributionNoiseZ (distributionEngine);
-        Vector3f noisePosition = Vector3f(noiseX, noiseY, noiseZ);
-//        Vector3f noisePosition = Vector3f((maxX-minX)*noiseX, (maxY-minY)*noiseY, (maxZ-minZ)*noiseZ);
-        MeshVertex noise = MeshVertex(noisePosition, Vector3f(1, 0, 0), Color::Black());
-        newVertices.push_back(noise);
-    }
-
     // Update point cloud to include the removed points and added noise
     pointCloud->create(newVertices);
-
-    // Return number of points, noise and outliers
-    numbers[0] = numSamplePoints;
-    numbers[1] = numOutliers;
-    numbers[2] = numNoisePoints;
 }
 
 
@@ -160,6 +182,42 @@ void keepPartOfPointCloud(Mesh::pointer &pointCloud, unsigned int startPoint, un
     pointCloud->create(newVertices);
 }
 
+void filterPointCloud(Mesh::pointer &pointCloud, float depthFar, float depthNear, float angle, float shift=0.0f) {
+    MeshAccess::pointer accessFixedSet = pointCloud->getMeshAccess(ACCESS_READ);
+    std::vector<MeshVertex> vertices = accessFixedSet->getVertices();
+
+    auto numVertices = (unsigned int) vertices.size();
+    std::vector<MeshVertex> newVertices;
+
+    for (unsigned long index = 0; index < numVertices; index++) {
+        Vector3f position = vertices.at(index).getPosition();
+        if (position[2] <= depthFar && position[2] >= depthNear
+               && std::fabs(std::atan((position[0]+shift)/position[2])) <= angle) {
+            newVertices.push_back(vertices.at(index));
+        }
+    }
+    pointCloud->create(newVertices);
+}
+
+void flip(Mesh::pointer &pointCloud) {
+    MeshAccess::pointer accessFixedSet = pointCloud->getMeshAccess(ACCESS_READ);
+    std::vector<MeshVertex> vertices = accessFixedSet->getVertices();
+
+    auto numVertices = (unsigned int) vertices.size();
+    std::vector<MeshVertex> newVertices;
+    newVertices = vertices;
+
+    for (unsigned long index = 0; index < numVertices; index++) {
+        Vector3f position = vertices.at(index).getPosition();
+        Vector3f newPosition = position;
+        newPosition[1] *= -1;
+        newPosition[2] *= -1;
+        newVertices.at(index).setPosition(newPosition);
+    }
+    pointCloud->create(newVertices);
+}
+
+
 void downsample(Mesh::pointer &pointCloud, unsigned int desiredNumberOfPoints) {
 
     MeshAccess::pointer accessFixedSet = pointCloud->getMeshAccess(ACCESS_READ);
@@ -170,16 +228,24 @@ void downsample(Mesh::pointer &pointCloud, unsigned int desiredNumberOfPoints) {
     auto numSamplePoints = min<unsigned int>(numVertices, desiredNumberOfPoints);
     std::vector<MeshVertex> newVertices;
 
-    auto step = (int) floor((double) numVertices / (double)numSamplePoints);
-
+    auto step = (float) numVertices / (float)numSamplePoints;
     unsigned int sampledPoints = 0;
-    for (unsigned long i = 0; i < numVertices; i += step) {
-        if (vertices.at(i).getPosition().array().isNaN().sum() == 0 ) {
-            newVertices.push_back(vertices.at(i));
-            ++sampledPoints;
+    for (unsigned long i = 0; i < desiredNumberOfPoints; i++) {
+        auto newIndex = (unsigned long) floorf((float)i*step);
+        if (vertices.at(newIndex).getPosition().array().isNaN().sum() == 0 ) {
+            newVertices.push_back(vertices.at(newIndex));
         }
+        ++sampledPoints;
     }
     pointCloud->create(newVertices);
+}
+
+void savePointCloud(Mesh::pointer &pointCloud, std::string filename) {
+
+    auto exporter = VTKMeshFileExporter::New();
+    exporter->setFilename(Config::getTestDataPath() + filename + ".vtk");
+    exporter->setInputData(pointCloud);
+    exporter->update(0);
 }
 
 void saveAbdominalSurfaceExtraction(int threshold=-500) {
@@ -219,8 +285,8 @@ void visualizeSurfaceExtraction(int threshold=-500) {
 
 TEST_CASE("cpd", "[fast][coherentpointdrift][visual][cpd]") {
 
-    auto dataset1 = "GM_test_1.vtk";
-    auto dataset2 = "GM_test_1.vtk";
+    auto dataset1 = "bunny.vtk";
+    auto dataset2 = "bunny.vtk";
 
     // Load point clouds
     auto cloud1 = getPointCloud(dataset1);
@@ -228,51 +294,52 @@ TEST_CASE("cpd", "[fast][coherentpointdrift][visual][cpd]") {
     auto cloud3 = getPointCloud(dataset2);
 
     // Normalize point clouds
-//    normalizePointCloud(cloud1);
-//    normalizePointCloud(cloud2);
-//    normalizePointCloud(cloud3);
+    normalizePointCloud(cloud1);
+    normalizePointCloud(cloud2);
+    normalizePointCloud(cloud3);
 
     // Modify point clouds
 
-    int numbersCloud1[3];
-    int numbersCloud2[3];
-//    modifyPointCloud(cloud1, numbersCloud1, 0.01, 0.0, 0.0, 0.4);
-//    modifyPointCloud(cloud2, numbersCloud2, 0.01, 0.0, 0.0);
-//    modifyPointCloud(cloud3, numbersCloud2, 0.75, 0.0, 0.0, 0.0);
+    downsample(cloud1, 12000);
+    downsample(cloud2, 12000);
+//    downsample(cloud3, 12000);
+//    addGaussianNoise(cloud1, 0.12f*0.12f);
+//    addGaussianNoise(cloud2, powf(0.2f,2));
 
-    downsample(cloud1, 3000);
-    downsample(cloud2, 3000);
-    keepPartOfPointCloud(cloud1, 0, 3000);
-    keepPartOfPointCloud(cloud2, 1000, 2500);
+//    modifyPointCloud(cloud1, 1.0, 0.3);
+//    modifyPointCloud(cloud2, 1.0, 0.3);
+//    modifyPointCloud(cloud3, 1.0, 0.3);
+
+//    keepPartOfPointCloud(cloud1, 0, 3000);
+//    keepPartOfPointCloud(cloud2, 1000, 2500);
 
     // Set registration settings
-    float uniformWeight = 0.5;
-    double tolerance = 1e-6;
+    float uniformWeight = 0.0;
+    double tolerance = 1e-8;
     bool applyTransform = true;
 
     // Transform one of the point clouds
     Vector3f translation(-0.052f, 0.005f, -0.001f);
     auto transform = AffineTransformation::New();
     MatrixXf shearing = Matrix3f::Identity();
-    shearing(0, 0) = 0.5;
+    shearing(0, 0) = 0.3;
     shearing(0, 1) = 1.2;
     shearing(1, 0) = 0.0;
     Affine3f affine = Affine3f::Identity();
-    affine.rotate(Eigen::AngleAxisf(3.141592f / 180.0f * 50.0f, Eigen::Vector3f::UnitY()));
-//    affine.scale(0.5);
-//    affine.translate(translation);
+    affine.rotate(Eigen::AngleAxisf(3.141592f / 180.0f * 50.0f, Eigen::Vector3f::UnitZ()));
+    affine.scale(0.5);
+    affine.translate(translation);
 //    affine.linear() += shearing;
     transform->setTransform(affine);
 
     if (applyTransform) {
-        // Apply transform to one point cloud
         cloud2->getSceneGraphNode()->setTransformation(transform);
-        // Apply transform to a point cloud not registered (for reference)
         cloud3->getSceneGraphNode()->setTransformation(transform);
     }
 
     // Run for different numbers of iterations
-    std::vector<unsigned char> iterations = {50};
+    MatrixXf fixedPoints = getPointCloudFromMesh(cloud1);
+    std::vector<unsigned int> iterations = {100};
     for(auto maxIterations : iterations) {
 
         // Run Coherent Point Drift
@@ -284,14 +351,112 @@ TEST_CASE("cpd", "[fast][coherentpointdrift][visual][cpd]") {
         cpd->setUniformWeight(uniformWeight);
 
         auto renderer = VertexRenderer::New();
-        renderer->addInputData(cloud1, Color::Green(), 3.0);                        // Fixed points
-//        renderer->addInputData(cloud3, Color::Blue(), 2.0);                         // Moving points
-        renderer->addInputConnection(cpd->getOutputPort(), Color::Red(), 2.0);      // Moving points registered
+        renderer->addInputData(cloud1, Color::Red(), 1.5);                        // Fixed points
+//        renderer->addInputData(cloud2, Color::Blue(), 2.0);                        // Fixed points
+//        renderer->addInputData(cloud3, Color::Black(), 2.0);                         // Moving points
+        renderer->addInputConnection(cpd->getOutputPort(), Color::Blue(), 2.0);      // Moving points registered
 
         auto window = SimpleWindow::New();
         window->addRenderer(renderer);
-        //window->setTimeout(1000);
+//        window->setTimeout(1000);
         window->start();
+
+//        std::cout << "Error: " << cpd->mResults[0] << std::endl;
+//        std::cout << "Iterations: " << cpd->mResults[1] << std::endl;
+//        std::cout << "Time EM: " << cpd->mResults[2] << std::endl;
     }
 
 }
+
+
+//TEST_CASE("cpd", "[fast][coherentpointdrift][visual][cpd]") {
+//
+//    auto dataset1 = "bunny1890.vtk";
+//    auto dataset2 = "bunny1890.vtk";
+//
+//    // Set registration settings
+//    float uniformWeight = 0.7;
+//    double tolerance = 1e-8;
+//    unsigned int maxIterations = 300;
+//    bool applyTransform = true;
+//
+//    // Load point clouds
+//    auto cloud1 = getPointCloud(dataset1);
+//    auto cloud2 = getPointCloud(dataset2);
+//    auto cloud3 = getPointCloud(dataset2);
+//
+//    // Normalize point clouds
+//    normalizePointCloud(cloud1);
+//    normalizePointCloud(cloud2);
+//    normalizePointCloud(cloud3);
+//
+//    // Transform one of the point clouds
+//    Vector3f translation(-0.052f, 0.005f, -0.001f);
+//    auto transform = AffineTransformation::New();
+//    MatrixXf shearing = Matrix3f::Identity();
+//    shearing(0, 0) = 0.5;
+//    shearing(0, 1) = 1.2;
+//    shearing(1, 0) = 0.0;
+//    Affine3f affine = Affine3f::Identity();
+//    affine.rotate(Eigen::AngleAxisf(3.141592f / 180.0f * 50.0f, Eigen::Vector3f::UnitZ()));
+////    affine.scale(0.5);
+////    affine.translate(translation);
+////    affine.linear() += shearing;
+//    transform->setTransform(affine);
+//
+//    clock_t seed = clock();
+//    int numRuns = 23;
+//    double errorRotation[numRuns];
+//    double numIterations[numRuns];
+//    double times[numRuns];
+//
+//    float gaussianSTD = 0.12f;
+//
+//    for (int i = 0; i < numRuns; i++) {
+//
+//        // Modify point clouds
+//        addGaussianNoise(cloud2, gaussianSTD * gaussianSTD);
+//
+//        if (applyTransform) {
+//            cloud2->getSceneGraphNode()->setTransformation(transform);
+//            cloud3->getSceneGraphNode()->setTransformation(transform);
+//        }
+//
+//        // Run Coherent Point Drift
+//        auto cpd = CoherentPointDriftRigid::New();
+//        cpd->setFixedMesh(cloud1);
+//        cpd->setMovingMesh(cloud2);
+//        cpd->setMaximumIterations(maxIterations);
+//        cpd->setTolerance(tolerance);
+//        cpd->setUniformWeight(uniformWeight);
+//
+//        auto renderer = VertexRenderer::New();
+//        renderer->addInputData(cloud1, Color::Green(), 3.0);                        // Fixed points
+////        renderer->addInputData(cloud3, Color::Blue(), 2.0);                         // Moving points
+//        renderer->addInputConnection(cpd->getOutputPort(), Color::Red(), 2.0);      // Moving points registered
+//
+//        auto window = SimpleWindow::New();
+//        window->addRenderer(renderer);
+//        window->setTimeout(1);
+//        window->start();
+//
+//        errorRotation[i] = cpd->mResults[0];
+//        numIterations[i] = cpd->mResults[1];
+//        times[i] = cpd->mResults[2];
+//    }
+//
+//    std::cout << "ERROR\n";
+//    for (int i = 0; i < numRuns; i++) {
+//        std::cout << errorRotation[i] << std::endl;
+//    }
+//
+//    std::cout << "Iterations\n";
+//    for (int i = 0; i < numRuns; i++) {
+//        std::cout << numIterations[i] << std::endl;
+//    }
+//
+//    std::cout << "TimeEM\n";
+//    for (int i = 0; i < numRuns; i++) {
+//        std::cout << times[i] << std::endl;
+//    }
+//}

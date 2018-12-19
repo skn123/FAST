@@ -25,11 +25,14 @@ namespace fast {
         mRegistrationConverged = false;
         mScale = 1.0;
         mIterationError = 100*mTolerance;
+        mFixedNormalizationScale = 1.0;
+        mMovingNormalizationScale = 1.0;
+        mFixedMeanInitial = MatrixXf::Zero(3, 1);
+        mMovingMeanInitial = MatrixXf::Zero(3, 1);
 
         timeE = 0.0;
-        timeEDistances = 0.0;
         timeENormal = 0.0;
-        timeEPosterior = 0.0;
+        timeEPosteriorDivision = 0.0;
         timeM = 0.0;
         timeMUseful = 0.0;
         timeMCenter = 0.0;
@@ -101,7 +104,7 @@ namespace fast {
          * Let row i in P equal the squared distances from all fixed points to moving point i
          * *********************************************************************************/
 
-        /* Implementation without OpenMP
+        /* Implementation without OpenMP */
         MatrixXf movingPointMatrix = MatrixXf::Zero(mNumMovingPoints, mNumFixedPoints);
         MatrixXf distances = MatrixXf::Zero(mNumMovingPoints, mNumFixedPoints);
         for (int i = 0; i < mNumMovingPoints; ++i) {
@@ -111,32 +114,45 @@ namespace fast {
             distances = distances.cwiseAbs2();                            // Square distance components (3xN)
             mResponsibilityMatrix.row(i) = distances.rowwise().sum();   // Sum x, y, z components (1xN)
         }
-        */
+
 
         auto c = (float) (pow(2*(double)EIGEN_PI*mVariance, (double)mNumDimensions/2.0)
                           * (mUniformWeight/(1-mUniformWeight)) * (float)mNumMovingPoints/mNumFixedPoints);
 
-#pragma omp parallel for //collapse(2)
-        for (int col = 0; col < mNumFixedPoints; ++col) {
-            for (int row = 0; row < mNumMovingPoints; ++row) {
-                double norm = (fixedPoints.row(col) - movingPoints.row(row)).squaredNorm();
-                mResponsibilityMatrix(row, col) = exp(norm / (-2.0 * mVariance));
-            }
-        }
+//#pragma omp parallel for //collapse(2)
+//        for (int col = 0; col < mNumFixedPoints; ++col) {
+//            for (int row = 0; row < mNumMovingPoints; ++row) {
+//                double norm = (fixedPoints.row(col) - movingPoints.row(row)).squaredNorm();
+//                mResponsibilityMatrix(row, col) = exp(norm / (-2.0 * mVariance));
+//            }
+//        }
         double timeEndFirstLoop = omp_get_wtime();
+//
 
-#pragma omp parallel for
-        for (int col = 0; col < mNumFixedPoints; ++col) {
-            float denom = mResponsibilityMatrix.col(col).sum() + c;
-            mResponsibilityMatrix.col(col) /= max(denom, Eigen::NumTraits<float>::epsilon() );
-        }
+        mResponsibilityMatrix *= -1.0/(2.0 * mVariance);
+        mResponsibilityMatrix = mResponsibilityMatrix.array().exp();
+
+        MatrixXf denominatorRow = mResponsibilityMatrix.colwise().sum();
+        denominatorRow =  denominatorRow.array() + c;
+
+        // Ensure that one does not divide by zero
+        MatrixXf shouldBeLargerThanEpsilon = Eigen::NumTraits<float>::epsilon() * MatrixXf::Ones(1, mNumFixedPoints);
+        denominatorRow = denominatorRow.cwiseMax(shouldBeLargerThanEpsilon);
+        MatrixXf denominator = denominatorRow.replicate(mNumMovingPoints, 1);
+
+        mResponsibilityMatrix = mResponsibilityMatrix.cwiseQuotient(denominator);
+
+
+//#pragma omp parallel for
+//        for (int col = 0; col < mNumFixedPoints; ++col) {
+//            float denom = mResponsibilityMatrix.col(col).sum() + c;
+//            mResponsibilityMatrix.col(col) /= max(denom, Eigen::NumTraits<float>::epsilon() );
+//        }
 
         // Update computation times
         double timeEndE = omp_get_wtime();
-        timeEDistances += 0.0;
-        timeENormal += timeEndFirstLoop - timeStartE;
-        timeEPosterior += 0.0;
-        timeEPosteriorDivision += timeEndE - timeEndFirstLoop;
+//        timeENormal += timeEndFirstLoop - timeStartE;
+//        timeEPosteriorDivision += timeEndE - timeEndFirstLoop;
         timeE += timeEndE - timeStartE;
     }
 
@@ -154,7 +170,7 @@ namespace fast {
         mMovingPoints = mMovingPoints.rowwise().homogeneous() * existingTransform.affine().transpose();
 
         // Normalize the point sets, i.e. zero mean and unit variance
-        normalizePointSets();
+//        normalizePointSets();
 
         // Initialize variance and error
         initializeVarianceAndMore();
@@ -179,20 +195,30 @@ namespace fast {
         double timeEndEM = omp_get_wtime();
         double timeTotalEM = timeEndEM - timeStartEM;
 
-        std::cout << "\nCOMPUTATION TIMES:\n";
-        std::cout << "Initialization of point sets and normalization: " << timeStartEM-timeStart << " s.\n";
-        std::cout << "EM converged in " << mIteration-1 << " iterations in " << timeTotalEM << " s.\n";
-        std::cout << "Time spent on expectation: " << timeE << " s\n";
-        std::cout << "      - Calculating distances between points: " << timeEDistances << " s.\n";
-        std::cout << "      - Normal distribution: " << timeENormal << " s.\n";
-        std::cout << "      - Create denominator, no zero-elements: " << timeEPosterior << " s.\n";
-        std::cout << "      - Posterior GMM probabilities, division: " << timeEPosteriorDivision << " s.\n";
-        std::cout << "Time spent on maximization: " << timeM << " s\n";
-        std::cout << "      - Calculating P1, Pt1, Np: " << timeMUseful << " s.\n";
-        std::cout << "      - Centering point clouds: " << timeMCenter << " s.\n";
-        std::cout << "      - SVD: " << timeMSVD << " s.\n";
-        std::cout << "      - Calculation transformation parameters: " << timeMParameters << " s.\n";
-        std::cout << "      - Updating transformation and error: " << timeMUpdate << " s.\n";
+//        std::cout << "\nCOMPUTATION TIMES:\n";
+//        std::cout << "Initialization of point sets and normalization: " << timeStartEM-timeStart << " s.\n";
+//        std::cout << "EM converged in " << mIteration-1 << " iterations in " << timeTotalEM << " s.\n";
+//        std::cout << "Time spent on expectation: " << timeE << " s\n";
+//        std::cout << "      - Normal distribution: " << timeENormal << " s.\n";
+//        std::cout << "      - Posterior GMM probabilities, division: " << timeEPosteriorDivision << " s.\n";
+//        std::cout << "Time spent on maximization: " << timeM << " s\n";
+//        std::cout << "      - Calculating P1, Pt1, Np: " << timeMUseful << " s.\n";
+//        std::cout << "      - Centering point clouds: " << timeMCenter << " s.\n";
+//        std::cout << "      - SVD (rigid): " << timeMSVD << " s.\n";
+//        std::cout << "      - Calculation transformation parameters: " << timeMParameters << " s.\n";
+//        std::cout << "      - Updating transformation and error: " << timeMUpdate << " s.\n";
+
+        std::cout << mIteration-1 << std::endl;
+        std::cout <<timeTotalEM << std::endl;
+        std::cout <<timeE << std::endl;
+        std::cout <<timeENormal << std::endl;
+        std::cout <<timeEPosteriorDivision << std::endl;
+        std::cout <<timeM << std::endl;
+        std::cout <<timeMUseful << std::endl;
+        std::cout <<timeMCenter<< std::endl;
+        std::cout <<timeMSVD<< std::endl;
+        std::cout <<timeMParameters << std::endl;
+        std::cout <<timeMUpdate << std::endl;
 
 
         /* ***********************************************
@@ -220,16 +246,48 @@ namespace fast {
         mMovingMesh->getSceneGraphNode()->setTransformation(transform);
         addOutputData(0, mMovingMesh);
 
+
+        /* ******************
+        * Registration error
+        * *****************/
+        double error = 0.0;
+        double errorRotationDiffNorm = 0.0;
+        double errorAffineDiffNorm = 0.0;
+        unsigned int lastPoint = min(mNumFixedPoints, mNumMovingPoints);
+#pragma omp parallel for
+        for (int i = 0; i < lastPoint; i++) {
+            error += (mFixedPoints.row(i)-mMovingPoints.row(i)).squaredNorm();
+        }
+
+        MatrixXf rotationDiff = registration.linear().inverse() - existingTransform.linear();
+        MatrixXf affineDiff = registration.inverse().affine() - existingTransform.affine();
+        errorRotationDiffNorm = rotationDiff.norm();
+        errorAffineDiffNorm = affineDiff.norm();
+
+        std::cout << "\nCOMPUTATION ERROR\n";
+//        std::cout << "Squared norm error: " << error << std::endl;
+//        std::cout << "Norm of rotation matrix difference: " << errorRotationDiffNorm << std::endl;
+        std::cout << "Norm of total matrix difference: " << errorAffineDiffNorm << std::endl;
+
+        mResults[0] = errorRotationDiffNorm;
+        mResults[4] = errorAffineDiffNorm;
+        mResults[1] = mIteration-1;
+        mResults[2] = timeTotalEM;
+
         // Print some matrices
+//        printOutputMatrices(existingTransform, registration, registrationTransformTotal);
+    }
+
+    void CoherentPointDrift::printOutputMatrices(Affine3f existingTransform, Affine3f registration,
+                                                 Affine3f registrationTransformTotal) {
         std::cout << "\n*****************************************\n";
         std::cout << "Existing transform: \n" << existingTransform.matrix() << std::endl;
         std::cout << "Registration matrix: \n" << registration.matrix() << std::endl;
         std::cout << "Registration matrix inverse: \n" << registration.matrix().inverse() << std::endl;
         std::cout << "Final registration matrix: \n" << registrationTransformTotal.matrix() << std::endl;
         std::cout << "Registered transform * existingTransform (should be identity): \n"
-            << registrationTransformTotal * existingTransform.matrix() << std::endl;
+                  << registrationTransformTotal * existingTransform.matrix() << std::endl;
     }
-
 
     void CoherentPointDrift::setFixedMesh(Mesh::pointer data) {
         setInputData(0, data);
@@ -247,7 +305,7 @@ namespace fast {
         setInputConnection(1, port);
     }
 
-    void CoherentPointDrift::setMaximumIterations(unsigned char maxIterations) {
+    void CoherentPointDrift::setMaximumIterations(unsigned int maxIterations) {
         mMaxIterations = maxIterations;
     }
 

@@ -29,22 +29,26 @@ namespace fast {
         double startM = omp_get_wtime();
 
         // Calculate some useful matrix reductions
-        mP1 = VectorXf::Zero(mNumMovingPoints);
-        #pragma omp parallel for
-            for (int col = 0; col < mNumFixedPoints; ++col) {
-                mPt1(col) = mResponsibilityMatrix.col(col).sum();
-            }
-        #pragma omp parallel
-        {
-            VectorXf mP1Local = VectorXf::Zero(mNumMovingPoints);
-            #pragma omp for
-            for (int col = 0; col < mNumFixedPoints; ++col) {
-                mP1Local += mResponsibilityMatrix.col(col);
-            }
-            #pragma omp critical
-            mP1 += mP1Local;
-        }
-        mNp = mPt1.sum();                                           // 1 (sum of all P elements)
+        mPt1 = mResponsibilityMatrix.transpose().rowwise().sum();       // mNumFixedPoints x 1
+        mP1 = mResponsibilityMatrix.rowwise().sum();                    // mNumMovingPoints x 1
+        mNp = mPt1.sum();                                               // 1 (sum of all P elements)
+
+//        mP1 = VectorXf::Zero(mNumMovingPoints);
+//        #pragma omp parallel for
+//            for (int col = 0; col < mNumFixedPoints; ++col) {
+//                mPt1(col) = mResponsibilityMatrix.col(col).sum();
+//            }
+//        #pragma omp parallel
+//        {
+//            VectorXf mP1Local = VectorXf::Zero(mNumMovingPoints);
+//            #pragma omp for
+//            for (int col = 0; col < mNumFixedPoints; ++col) {
+//                mP1Local += mResponsibilityMatrix.col(col);
+//            }
+//            #pragma omp critical
+//            mP1 += mP1Local;
+//        }
+//        mNp = mPt1.sum();                                           // 1 (sum of all P elements)
         double timeEndMUseful = omp_get_wtime();
 
         // Estimate new mean vectors
