@@ -22,6 +22,14 @@ class FAST_EXPORT  IterativeClosestPoint : public ProcessObject {
         void setMaximumNrOfIterations(uint iterations);
         void setRandomPointSampling(uint nrOfPointsToSample);
         void setDistanceThreshold(float distance);
+
+        double getTime() const;
+        uint getIterations() const;
+
+        void setLandmarkIndices(std::vector<int> landmarksFixed, std::vector<int> landmarksMoving);
+        void setFilename(std::string filename);
+
+
     private:
         IterativeClosestPoint();
         void execute();
@@ -33,6 +41,14 @@ class FAST_EXPORT  IterativeClosestPoint : public ProcessObject {
         float mError;
         AffineTransformation::pointer mTransformation;
         IterativeClosestPoint::TransformationType mTransformationType;
+
+        double mTimeTot;
+        uint mIterations;
+
+        std::string mFilename;
+        std::vector<int> mLandmarkIndicesFixed;
+        std::vector<int> mLandmarkIndicesMoving;
+        bool mLandmarks;
 };
 
 } // end namespace fast

@@ -6,11 +6,15 @@
 #include <random>
 #include <unordered_set>
 
+#include <iostream>
+#include <fstream>
+
 namespace fast {
 
 IterativeClosestPoint::IterativeClosestPoint() {
     createInputPort<Mesh>(0);
     createInputPort<Mesh>(1);
+    createOutputPort<Mesh>(0);
     mMaxIterations = 100;
     mMinErrorChange = 1e-5;
     mError = -1;
@@ -19,6 +23,9 @@ IterativeClosestPoint::IterativeClosestPoint() {
     mTransformationType = IterativeClosestPoint::RIGID;
     mIsModified = true;
     mTransformation = AffineTransformation::New();
+
+    mTimeTot = 0.0;
+    mIterations = 0;
 }
 
 
@@ -41,6 +48,14 @@ AffineTransformation::pointer IterativeClosestPoint::getOutputTransformation() {
 
 float IterativeClosestPoint::getError() const {
     return mError;
+}
+
+double IterativeClosestPoint::getTime() const {
+    return mTimeTot;
+}
+
+uint IterativeClosestPoint::getIterations() const {
+    return mIterations;
 }
 
 inline double colorDistance(Vector3f e1, Vector3f e2) {
@@ -244,16 +259,23 @@ void IterativeClosestPoint::execute() {
 
     float colorWeight = 1.0f;
 
+
+
+
     // Want to choose the smallest one as moving
     bool invertTransform = false;
 	MatrixXf movedPoints = currentTransformation*(movingPoints.colwise().homogeneous());
+
+    double timeStart = omp_get_wtime();
+
     // Match closest points using current transformation
     MatrixXf rearrangedFixedPoints = rearrangeMatrixToClosestPoints(
             fixedPoints, movedPoints, fixedColors, movingColors, colorWeight);
-    do {
-        previousError = error;        
 
-        reportInfo() << "Processing " << rearrangedFixedPoints.cols() << " points in ICP" << reportEnd();
+    do {
+        previousError = error;
+
+//        reportInfo() << "Processing " << rearrangedFixedPoints.cols() << " points in ICP" << reportEnd();
         // Get centroids
         Vector3f centroidFixed = getCentroid(rearrangedFixedPoints);
         //reportInfo() << "Centroid fixed: " << Reporter::end();
@@ -311,18 +333,58 @@ void IterativeClosestPoint::execute() {
         error = sqrt(error / distance.cols());
 
         iterations++;
-        reportInfo() << "ICP error: " << error << Reporter::end();
+//        reportInfo() << "ICP error: " << error << Reporter::end();
         // To continue, change in error has to be above min error change and nr of iterations less than max iterations
     } while(previousError-error > mMinErrorChange && iterations < mMaxIterations);
 
 
+    double timeEnd = omp_get_wtime();
+    mTimeTot = timeEnd - timeStart;
+    mIterations = iterations;
+
     if(invertTransform){
         currentTransformation = currentTransformation.inverse();
     }
-    reportInfo() << "Final transform: " << currentTransformation.matrix() << reportEnd();
+
+//    reportInfo() << "Final transform: " << currentTransformation.matrix() << reportEnd();
 
     mError = error;
     mTransformation->setTransform(currentTransformation);
+
+
+    float errorLMPrereg = 0.0f;
+    float errorLMICP = 0.0f;
+    float errorLMMax = 0.0f;
+    if(mLandmarks) {
+        int numLandmarks = mLandmarkIndicesFixed.size();
+        assert (numLandmarks == mLandmarkIndicesMoving.size());
+        for (int i = 0; i < numLandmarks; ++i) {
+            int n = mLandmarkIndicesFixed[i];
+            int m = mLandmarkIndicesMoving[i];
+            errorLMPrereg += (fixedPoints.col(n) - movingPoints.col(m)).norm();
+            float norm = (fixedPoints.col(n) - movedPoints.col(m)).norm();
+            errorLMICP += norm;
+            if (norm > errorLMMax) {
+                errorLMMax = norm;
+            }
+        }
+        errorLMPrereg /= numLandmarks;
+        errorLMICP /= numLandmarks;
+    }
+
+    std::ofstream resultsICP;
+    resultsICP.open (mFilename, std::ios::out | std::ios::app);
+    resultsICP  << iterations-1  << " " << mTimeTot << " "
+                <<  errorLMPrereg << " " << errorLMICP
+                << std::endl;
+    resultsICP.close();
+
+
+
+//    auto transform = AffineTransformation::New();
+//    transform->setTransform(currentTransformation*initialMovingTransform);
+//    movingMesh->getSceneGraphNode()->setTransformation(transform);
+//    addOutputData(0, movingMesh);
 }
 
 void IterativeClosestPoint::setMaximumNrOfIterations(uint iterations) {
@@ -342,5 +404,16 @@ void IterativeClosestPoint::setDistanceThreshold(float distance) {
 void IterativeClosestPoint::setMinimumErrorChange(float errorChange) {
     mMinErrorChange = errorChange;
 }
+
+
+    void IterativeClosestPoint::setFilename(std::string filename) {
+        mFilename = filename;
+}
+
+    void IterativeClosestPoint::setLandmarkIndices(std::vector<int> landmarksFixed, std::vector<int> landmarksMoving) {
+        mLandmarkIndicesFixed = landmarksFixed;
+        mLandmarkIndicesMoving = landmarksMoving;
+        mLandmarks = true;
+    }
 
 }

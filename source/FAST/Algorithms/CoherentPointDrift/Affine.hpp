@@ -15,14 +15,11 @@ namespace fast {
         CoherentPointDriftAffine();
         void initializeVarianceAndMore() override;
         void maximization(MatrixXf& fixedPoints, MatrixXf& movingPoints) override;
+        void saveResultsToTextFile() override;
 
     private:
-        MatrixXf mPt1;                          // Colwise sum of P, then transpose
-        MatrixXf mP1;                           // Rowwise sum of P
         MatrixXf mAffineMatrix;                 // B
         MatrixXf mTranslation;                  // t
-        float mNp;                              // Sum of all elements in P
-        TransformationType mTransformationType;
     };
 
 }

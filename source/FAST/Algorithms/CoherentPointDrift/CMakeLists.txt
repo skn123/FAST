@@ -5,5 +5,7 @@ fast_add_sources(
         Rigid.hpp
         Affine.cpp
         Affine.hpp
+        NonRigid.cpp
+        NonRigid.hpp
 )
-fast_add_test_sources(Tests.cpp)
+fast_add_test_sources(CPDTests.cpp)

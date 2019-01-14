@@ -3,6 +3,7 @@
 
 #include <limits>
 #include <iostream>
+#include <fstream>
 
 namespace fast {
 
@@ -12,62 +13,23 @@ namespace fast {
     }
 
     void CoherentPointDriftRigid::initializeVarianceAndMore() {
-
-        // Initialize the variance in the CPD registration
-        mVariance = ((double) mNumMovingPoints * (mFixedPoints.transpose() * mFixedPoints).trace() +
-                     (double) mNumFixedPoints * (mMovingPoints.transpose() * mMovingPoints).trace() -
-                     2.0 * mFixedPoints.colwise().sum() * mMovingPoints.colwise().sum().transpose()) /
-                    (double) (mNumFixedPoints * mNumMovingPoints * mNumDimensions);
-
-        mIterationError = 10*mTolerance;
-        mResponsibilityMatrix = MatrixXf::Zero(mNumMovingPoints, mNumFixedPoints);
-        mPt1 = VectorXf::Zero(mNumFixedPoints);
-        mP1 = VectorXf::Zero(mNumMovingPoints);
     }
 
     void CoherentPointDriftRigid::maximization(MatrixXf& fixedPoints, MatrixXf& movingPoints) {
         double startM = omp_get_wtime();
 
-        // Calculate some useful matrix reductions
-        mPt1 = mResponsibilityMatrix.transpose().rowwise().sum();       // mNumFixedPoints x 1
-        mP1 = mResponsibilityMatrix.rowwise().sum();                    // mNumMovingPoints x 1
-        mNp = mPt1.sum();                                               // 1 (sum of all P elements)
-
-//        mP1 = VectorXf::Zero(mNumMovingPoints);
-//        #pragma omp parallel for
-//            for (int col = 0; col < mNumFixedPoints; ++col) {
-//                mPt1(col) = mResponsibilityMatrix.col(col).sum();
-//            }
-//        #pragma omp parallel
-//        {
-//            VectorXf mP1Local = VectorXf::Zero(mNumMovingPoints);
-//            #pragma omp for
-//            for (int col = 0; col < mNumFixedPoints; ++col) {
-//                mP1Local += mResponsibilityMatrix.col(col);
-//            }
-//            #pragma omp critical
-//            mP1 += mP1Local;
-//        }
-//        mNp = mPt1.sum();                                           // 1 (sum of all P elements)
-        double timeEndMUseful = omp_get_wtime();
-
         // Estimate new mean vectors
         MatrixXf fixedMean = fixedPoints.transpose() * mPt1 / mNp;
         MatrixXf movingMean = movingPoints.transpose() * mP1 / mNp;
-
-        // Center point sets around estimated mean
-        MatrixXf fixedPointsCentered = fixedPoints - fixedMean.transpose().replicate(mNumFixedPoints, 1);
-        MatrixXf movingPointsCentered = movingPoints - movingMean.transpose().replicate(mNumMovingPoints, 1);
-
         double timeEndMCenter = omp_get_wtime();
 
-
         // Single value decomposition (SVD)
-        const MatrixXf A = fixedPointsCentered.transpose() * mResponsibilityMatrix.transpose() * movingPointsCentered;
+        const MatrixXf A = mPX.transpose() * movingPoints - mNp * fixedMean * movingMean.transpose();
         auto svdU =  A.bdcSvd(Eigen::ComputeThinU);
         auto svdV =  A.bdcSvd(Eigen::ComputeThinV);
         const MatrixXf* U = &svdU.matrixU();
         const MatrixXf* V = &svdV.matrixV();
+        VectorXf singularValues = svdU.singularValues();
 
         MatrixXf UVt = *U * V->transpose();
         Eigen::RowVectorXf C = Eigen::RowVectorXf::Ones(mNumDimensions);
@@ -75,15 +37,30 @@ namespace fast {
 
         double timeEndMSVD = omp_get_wtime();
 
+
         /* ************************************************************
          * Find transformation parameters: rotation, scale, translation
          * ***********************************************************/
         mRotation = *U * C.asDiagonal() * V->transpose();
         MatrixXf AtR = A.transpose() * mRotation;
-        MatrixXf ARt = A * mRotation.transpose();
-        double traceAtR = AtR.trace();
-        double traceXPX = (fixedPointsCentered.transpose() * mPt1.asDiagonal() * fixedPointsCentered).trace();
-        double traceYPY = (movingPointsCentered.transpose() * mP1.asDiagonal() * movingPointsCentered).trace();
+
+        float traceAtR = 0.0f;
+        float traceYPY = 0.0f;
+        float traceXPX = 0.0f;
+        for (int d = 0; d < mNumDimensions - 1; ++d) {
+            traceAtR += singularValues(d);
+        }
+        traceAtR += singularValues(mNumDimensions-1) * C[mNumDimensions-1];
+
+        for (int m = 0; m < mNumMovingPoints; ++m) {
+            traceYPY += mP1(m) * (movingPoints.row(m).squaredNorm());
+        }
+        traceYPY -= mNp * movingMean.squaredNorm();
+
+        for (int n = 0; n < mNumFixedPoints; ++n) {
+            traceXPX += mPt1(n) * (fixedPoints.row(n).squaredNorm());
+        }
+        traceXPX -= mNp * fixedMean.squaredNorm();
 
         mScale = traceAtR / traceYPY;
         mTranslation = fixedMean - mScale * mRotation * movingMean;
@@ -94,10 +71,11 @@ namespace fast {
         if (mVariance < 0) {
             mVariance = std::fabs(mVariance);
         } else if (mVariance == 0){
-            mVariance = 10.0 * std::numeric_limits<double>::epsilon();
+            mVariance = 10.0f * std::numeric_limits<float>::epsilon();
             mRegistrationConverged = true;
         }
         double timeEndMParameters = omp_get_wtime();
+
 
         /* ****************
          * Update transform
@@ -106,7 +84,6 @@ namespace fast {
         iterationTransform.translation() = Vector3f(mTranslation);
         iterationTransform.linear() = mRotation;
         iterationTransform.scale(float(mScale));
-
 
         Affine3f currentRegistrationTransform;
         MatrixXf registrationMatrix = iterationTransform.matrix() * mTransformation->getTransform().matrix();
@@ -128,14 +105,24 @@ namespace fast {
         mIterationError = std::fabs(mVariance - varianceOld);
         mRegistrationConverged =  mIterationError <= mTolerance;
 
+
         double endM = omp_get_wtime();
         timeM += endM - startM;
-        timeMUseful += timeEndMUseful - startM;
-        timeMCenter += timeEndMCenter - timeEndMUseful;
-        timeMSVD += timeEndMSVD - timeEndMCenter;
+        timeMCenter += timeEndMCenter - startM;
+        timeMSolve += timeEndMSVD - timeEndMCenter;
         timeMParameters += timeEndMParameters - timeEndMSVD;
         timeMUpdate += endM - timeEndMParameters;
     }
 
-
+    void CoherentPointDriftRigid::saveResultsToTextFile() {
+        std::ofstream results;
+        results.open (mResultFilename, std::ios::out | std::ios::app);
+        results     << mUniformWeight << " " << mIteration-1 << " "
+                    << mErrorPoints << " "<< mErrorTransformation << " " << mErrorRotation << " "
+                    << timeTot << " "<< timeEM << " " << timeE << " " << timeM << " "
+                    << timeEBuffers << " "<< timeEKernel1 << " " << timeEKernel2 << " " << timeEUseful << " "
+                    << timeMCenter << " " << timeMSolve << " "<< timeMParameters << " " << timeMUpdate
+                    << std::endl;
+        results.close();
+    }
 }
