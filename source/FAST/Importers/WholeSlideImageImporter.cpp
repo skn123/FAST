@@ -54,22 +54,17 @@ void WholeSlideImageImporter::readWithOpenSlide(std::string filename) {
         openslide_get_level_dimensions(file, level, &fullWidth, &fullHeight); // Level 0 is the largest level
         std::size_t bytes = fullWidth * fullHeight * 4;
         int sizeInMB = bytes / (1024 * 1024);
-        if(sizeInMB > 4) {
-            reportInfo() << "WSI level " << level << " has size " << fullWidth << "x" << fullHeight << " and " << sizeInMB << " MB adding.." << reportEnd();
-            ImagePyramidLevel levelData;
-            levelData.width = fullWidth;
-            levelData.height = fullHeight;
-            try {
-                levelData.tileWidth = std::stoi(metadata.at("openslide.level[" + std::to_string(level) + "].tile-width"));
-                levelData.tileHeight = std::stoi(metadata.at("openslide.level[" + std::to_string(level) + "].tile-height"));
-                reportInfo() << "Setting tile width and height to " << levelData.tileWidth << " " << levelData.tileHeight << reportEnd();
-            } catch(...) {
-            }
-            levelList.push_back(levelData);
-        } else {
-            reportInfo() << "WSI level was less than 4 MB, skipping.." << reportEnd();
-            break;
+        reportInfo() << "WSI level " << level << " has size " << fullWidth << "x" << fullHeight << " and " << sizeInMB << " MB adding.." << reportEnd();
+        ImagePyramidLevel levelData;
+        levelData.width = fullWidth;
+        levelData.height = fullHeight;
+        try {
+            levelData.tileWidth = std::stoi(metadata.at("openslide.level[" + std::to_string(level) + "].tile-width"));
+            levelData.tileHeight = std::stoi(metadata.at("openslide.level[" + std::to_string(level) + "].tile-height"));
+            reportInfo() << "Setting tile width and height to " << levelData.tileWidth << " " << levelData.tileHeight << reportEnd();
+        } catch(...) {
         }
+        levelList.push_back(levelData);
     }
     auto image = ImagePyramid::create(file, levelList);
     image->setMetadata(metadata);
