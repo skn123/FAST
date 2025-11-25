@@ -36,6 +36,11 @@ class FAST_EXPORT ImagePyramid : public SpatialDataObject {
      * @param compressionQuality Quality of compression when using lossy compression like JPEG and JPEGXL.
      *      100 = best, 0 = worst.
      * @param dataType Data type
+     * @param levelDownsamples If not specified an image pyramid with the default structure is used where each level is
+     *          downsampled with a factor of 2 for each level until a level with smaller width or height than 1024 is reached.
+     *          An alternative image pyramid structure can be achieved by specifying the downsampling factor for each level
+     *          in this list. E.g. [4, 4] will create an image pyramid with 3 levels, level 0 with the original width and height.
+     *          Level 1 with the size width/4, height/4, and level 2 with the size width/(4*4), height/(4*4).
      * @return instance
      */
     FAST_CONSTRUCTOR(ImagePyramid,
@@ -46,15 +51,16 @@ class FAST_EXPORT ImagePyramid : public SpatialDataObject {
                      int, patchHeight, = 256,
                      ImageCompression, compression, = ImageCompression::UNSPECIFIED,
                      int, compressionQuality, = 90,
-                     DataType, dataType, = TYPE_UINT8
+                     DataType, dataType, = TYPE_UINT8,
+                     std::vector<float>, levelDownsamples, = std::vector<float>()
         );
 #ifndef SWIG
         FAST_CONSTRUCTOR(ImagePyramid, openslide_t*, fileHandle,, std::vector<ImagePyramidLevel>, levels,);
         FAST_CONSTRUCTOR(ImagePyramid, TIFF*, fileHandle,, std::vector<ImagePyramidLevel>, levels,, int, channels,,bool, isOMETIFF, = false);
 #endif
-        int getNrOfLevels();
-        int getLevelWidth(int level);
-        int getLevelHeight(int level);
+        int getNrOfLevels() const;
+        int getLevelWidth(int level) const;
+        int getLevelHeight(int level) const;
         int getLevelTileWidth(int level);
         int getLevelTileHeight(int level);
         int getLevelTilesX(int level);
@@ -69,6 +75,8 @@ class FAST_EXPORT ImagePyramid : public SpatialDataObject {
         std::pair<int, float> getClosestLevelForMagnification(float magnification, float percentageSlack = 0.1f);
         int getFullWidth();
         int getFullHeight();
+        int getWidth() const;
+        int getHeight() const;
         int getNrOfChannels() const;
         bool isBGRA() const;
         bool usesTIFF() const;
@@ -106,7 +114,7 @@ class FAST_EXPORT ImagePyramid : public SpatialDataObject {
     private:
         ImagePyramid();
         std::vector<ImagePyramidLevel> m_levels;
-        ImagePyramidLevel getLevelInfo(int level);
+        ImagePyramidLevel getLevelInfo(int level) const;
 
         openslide_t* m_fileHandle = nullptr;
         TIFF* m_tiffHandle = nullptr;

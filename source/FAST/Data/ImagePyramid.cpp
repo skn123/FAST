@@ -29,7 +29,7 @@ namespace fast {
 
 int ImagePyramid::m_counter = 0;
 
-ImagePyramid::ImagePyramid(int width, int height, int channels, int patchWidth, int patchHeight, ImageCompression compression, int compressionQuality, DataType dataType) {
+ImagePyramid::ImagePyramid(int width, int height, int channels, int patchWidth, int patchHeight, ImageCompression compression, int compressionQuality, DataType dataType, std::vector<float> levelDownsamples) {
     if(channels <= 0 || channels > 4)
         throw Exception("Nr of channels must be between 1 and 4");
 
@@ -93,15 +93,29 @@ ImagePyramid::ImagePyramid(int width, int height, int channels, int patchWidth, 
     m_compressionFormat = compression;
     m_compressionQuality = compressionQuality;
 
+    float currentDownsample = 1.0f;
     while(true) {
-		currentWidth = width / std::pow(2, currentLevel);
-		currentHeight = height / std::pow(2, currentLevel);
-
-        if(currentLevel > 0 && (currentWidth < 4096 && currentHeight < 4096)) // IMPORTANT: This should be the same as in PatchStitcher.
-            break;
+        if(currentLevel > 0) {
+            if(levelDownsamples.empty()) {
+                currentWidth = round((float)width / std::pow(2, currentLevel));
+                currentHeight = round((float)height / std::pow(2, currentLevel));
+                if(currentLevel > 0 && (currentWidth < 1024 || currentHeight < 1024))
+                    break;
+            } else {
+                if(currentLevel-1 == levelDownsamples.size())
+                    break;
+                if(levelDownsamples[currentLevel-1] <= 1.0f)
+                    throw Exception("Invalid level downsample factor smaller than 1.0");
+                currentDownsample *= levelDownsamples[currentLevel-1];
+                currentWidth = round((float)width / currentDownsample);
+                currentHeight = round((float)height / currentDownsample);
+                if(currentWidth < 1 || currentHeight < 1)
+                    throw Exception("Invalid level downsamples resulting in width and height smaller than 1");
+            }
+        }
 
         reportInfo() << "Processing level " << currentLevel << reportEnd();
-        std::size_t bytes = (std::size_t)currentWidth * currentHeight * m_channels * sizeof(char);
+        std::size_t bytes = (std::size_t)currentWidth * currentHeight * getSizeOfDataType(m_dataType, m_channels);
 
         // Get total size of image
         float sizeInMB = (float)bytes / (1024 * 1024);
@@ -177,15 +191,6 @@ ImagePyramid::ImagePyramid(int width, int height, int channels, int patchWidth, 
             auto data = std::make_unique<uchar[]>(levelData.tileWidth*levelData.tileHeight*samplesPerPixel); // Is initialized to zeros
             TIFFWriteTile(tiff, data.get(), 0, 0, 0, 0);
         }
-        /*
-        // TODO Do we really need to inititalize all tiles? This takes time..
-        for(int y = 0; y < levelData.tilesY; ++y) {
-            for(int x = 0; x < levelData.tilesX; ++x) {
-                TIFFWriteTile(tiff, data.get(), x*levelData.tileWidth, y*levelData.tileHeight, 0, 0);
-            }
-		}*/
-        // END
-
         TIFFWriteDirectory(m_tiffHandle);
 		reportInfo() << "Done creating level " << currentLevel << reportEnd();
 		++currentLevel;
@@ -216,7 +221,7 @@ ImagePyramid::ImagePyramid() {
     m_pyramidFullyInitialized = false;
 }
 
-ImagePyramidLevel ImagePyramid::getLevelInfo(int level) {
+ImagePyramidLevel ImagePyramid::getLevelInfo(int level) const {
     /*if(!m_initialized)
         throw Exception("ImagePyramid has not been initialized.");*/ // TODO why does this fail?
     if(level < 0) // Negative level means last level (lowest resolution)
@@ -226,15 +231,15 @@ ImagePyramidLevel ImagePyramid::getLevelInfo(int level) {
     return m_levels[level];
 }
 
-int ImagePyramid::getNrOfLevels() {
+int ImagePyramid::getNrOfLevels() const {
     return m_levels.size();
 }
 
-int ImagePyramid::getLevelWidth(int level) {
+int ImagePyramid::getLevelWidth(int level) const {
     return getLevelInfo(level).width;
 }
 
-int ImagePyramid::getLevelHeight(int level) {
+int ImagePyramid::getLevelHeight(int level) const {
     return getLevelInfo(level).height;
 }
 
@@ -665,4 +670,10 @@ std::pair<int, float> ImagePyramid::getClosestLevelForMagnification(float magnif
     return {level, resampleFactor};
 }
 
+int ImagePyramid::getWidth() const {
+    return getLevelWidth(0);
+}
+int ImagePyramid::getHeight() const {
+    return getLevelHeight(0);
+}
 }

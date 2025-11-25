@@ -108,3 +108,49 @@ TEST_CASE("getClosestLevelForMagnification()", "[fast][ImagePyramid]") {
     }
      */
 }
+
+TEST_CASE("Create image pyramid with default levels", "[fast][ImagePyramid]") {
+    auto pyramid = ImagePyramid::create(12000, 8000, 3, 512, 512, ImageCompression::JPEG);
+
+    CHECK(pyramid->getNrOfLevels() == 3);
+    CHECK(pyramid->getWidth() == 12000);
+    CHECK(pyramid->getHeight() == 8000);
+    CHECK(pyramid->getLevelWidth(1) == 12000/2);
+    CHECK(pyramid->getLevelHeight(1) == 8000/2);
+    CHECK(pyramid->getLevelWidth(2) == 12000/4);
+    CHECK(pyramid->getLevelHeight(2) == 8000/4);
+    CHECK_THROWS(pyramid->getLevelWidth(3));
+    CHECK(pyramid->getDataType() == TYPE_UINT8);
+    CHECK(pyramid->getLevelTileWidth(0) == 512);
+    CHECK(pyramid->getLevelTileHeight(0) == 512);
+    CHECK(pyramid->getCompression() == ImageCompression::JPEG);
+    CHECK(pyramid->getNrOfChannels() == 3);
+    CHECK(pyramid->getLevelScale(0) == 1);
+    CHECK(pyramid->getLevelScale(1) == 2);
+    CHECK(pyramid->getLevelScale(2) == 4);
+}
+
+TEST_CASE("Create image pyramid with custom levels", "[fast][ImagePyramid]") {
+    auto pyramid = ImagePyramid::create(22000, 13000, 1, 512, 256, ImageCompression::JPEG, 90,
+                                        fast::TYPE_UINT8, {4, 2, 2});
+
+    CHECK(pyramid->getNrOfLevels() == 4);
+    CHECK(pyramid->getWidth() == 22000);
+    CHECK(pyramid->getHeight() == 13000);
+    CHECK(pyramid->getLevelWidth(1) == 22000/4);
+    CHECK(pyramid->getLevelHeight(1) == 13000/4);
+    CHECK(pyramid->getLevelWidth(2) == 22000/(4*2));
+    CHECK(pyramid->getLevelHeight(2) == 13000/(4*2));
+    CHECK(pyramid->getLevelWidth(3) == 22000/(4*2*2));
+    CHECK(pyramid->getLevelHeight(3) == 13000/(4*2*2));
+    CHECK_THROWS(pyramid->getLevelWidth(4));
+    CHECK(pyramid->getDataType() == TYPE_UINT8);
+    CHECK(pyramid->getLevelTileWidth(0) == 512);
+    CHECK(pyramid->getLevelTileHeight(0) == 256);
+    CHECK(pyramid->getCompression() == ImageCompression::JPEG);
+    CHECK(pyramid->getNrOfChannels() == 1);
+    CHECK(pyramid->getLevelScale(0) == 1);
+    CHECK(pyramid->getLevelScale(1) == 4);
+    CHECK(pyramid->getLevelScale(2) == 8);
+    CHECK(pyramid->getLevelScale(3) == 16);
+}
