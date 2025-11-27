@@ -97,8 +97,8 @@ ImagePyramid::ImagePyramid(int width, int height, int channels, int patchWidth, 
     while(true) {
         if(currentLevel > 0) {
             if(levelDownsamples.empty()) {
-                currentWidth = round((float)width / std::pow(2, currentLevel));
-                currentHeight = round((float)height / std::pow(2, currentLevel));
+                currentWidth = std::ceil((float)width / std::pow(2, currentLevel));
+                currentHeight = std::ceil((float)height / std::pow(2, currentLevel));
                 if(currentLevel > 0 && (currentWidth < 1024 || currentHeight < 1024))
                     break;
             } else {
@@ -107,8 +107,8 @@ ImagePyramid::ImagePyramid(int width, int height, int channels, int patchWidth, 
                 if(levelDownsamples[currentLevel-1] <= 1.0f)
                     throw Exception("Invalid level downsample factor smaller than 1.0");
                 currentDownsample *= levelDownsamples[currentLevel-1];
-                currentWidth = round((float)width / currentDownsample);
-                currentHeight = round((float)height / currentDownsample);
+                currentWidth = std::ceil((float)width / currentDownsample);
+                currentHeight = std::ceil((float)height / currentDownsample);
                 if(currentWidth < 1 || currentHeight < 1)
                     throw Exception("Invalid level downsamples resulting in width and height smaller than 1");
             }
