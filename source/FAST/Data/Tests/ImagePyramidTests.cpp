@@ -115,19 +115,19 @@ TEST_CASE("Create image pyramid with default levels", "[fast][ImagePyramid]") {
     CHECK(pyramid->getNrOfLevels() == 3);
     CHECK(pyramid->getWidth() == 12000);
     CHECK(pyramid->getHeight() == 8000);
-    CHECK(pyramid->getLevelWidth(1) == 12000/2);
-    CHECK(pyramid->getLevelHeight(1) == 8000/2);
-    CHECK(pyramid->getLevelWidth(2) == 12000/4);
-    CHECK(pyramid->getLevelHeight(2) == 8000/4);
+    CHECK(pyramid->getLevelWidth(1) == fast::round(12000.0f/2.0f));
+    CHECK(pyramid->getLevelHeight(1) == fast::round(8000.0f/2.0f));
+    CHECK(pyramid->getLevelWidth(2) == fast::round(12000.0f/4.0f));
+    CHECK(pyramid->getLevelHeight(2) == fast::round(8000.0f/4.0f));
     CHECK_THROWS(pyramid->getLevelWidth(3));
     CHECK(pyramid->getDataType() == TYPE_UINT8);
     CHECK(pyramid->getLevelTileWidth(0) == 512);
     CHECK(pyramid->getLevelTileHeight(0) == 512);
     CHECK(pyramid->getCompression() == ImageCompression::JPEG);
     CHECK(pyramid->getNrOfChannels() == 3);
-    CHECK(pyramid->getLevelScale(0) == 1);
-    CHECK(pyramid->getLevelScale(1) == 2);
-    CHECK(pyramid->getLevelScale(2) == 4);
+    CHECK(pyramid->getLevelScale(0) == Approx(1));
+    CHECK(pyramid->getLevelScale(1) == Approx(2));
+    CHECK(pyramid->getLevelScale(2) == Approx(4));
 }
 
 TEST_CASE("Create image pyramid with custom levels", "[fast][ImagePyramid]") {
@@ -137,20 +137,46 @@ TEST_CASE("Create image pyramid with custom levels", "[fast][ImagePyramid]") {
     CHECK(pyramid->getNrOfLevels() == 4);
     CHECK(pyramid->getWidth() == 22000);
     CHECK(pyramid->getHeight() == 13000);
-    CHECK(pyramid->getLevelWidth(1) == 22000/4);
-    CHECK(pyramid->getLevelHeight(1) == 13000/4);
-    CHECK(pyramid->getLevelWidth(2) == 22000/(4*2));
-    CHECK(pyramid->getLevelHeight(2) == 13000/(4*2));
-    CHECK(pyramid->getLevelWidth(3) == 22000/(4*2*2));
-    CHECK(pyramid->getLevelHeight(3) == 13000/(4*2*2));
+    CHECK(pyramid->getLevelWidth(1) == fast::round(22000.0f/4.0f));
+    CHECK(pyramid->getLevelHeight(1) == fast::round(13000.0f/4.0f));
+    CHECK(pyramid->getLevelWidth(2) == fast::round(22000.0f/(4.0f*2.0f)));
+    CHECK(pyramid->getLevelHeight(2) == fast::round(13000.0f/(4.0f*2.0f)));
+    CHECK(pyramid->getLevelWidth(3) == fast::round(22000.0f/(4.0f*2.0f*2.0f)));
+    CHECK(pyramid->getLevelHeight(3) == fast::round(13000.0f/(4.0f*2.0f*2.0f)));
     CHECK_THROWS(pyramid->getLevelWidth(4));
     CHECK(pyramid->getDataType() == TYPE_UINT8);
     CHECK(pyramid->getLevelTileWidth(0) == 512);
     CHECK(pyramid->getLevelTileHeight(0) == 256);
     CHECK(pyramid->getCompression() == ImageCompression::JPEG);
     CHECK(pyramid->getNrOfChannels() == 1);
-    CHECK(pyramid->getLevelScale(0) == 1);
-    CHECK(pyramid->getLevelScale(1) == 4);
-    CHECK(pyramid->getLevelScale(2) == 8);
-    CHECK(pyramid->getLevelScale(3) == 16);
+    CHECK(pyramid->getLevelScale(0) == Approx(1));
+    CHECK(pyramid->getLevelScale(1) == Approx(4));
+    CHECK(pyramid->getLevelScale(2) == Approx(8));
+    CHECK(pyramid->getLevelScale(3) == Approx(16));
+}
+
+TEST_CASE("Create image pyramid with custom level sizes", "[fast][ImagePyramid]") {
+    std::vector<Vector2i> sizes = {
+            {22000/1.5f, 13000/1.5f},
+            {22000/4.5f, 13000/4.5f}
+    };
+    auto pyramid = ImagePyramid::create(22000, 13000, 1, 512, 512, ImageCompression::JPEG, 90,
+                                        fast::TYPE_UINT8, {}, sizes);
+
+    CHECK(pyramid->getNrOfLevels() == 3);
+    CHECK(pyramid->getWidth() == 22000);
+    CHECK(pyramid->getHeight() == 13000);
+    CHECK(pyramid->getLevelWidth(1) == sizes[0].x());
+    CHECK(pyramid->getLevelHeight(1) == sizes[0].y());
+    CHECK(pyramid->getLevelWidth(2) == sizes[1].x());
+    CHECK(pyramid->getLevelHeight(2) == sizes[1].y());
+    CHECK_THROWS(pyramid->getLevelWidth(3));
+    CHECK(pyramid->getDataType() == TYPE_UINT8);
+    CHECK(pyramid->getLevelTileWidth(0) == 512);
+    CHECK(pyramid->getLevelTileHeight(0) == 512);
+    CHECK(pyramid->getCompression() == ImageCompression::JPEG);
+    CHECK(pyramid->getNrOfChannels() == 1);
+    CHECK(pyramid->getLevelScale(0) == Approx(1.0f).margin(0.01));
+    CHECK(pyramid->getLevelScale(1) == Approx(1.5f).margin(0.01));
+    CHECK(pyramid->getLevelScale(2) == Approx(4.5f).margin(0.01));
 }

@@ -41,6 +41,10 @@ class FAST_EXPORT ImagePyramid : public SpatialDataObject {
      *          An alternative image pyramid structure can be achieved by specifying the downsampling factor for each level
      *          in this list. E.g. [4, 4] will create an image pyramid with 3 levels, level 0 with the original width and height.
      *          Level 1 with the size width/4, height/4, and level 2 with the size width/(4*4), height/(4*4).
+     * @param levelSizes If not specified an image pyramid with the default structure is used where each level is
+     *          downsampled with a factor of 2 for each level until a level with smaller width or height than 1024 is reached.
+     *          An alternative image pyramid structure can be achieved by specifying the exact sizes for each level
+     *          in this list. If both levelDownsamples and levelSizes are provided, levelSizes is used.
      * @return instance
      */
     FAST_CONSTRUCTOR(ImagePyramid,
@@ -52,7 +56,8 @@ class FAST_EXPORT ImagePyramid : public SpatialDataObject {
                      ImageCompression, compression, = ImageCompression::UNSPECIFIED,
                      int, compressionQuality, = 90,
                      DataType, dataType, = TYPE_UINT8,
-                     std::vector<float>, levelDownsamples, = std::vector<float>()
+                     std::vector<float>, levelDownsamples, = std::vector<float>(),
+                     std::vector<Vector2i>, levelSizes, = std::vector<Vector2i>()
         );
 #ifndef SWIG
         FAST_CONSTRUCTOR(ImagePyramid, openslide_t*, fileHandle,, std::vector<ImagePyramidLevel>, levels,);

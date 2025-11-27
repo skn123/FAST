@@ -29,7 +29,7 @@ namespace fast {
 
 int ImagePyramid::m_counter = 0;
 
-ImagePyramid::ImagePyramid(int width, int height, int channels, int patchWidth, int patchHeight, ImageCompression compression, int compressionQuality, DataType dataType, std::vector<float> levelDownsamples) {
+ImagePyramid::ImagePyramid(int width, int height, int channels, int patchWidth, int patchHeight, ImageCompression compression, int compressionQuality, DataType dataType, std::vector<float> levelDownsamples, std::vector<Vector2i> levelSizes) {
     if(channels <= 0 || channels > 4)
         throw Exception("Nr of channels must be between 1 and 4");
 
@@ -96,21 +96,28 @@ ImagePyramid::ImagePyramid(int width, int height, int channels, int patchWidth, 
     float currentDownsample = 1.0f;
     while(true) {
         if(currentLevel > 0) {
-            if(levelDownsamples.empty()) {
-                currentWidth = std::ceil((float)width / std::pow(2, currentLevel));
-                currentHeight = std::ceil((float)height / std::pow(2, currentLevel));
-                if(currentLevel > 0 && (currentWidth < 1024 || currentHeight < 1024))
+            if(!levelSizes.empty()) {
+                if(currentLevel-1 == levelSizes.size())
                     break;
-            } else {
+                if(levelSizes[currentLevel-1].x() <= 2 && levelSizes[currentLevel-1].y() <= 2)
+                    throw Exception("Invalid level size smaller than 2");
+                currentWidth = levelSizes[currentLevel-1].x();
+                currentHeight = levelSizes[currentLevel-1].y();
+            } else if(!levelDownsamples.empty()) {
                 if(currentLevel-1 == levelDownsamples.size())
                     break;
                 if(levelDownsamples[currentLevel-1] <= 1.0f)
                     throw Exception("Invalid level downsample factor smaller than 1.0");
                 currentDownsample *= levelDownsamples[currentLevel-1];
-                currentWidth = std::ceil((float)width / currentDownsample);
-                currentHeight = std::ceil((float)height / currentDownsample);
+                currentWidth = round((float)width / currentDownsample);
+                currentHeight = round((float)height / currentDownsample);
                 if(currentWidth < 1 || currentHeight < 1)
                     throw Exception("Invalid level downsamples resulting in width and height smaller than 1");
+            } else {
+                currentWidth = round((float)width / std::pow(2, currentLevel));
+                currentHeight = round((float)height / std::pow(2, currentLevel));
+                if(currentLevel > 0 && (currentWidth < 1024 || currentHeight < 1024))
+                    break;
             }
         }
 
