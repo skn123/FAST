@@ -8,6 +8,14 @@ class QLabel;
 
 namespace fast {
 
+// The destructor is causing seg faults in python after is has been used in a window
+#ifdef SWIG
+%nodefaultdtor TextWidget;
+%extend TextWidget {
+    ~TextWidget() {
+    }
+};
+#endif
 
 /**
  * @brief A text widget

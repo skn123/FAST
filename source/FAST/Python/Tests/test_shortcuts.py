@@ -94,3 +94,67 @@ def test_display2D_mesh():
 def test_display2D_no_input():
     with pytest.raises(ValueError):
         fast.display2D()
+
+
+def test_display2D_image_pyramid():
+    importer = fast.WholeSlideImageImporter.create(fast.Config.getTestDataPath() + 'WSI/CMU-1.svs')
+    fast.display2D(imagePyramid=importer, timeout=timeout)
+
+
+def test_display2D_widget():
+    widget = fast.TextWidget('Widget!')
+    importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'US/JugularVein/US-2D_100.mhd')
+    fast.display2D(image=importer, timeout=timeout, widgets=[widget])
+
+
+def test_display2D_widgets():
+    widget_right1 = fast.TextWidget('Right 1')
+    widget_right2 = fast.TextWidget('Right 2')
+    widget_left = fast.TextWidget('Left')
+    widget_bottom = fast.TextWidget('Bottom')
+    widget_top = fast.TextWidget('Top')
+
+    importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'US/JugularVein/US-2D_100.mhd')
+
+    fast.display2D(image=importer, timeout=timeout, widgets={
+        fast.WidgetPosition_RIGHT: [widget_right1, widget_right2],
+        fast.WidgetPosition_LEFT: [widget_left],
+        fast.WidgetPosition_BOTTOM: [widget_bottom],
+        fast.WidgetPosition_TOP: [widget_top],
+    })
+
+
+def test_display3D_slicer():
+    importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'CT/CT-Thorax.mhd')
+    fast.display3D(importer, timeout=timeout)
+
+
+def test_display3D_slicer_segmentation():
+    importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'CT/CT-Thorax.mhd')
+    segmentation = fast.BinaryThresholding.create(300).connect(importer)
+    fast.display3D(
+        importer,
+        segmentation,
+        segmentationColors={1: fast.Color.Red()},
+        segmentationOpacity=0.1,
+        segmentationBorderOpacity=1.0,
+        displayType=fast.DisplayType.SLICER,
+        timeout=timeout,
+    )
+
+
+def test_display3D_alpha_blending():
+    importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'CT/CT-Thorax.mhd')
+    fast.display3D(
+        importer,
+        displayType=fast.DisplayType.ALPHA_BLENDING,
+        timeout=timeout,
+    )
+
+def test_display3D_mip():
+    importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'CT/CT-Thorax.mhd')
+    fast.display3D(
+        importer,
+        displayType=fast.DisplayType.MAXIMUM_INTENSITY_PROJECTION,
+        timeout=timeout,
+    )

@@ -11,7 +11,14 @@ class QSlider;
 namespace fast {
 
 
+// The destructor is causing seg faults in python after is has been used in a window
 #ifdef SWIG
+%nodefaultdtor SliderWidget;
+%extend SliderWidget {
+    ~SliderWidget() {
+    }
+};
+
 %feature("director") SliderWidgetCallback;
 %pythoncode %{
 _slider_callbacks = [] # Hack to avoid callbacks being deleted

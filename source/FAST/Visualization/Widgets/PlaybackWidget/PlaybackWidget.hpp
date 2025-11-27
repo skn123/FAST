@@ -7,6 +7,16 @@ class QSlider;
 class QPushButton;
 
 namespace fast {
+
+// The destructor is causing seg faults in python after is has been used in a window
+#ifdef SWIG
+%nodefaultdtor PlaybackWidget;
+%extend PlaybackWidget {
+    ~PlaybackWidget() {
+    }
+};
+#endif
+
 /**
  * @brief A widget to control playback of a RandomAccessStreamer
  * @ingroup widgets

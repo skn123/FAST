@@ -1,10 +1,10 @@
 #pragma once
 
-#include "FASTExport.hpp"
-#include "FAST/Object.hpp"
-#include "WindowWidget.hpp"
-#include "ComputationThread.hpp"
-#include "View.hpp"
+#include <FASTExport.hpp>
+#include <FAST/Object.hpp>
+#include <FAST/Visualization/WindowWidget.hpp>
+#include <FAST/Visualization/ComputationThread.hpp>
+#include <FAST/Visualization/View.hpp>
 #include <vector>
 #include <QGLContext>
 

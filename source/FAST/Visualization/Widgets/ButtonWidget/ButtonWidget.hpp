@@ -10,7 +10,14 @@ class QPushButton;
 namespace fast {
 
 
+// The destructor is causing seg faults in python after is has been used in a window
 #ifdef SWIG
+%nodefaultdtor ButtonWidget;
+%extend ButtonWidget {
+    ~ButtonWidget() {
+    }
+};
+
 %feature("director") ButtonWidgetCallback;
 
 %pythoncode %{
