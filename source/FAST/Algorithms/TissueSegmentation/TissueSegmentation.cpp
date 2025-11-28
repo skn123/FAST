@@ -200,7 +200,7 @@ void TissueSegmentation::runNeuralNetwork(SpatialDataObject::pointer image) {
         } while(!output->isLastFrame());
          */
         auto finish = RunUntilFinished::create()->connect(stitcher);
-        auto output = finish->runAndGetOutputData<Image>();
+        auto output = finish->runAndGetOutputData<SpatialDataObject>();
         addOutputData(0, output);
     } else if(auto patch = std::dynamic_pointer_cast<Image>(image)) {
         // If patch is smaller then input size of neural network; run as is

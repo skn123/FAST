@@ -297,7 +297,11 @@ std::shared_ptr<DataType> ProcessObject::updateAndGetOutputData(uint portID) {
 
 template<class DataType>
 std::shared_ptr<DataType> ProcessObject::runAndGetOutputData(uint portID, int64_t executeToken) {
-    return std::dynamic_pointer_cast<DataType>(runAndGetOutputData(portID, executeToken));
+    auto data = runAndGetOutputData(portID, executeToken);
+    auto castedObject = std::dynamic_pointer_cast<DataType>(data);
+    if(!castedObject)
+        throw BadCastException(data->getNameOfClass(), DataType::getStaticNameOfClass());
+    return castedObject;
 }
 
 
