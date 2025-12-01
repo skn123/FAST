@@ -95,17 +95,8 @@ network.setScaleFactor(1.0/255.0)
 tensor2seg = fast.TensorToSegmentation.create()\
     .connect(network)
 
-# Setup visualization
-renderer = fast.ImageRenderer.create()\
-    .connect(importer)
-
-# Set colors for each class
-segRenderer = fast.SegmentationRenderer.create(colors={1: fast.Color.Red(), 2: fast.Color.Blue()})\
-    .connect(tensor2seg)
-
-fast.SimpleWindow2D.create()\
-    .connect([renderer, segRenderer])\
-    .run()
+# Display results and set colors for each class
+fast.display2D(importer, tensor2seg, segmentationColors={1: fast.Color.Red(), 2: fast.Color.Blue()})
 @endcode
 
 For convenience you can also use the SegmentationNetwork process object, which extends NeuralNetwork by applying TensorToSegmentation
@@ -121,15 +112,8 @@ network = fast.SegmentationNetwork.create(fast.Config.getTestDataPath() + "Neura
 # Add a preprocessing step: multiply each pixel with 1/255, thus normalizing the intensity
 network.setScaleFactor(1.0/255.0)
 
-# Setup visualization
-renderer = fast.ImageRenderer.create().connect(importer)
-
-segRenderer = fast.SegmentationRenderer.create(colors={1: fast.Color.Red(), 2: fast.Color.Blue()})\
-    .connect(network)
-
-fast.SimpleWindow2D.create()\
-    .connect([renderer, segRenderer])\
-    .run()
+# Display results and set colors for each class
+fast.display2D(importer, tensor2seg, segmentationColors={1: fast.Color.Red(), 2: fast.Color.Blue()})
 @endcode
 
 

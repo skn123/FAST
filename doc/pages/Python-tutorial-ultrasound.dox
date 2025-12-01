@@ -41,6 +41,17 @@ fast.SimpleWindow2D.create()\
     .run()
 @endcode
 
+To reduce boilerplate code, you can use the [display2D](@ref shortcuts) function:
+
+@code{.py}
+import fast
+
+streamer = fast.MovieStreamer\
+    .create(fast.Config.getTestDataPath() + "/US/sagittal_spine.avi")
+
+fast.display2D(streamer)
+@endcode
+
 @image html images/tutorials/ultrasound/read_video.jpg width=400px;
 
 To get each frame from the video you can use the DataStream and a for loop.
@@ -120,12 +131,7 @@ streamer = fast.ImageFileStreamer.create(
     loop=True # Loop recording forever
 )
 
-renderer = fast.ImageRenderer.create()\
-    .connect(streamer)
-
-fast.SimpleWindow2D.create()\
-    .connect(renderer)\
-    .run()
+fast.display2D(streamer)
 @endcode
 
 @image html images/examples/python/left_ventricle.jpg width=250px;
@@ -142,7 +148,7 @@ streamer = fast.ImageFileStreamer.create(
     loop=True # Loop recording forever
 )
 
-# Use SlicerWindow to display the 3D data
+# Use SlicerWindow to display the 3D data, you can also use the display3D function
 fast.SlicerWindow.create()\
     .connectImage(streamer)\
     .run()
@@ -189,15 +195,9 @@ streamer = fast.ImageFileStreamer.create(
     framerate=20, # Specify framerate to stream data in
 )
 
-renderer = fast.ImageRenderer.create()\
-    .connect(streamer)
-
-# Create playback widget and connect it to the window
+# Create playback widget and use it in the display window
 widget = fast.PlaybackWidget(streamer)
-fast.SimpleWindow2D.create()\
-    .connect(renderer)\
-    .connect(widget)\
-    .run()
+fast.display2D(streamer, widgets=[widget])
 @endcode
 
 @image html images/tutorials/ultrasound/playback_widget.jpg
@@ -222,14 +222,8 @@ streamer = fast.UFFStreamer.create(
     scanConversionHeight=1024,
 )
 
-renderer = fast.ImageRenderer.create()\
-    .connect(streamer)
-
 widget = fast.PlaybackWidget(streamer)
-fast.SimpleWindow2D.create()\
-    .connect(renderer)\
-    .connect(widget)\
-    .run()
+fast.display2D(streamer, widgets=[widget])
 @endcode
 
 @image html images/tutorials/ultrasound/read_uff_data.jpg width=512px;
@@ -249,14 +243,8 @@ streamer = fast.UFFStreamer.create(
     dynamicRange=60,
 )
 
-renderer = fast.ImageRenderer.create()\
-    .connect(streamer)
-
 widget = fast.PlaybackWidget(streamer)
-fast.SimpleWindow2D.create()\
-    .connect(renderer)\
-    .connect(widget)\
-    .run()
+fast.display2D(streamer, widgets=[widget])
 @endcode
 
 @image html images/tutorials/ultrasound/read_uff_data_beamspace.jpg width=512px;
@@ -286,12 +274,7 @@ scan_convert = fast.ScanConverter.create(
                 endAngle=0.785398
         ).connect(data)
 
-renderer = fast.ImageRenderer.create()\
-        .connect(scan_convert)
-
-fast.SimpleWindow2D.create()\
-        .connect(renderer)\
-        .run()
+fast.display2D(scan_convert)
 
 # Visualize output of scan converter with matplotlib instead of FAST:
 plt.imshow(np.asarray(scan_convert.runAndGetOutputData())[..., 0], cmap='gray')
@@ -325,12 +308,7 @@ scan_convert = fast.ScanConverter.create(
                 endAngle=0.785398
         ).connect(envelope)
 
-renderer = fast.ImageRenderer.create()\
-        .connect(scan_convert)
-
-fast.SimpleWindow2D.create()\
-        .connect(renderer)\
-        .run()
+fast.display2D(scan_convert)
 
 # Visualize output of scan converter with matplotlib instead of FAST:
 plt.imshow(np.asarray(scan_convert.runAndGetOutputData())[..., 0], cmap='gray')
@@ -374,13 +352,7 @@ Here is an example of how to use the OpenIGTLinkStreamer in FAST to stream image
 import fast
 
 streamer = fast.OpenIGTLinkStreamer.create("localhost", 18944)
-
-renderer = fast.ImageRenderer.create()\
-    .connect(streamer)
-
-fast.SimpleWindow2D.create()\
-    .connect(renderer)\
-    .run()
+fast.display2D(streamer)
 @endcode
 
 ### Clarius
@@ -401,13 +373,7 @@ Thus you need to disable the windows firewall or add an exception in the firewal
 import fast
 
 streamer = fast.ClariusStreamer.create("192.168.1.1", 5828)
-
-renderer = fast.ImageRenderer.create()\
-    .connect(streamer)
-
-fast.SimpleWindow2D.create()\
-    .connect(renderer)\
-    .run()
+fast.display2D(streamer)
 @endcode
 
 Ultrasound image processing
@@ -591,12 +557,7 @@ importer = fast.ImageFileStreamer.create(
 inverter = Inverter.create()\
     .connect(importer)
 
-renderer = fast.ImageRenderer.create()\
-    .connect(inverter)
-
-fast.SimpleWindow2D.create()\
-    .connect(renderer)\
-    .run()
+fast.display2D(inverter)
 @endcode
 
 @image html images/tutorials/ultrasound/python_process_object.jpg width=400px;
@@ -802,14 +763,8 @@ nlm = fast.NonLocalMeans.create(
         inputMultiplicationWeight=0.5,
 ).connect(importer)
 
-rendererNLM = fast.ImageRenderer.create()\
-    .connect(nlm)
-
 sliderWidget = fast.SliderWidget('Smoothing', 0.2, 0.05, 0.8, 0.05, fast.SliderCallback(lambda x: nlm.setSmoothingAmount(x)))
-fast.SimpleWindow2D.create()\
-    .connect(rendererNLM)\
-    .connect(sliderWidget)\
-    .run()
+fast.display2D(nlm, widgets=[sliderWidget])
 @endcode
 
 @image html images/tutorials/ultrasound/simple_gui.jpg width=400px;
