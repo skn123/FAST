@@ -55,14 +55,14 @@ Our entire example should now look like this:
 
 @code{.py}
 import fast
-importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_0.mhd')
+importer = fast.ImageFileImporter\
+    .create(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_0.mhd')
 
 # Set up a renderer and connect it to the importer
 renderer = fast.ImageRenderer.create().connect(importer)
 
 # Create a window, add the renderer and start the computation/rendering loop.
-window = fast.SimpleWindow2D.create().connect(renderer)
-window.run()
+fast.SimpleWindow2D.create().connect(renderer).run()
 @endcode
 
 You should now see this image:
@@ -88,7 +88,8 @@ de-noising ultrasound images.
 
 @code{.py}
 import fast
-importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_0.mhd')
+importer = fast.ImageFileImporter\
+    .create(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_0.mhd')
 
 # Set up the NonLocalMeans processing step and connect it to the importer
 nlm = fast.NonLocalMeans.create().connect(importer)
@@ -142,8 +143,12 @@ cameras and even from ultrasound scanners.
 First, we are going to try streaming from disk. To do this, simply
 replace the ImageFileImporter with an ImageFileStreamer in the previous code example:
 
-@code{.cpp}
-importer = fast.ImageFileStreamer.create(fast.Config.getTestDataPath() + '/US/Heart/ApicalFourChamber/US-2D_#.mhd', True)
+@code{.py}
+importer = fast.ImageFileStreamer.create(
+    fast.Config.getTestDataPath() + '/US/Heart/ApicalFourChamber/US-2D_#.mhd',
+    loop=True,
+    framerate=10,
+)
 @endcode
 
 Compile and run the application, and you should now see an entire ultrasound recording being played back to you on screen.
@@ -164,6 +169,53 @@ frameNr = 0
 for image in fast.DataStream(nlm):
     print('Received image frame', frameNr, 'with size', image.getWidth(), image.getHeight())
     frameNr += 1
+@endcode
+
+Image segmentation
+-----------------------------------------
+
+Segmentation is the process of classifying each pixel in a image.
+In FAST, a segmentation is represented as an Image object with 8-bit unsigned integer data type and a single channel.
+Typically, segmentations are displayed as transparent color overlays on the original image.
+In the example below, a simple binary thresholding is applied to a stream of ultrasound images.
+A SegmentationRenderer is used to render a transparent overlay on the input image which is, as before, rendered
+using an ImageRenderer:
+
+@code{.py}
+import fast
+
+streamer = fast.ImageFileStreamer.create(
+    fast.Config.getTestDataPath() + '/US/Heart/ApicalFourChamber/US-2D_#.mhd',
+    loop=True,
+    framerate=10
+)
+segmentation = fast.BinaryThresholding.create(100).connect(streamer)
+
+# Create an image renderer and a segmentation renderer
+imageRenderer = fast.ImageRenderer.create().connect(streamer)
+segmentationRenderer = fast.SegmentationRenderer.create().connect(segmentation)
+
+# Connect renderers to window and run the whole pipeline
+fast.SimpleWindow2D.create(bgcolor=fast.Color.Black())\
+    .connect([imageRenderer, segmentationRenderer])\
+    .run()
+@endcode
+
+To reduce boilerplate code you can use the [display2D and display3D](@ref shortcuts) functions for displaying data and results.
+The example below is equivalent to the one above, but with only 1 line of code for the data display part.
+
+@code{.py}
+import fast
+
+streamer = fast.ImageFileStreamer.create(
+    fast.Config.getTestDataPath() + '/US/Heart/ApicalFourChamber/US-2D_#.mhd',
+    loop=True,
+    framerate=10
+)
+segmentation = fast.BinaryThresholding.create(100).connect(streamer)
+
+# Reduce boilerplate code with setting up renderers and window by using the display2D function:
+fast.display2D(streamer, segmentation, bgcolor=fast.Color.Black())
 @endcode
 
 Integration with other Python libraries
@@ -293,7 +345,14 @@ Here is a complete example on how to do this:
 
 Exporting data
 ---------------------
-@todo
+To save data in a given file format, you can use any of the [FAST Exporters](@ref exporters).
+For instance to save an image as a jpeg file you can use the ImageFileExporter:
+
+@code{.py}
+fast.ImageFileExporter.create('filename.jpg').connect(image).run()
+@endcode
+
+ImageFileExporter will recognize the filename extension, e.g. '.jpg', and select the correct exporting routine.
 
 Next steps
 ---------------------
