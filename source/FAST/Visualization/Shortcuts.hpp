@@ -13,7 +13,13 @@ class ImagePyramid;
 #ifndef SWIG
 
 /**
+ * @defgroup shortcuts Shortcuts
+ * Functions for reducing boiler plate code such as display2D and display3D.
+ */
+
+/**
  * @brief Arguments for display2D function.
+ * @ingroup shortcuts
  */
 struct Display2DArgs {
     std::variant<std::monostate, std::shared_ptr<Image>, std::shared_ptr<ProcessObject>> image; /**< Source of Image data to display (optional) **/
@@ -34,13 +40,13 @@ struct Display2DArgs {
     float vertexMinSize = 1.0f;
     Color vertexColor = Color::Null();
     float vertexOpacity = 1.0f;
-    Color bgcolor = Color::White();
-    int width = 0;
-    int height = 0;
-    std::optional<int> timeout;
-    bool renderToImage = false;
-    bool returnWindow = false;
-    std::variant<std::monostate, std::vector<QWidget*>, std::map<WidgetPosition, std::vector<QWidget*>>> widgets;
+    Color bgcolor = Color::White(); /**< Background color to use for the View. **/
+    int width = 0; /**< Width of window, set to 0 to use default width. **/
+    int height = 0; /**< Height of window, set to 0 to use default height. **/
+    std::optional<int> timeout; /**< Milliseconds until closing window automatically. If not setm the window will not automatically close. **/
+    bool renderToImage = false; /**< If set to true, the data is rendered to an Image and returned, instead of displaying it using a window. **/
+    bool returnWindow = false; /**< If set to true, the window is returned by the function, else display2D will call run on the window and return nothing. **/
+    std::variant<std::monostate, std::vector<QWidget*>, std::map<WidgetPosition, std::vector<QWidget*>>> widgets;  /**< Widgets to attach to window. **/
 };
 
 /**
@@ -54,39 +60,42 @@ struct Display2DArgs {
  * @param args See the Display2DArgs struct
  * @return A variant which is either empty, Window or Image depending on the choice of Display2DArgs.returnWindow
  *      and Display2DArgs.renderToImage
+ * @ingroup shortcuts
  */
 FAST_EXPORT std::variant<std::monostate, Window::pointer, Image::pointer> display2D(Display2DArgs args);
 
 /**
  * @brief Enum to choose how to display 3D data in display3D
  * @sa display3D
+ * @ingroup shortcuts
  */
 enum class DisplayType {
-    SLICER = 1,
-    ALPHA_BLENDING = 2,
-    MAXIMUM_INTENSITY_PROJECTION = 3
+    SLICER = 1, /**< Display 3D image and segmentation using SlicerWindow. **/
+    ALPHA_BLENDING = 2, /**< Display 3D image using AlphaBlendingVolumeRenderer. **/
+    MAXIMUM_INTENSITY_PROJECTION = 3 /**< Display 3D image using MaximumIntensityProjection. **/
 };
 
 /**
  * @brief Arguments for display3D function.
+ * @ingroup shortcuts
  */
 struct Display3DArgs {
-    std::variant<std::monostate, std::shared_ptr<Image>, std::shared_ptr<ProcessObject>> image;
-    std::variant<std::monostate, std::shared_ptr<Image>, std::shared_ptr<ProcessObject>> segmentation;
-    std::optional<float> intensityLevel;
-    std::optional<float> intensityWindow;
+    std::variant<std::monostate, std::shared_ptr<Image>, std::shared_ptr<ProcessObject>> image; /**< Source of Image data to display (optional) **/
+    std::variant<std::monostate, std::shared_ptr<Image>, std::shared_ptr<ProcessObject>> segmentation; /**< Source of segmentation Image data to display (optional) **/
+    std::optional<float> intensityLevel; /**< Intensity level used by ImageRenderer. Only used with DisplayType::SLICER **/
+    std::optional<float> intensityWindow; /**< Intensity window used by ImageRenderer. Only used with DisplayType::SLICER **/
     LabelColors segmentationColors;
     float segmentationOpacity = 0.5f;
     float segmentationBorderOpacity = -1.0f;
     int segmentationBorderRadius = 1;
-    TransferFunction transferFunction;
+    TransferFunction transferFunction; /**< Transfer function to use by AlphaBlendingVolumeRenderer when displayType == DisplayType::ALPHA_BLENDING **/
     DisplayType displayType = DisplayType::SLICER;
-    Color bgcolor = Color::White();
-    int width = 0;
-    int height = 0;
-    std::optional<int> timeout;
-    bool returnWindow = false;
-    std::variant<std::monostate, std::vector<QWidget*>, std::map<WidgetPosition, std::vector<QWidget*>>> widgets;
+    Color bgcolor = Color::White(); /**< Background color to use for the View. **/
+    int width = 0; /**< Width of window, set to 0 to use default width. **/
+    int height = 0; /**< Height of window, set to 0 to use default height. **/
+    std::optional<int> timeout;  /**< Milliseconds until closing window automatically. If not setm the window will not automatically close. **/
+    bool returnWindow = false; /**< If set to true, the window is returned by the function, else display2D will call run on the window and return nothing. **/
+    std::variant<std::monostate, std::vector<QWidget*>, std::map<WidgetPosition, std::vector<QWidget*>>> widgets; /**< Widgets to attach to window. **/
 };
 
 /**
@@ -103,6 +112,7 @@ struct Display3DArgs {
  *
  * @param args See the Display3DArgs struct
  * @return A variant which is either empty or a Window depending on whether Display3DArgs.returnWindow is set to true or not.
+ * @ingroup shortcuts
  */
 FAST_EXPORT std::variant<std::monostate, Window::pointer> display3D(Display3DArgs args);
 
