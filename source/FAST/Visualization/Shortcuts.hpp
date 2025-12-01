@@ -3,6 +3,8 @@
 #include <FAST/Visualization/Window.hpp>
 #include <FAST/Data/Image.hpp>
 #include <FAST/Visualization/VolumeRenderer/TransferFunction.hpp>
+#include <variant>
+#include <optional>
 
 class QWidget;
 
