@@ -46,7 +46,7 @@ void ImageImporter::execute() {
         uchar* convertedPixelData;
         // Load image from disk using Qt
         QImage image;
-        reportInfo() << "Trying to load image in ImageReporter" << Reporter::end();
+        reportInfo() << "Trying to load image in ImageImporter" << Reporter::end();
         if(!image.load(m_filename.c_str())) {
             throw FileNotFoundException(m_filename);
         }

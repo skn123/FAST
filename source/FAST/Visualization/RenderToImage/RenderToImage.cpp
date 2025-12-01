@@ -255,12 +255,12 @@ void RenderToImage::recalculateCamera() {
 
 
         float aspect = (max[yDirection] - min[yDirection])/(max[xDirection] - min[xDirection]);
-        if(m_width < 0 && m_height < 0)
+        if(m_width <= 0 && m_height <= 0)
             throw Exception("Width and height in RenderToImage can't both be below 0");
-        if(m_height < 0) {
+        if(m_height <= 0) {
             m_height = round(m_width*(aspect));
         }
-        if(m_width < 0) {
+        if(m_width <= 0) {
             m_width = round(m_height*(1.0f/aspect));
         }
         // Move objects away from camera so that we see everything

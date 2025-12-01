@@ -9,6 +9,11 @@ INPUT                  = @TOP_SOURCE_DIR@/doc/mainpage.dox \
 FILE_PATTERNS          = *.hpp, *.dox, *.md, *.cpp, *.py
 EXCLUDE_PATTERNS       = */Tests/* \
                          */Tools/*  \
+                         */Python/Shortcuts.py \
+                         */Python/ProcessObjectExtensions.py \
+                         */Python/DataStream.py \
+                         */Python/__init__fast.py \
+                         */Python/entry_points.py \
                          __*__.py
 RECURSIVE              = YES
 CREATE_SUBDIRS          = NO

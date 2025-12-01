@@ -102,7 +102,7 @@ void DicomMultiFrameStreamer::generateStream() {
         ROIfound = true;
     }
 
-    std::cout << "size: " << width << " " << height << " " << frames <<  std::endl;
+    reportInfo() << "Dicom multi frame size: " << width << " " << height << " frames: " << frames << reportEnd();
 
     auto previousTime = std::chrono::high_resolution_clock::now();
     while(true) {
