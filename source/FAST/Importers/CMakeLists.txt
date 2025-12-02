@@ -24,7 +24,7 @@ fast_add_test_sources(
     Tests/ImageFileImporterTests.cpp
     Tests/NIFTIImporterTests.cpp
 )
-if(FAST_MODULE_Dicom)
+if(FAST_MODULE_DICOM)
 fast_add_sources(
     DICOMFileImporter.cpp
     DICOMFileImporter.hpp
