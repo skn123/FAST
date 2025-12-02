@@ -160,7 +160,7 @@ include(cmake/ModuleKinect.cmake)
 include(cmake/ModuleRealSense.cmake)
 include(cmake/ModuleWholeSlideImaging.cmake)
 include(cmake/ModuleClarius.cmake)
-include(cmake/ModuleDicom.cmake)
+include(cmake/ModuleDICOM.cmake)
 include(cmake/ModuleHDF5.cmake)
 include(cmake/ModulePlotting.cmake)
 

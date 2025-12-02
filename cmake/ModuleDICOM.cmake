@@ -1,5 +1,5 @@
 
-if(FAST_MODULE_Dicom)
+if(FAST_MODULE_DICOM)
     message("-- Enabling dicom (DCMTK) module.")
     add_definitions("-DFAST_MODULE_DICOM")
     if(WIN32)

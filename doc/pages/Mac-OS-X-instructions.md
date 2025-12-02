@@ -44,7 +44,7 @@ Here is a list of some options which might be useful:
 * FAST_MODULE_TensorFlo (not supported on Apple Silicon)w
 * FAST_MODULE_TensorRT (not supported on Mac)
 * FAST_MODULE_OpenVIN (not supported on Apple Silicon)O
-* FAST_MODULE_Dicom
+* FAST_MODULE_DICOM
 * FAST_MODULE_WholeSlideImaging
 * FAST_MODULE_OpenIGTLink
 * FAST_MODULE_Clarius (not supported on Apple Silicon)

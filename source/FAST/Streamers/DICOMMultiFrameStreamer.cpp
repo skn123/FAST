@@ -1,4 +1,4 @@
-#include "DicomMultiFrameStreamer.hpp"
+#include "DICOMMultiFrameStreamer.hpp"
 #include "dcmtk/dcmimage/diregist.h"
 #include <dcmtk/dcmdata/dcfilefo.h>
 #include <dcmtk/dcmdata/dcdeftag.h>
@@ -13,7 +13,7 @@ namespace fast {
 
 /*
 template <>
-std::string DicomMultiFrameStreamer::getDicomTag<std::string>(ushort group, ushort element) {
+std::string DICOMMultiFrameStreamer::getDICOMTag<std::string>(ushort group, ushort element) {
     if(!m_dataset)
         load();
     OFString patientID;
@@ -22,7 +22,7 @@ std::string DicomMultiFrameStreamer::getDicomTag<std::string>(ushort group, usho
 }
 */
 
-DicomMultiFrameStreamer::DicomMultiFrameStreamer(std::string filename, bool loop, bool useFramerate, int framerate, bool convertToGrayscale, bool cropToROI) {
+DICOMMultiFrameStreamer::DICOMMultiFrameStreamer(std::string filename, bool loop, bool useFramerate, int framerate, bool convertToGrayscale, bool cropToROI) {
     createOutputPort(0);
     m_filename = filename;
     m_convertToGrayscale = convertToGrayscale;
@@ -33,13 +33,13 @@ DicomMultiFrameStreamer::DicomMultiFrameStreamer(std::string filename, bool loop
     DJDecoderRegistration::registerCodecs();// register JPEG codecs
 }
 
-void DicomMultiFrameStreamer::execute() {
+void DICOMMultiFrameStreamer::execute() {
     startStream();
 
     waitForFirstFrame();
 }
 
-void DicomMultiFrameStreamer::load() {
+void DICOMMultiFrameStreamer::load() {
     if(!fileExists(m_filename))
         throw FileNotFoundException(m_filename);
 
@@ -55,10 +55,10 @@ void DicomMultiFrameStreamer::load() {
         throw Exception("Unable to read dicom dataset");
     }
     if(m_image->getNumberOfFrames() == 1)
-        throw Exception("Dicom file given to DicomMultiFrameStreamer is not a multi frame file.");
+        throw Exception("DICOM file given to DICOMMultiFrameStreamer is not a multi frame file.");
 }
 
-void DicomMultiFrameStreamer::generateStream() {
+void DICOMMultiFrameStreamer::generateStream() {
     if(!m_image)
         load();
     const int width = m_image->getWidth();
@@ -102,7 +102,7 @@ void DicomMultiFrameStreamer::generateStream() {
         ROIfound = true;
     }
 
-    reportInfo() << "Dicom multi frame size: " << width << " " << height << " frames: " << frames << reportEnd();
+    reportInfo() << "DICOM multi frame size: " << width << " " << height << " frames: " << frames << reportEnd();
 
     auto previousTime = std::chrono::high_resolution_clock::now();
     while(true) {
@@ -154,17 +154,17 @@ void DicomMultiFrameStreamer::generateStream() {
     }
 }
 
-int DicomMultiFrameStreamer::getNrOfFrames() {
+int DICOMMultiFrameStreamer::getNrOfFrames() {
     if(!m_image)
         load();
     return m_image->getNumberOfFrames();
 }
 
-DicomMultiFrameStreamer::DicomMultiFrameStreamer() {
+DICOMMultiFrameStreamer::DICOMMultiFrameStreamer() {
 
 }
 
-DicomMultiFrameStreamer::~DicomMultiFrameStreamer() {
+DICOMMultiFrameStreamer::~DICOMMultiFrameStreamer() {
     DJDecoderRegistration::cleanup();
 }
 }

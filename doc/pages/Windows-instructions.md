@@ -53,7 +53,7 @@ Here is a list of some options which might be useful:
 * FAST_MODULE_TensorFlow
 * FAST_MODULE_TensorRT
 * FAST_MODULE_OpenVINO
-* FAST_MODULE_Dicom
+* FAST_MODULE_DICOM
 * FAST_MODULE_WholeSlideImaging
 * FAST_MODULE_OpenIGTLink
 * FAST_MODULE_Clarius

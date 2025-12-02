@@ -22,22 +22,22 @@ fast_add_python_interfaces(
 )
 fast_add_python_shared_pointers(Streamer RandomAccessStreamer FileStreamer MeshFileStreamer)
 fast_add_process_object(ImageFileStreamer ImageFileStreamer.hpp)
-if(FAST_MODULE_Dicom)
-    fast_add_sources(DicomMultiFrameStreamer.cpp DicomMultiFrameStreamer.hpp)
-    fast_add_process_object(DicomMultiFrameStreamer DicomMultiFrameStreamer.hpp)
-    fast_add_test_sources(Tests/DicomMultiFrameStreamerTests.cpp)
+if(FAST_MODULE_DICOM)
+    fast_add_sources(DICOMMultiFrameStreamer.cpp DICOMMultiFrameStreamer.hpp)
+    fast_add_process_object(DICOMMultiFrameStreamer DICOMMultiFrameStreamer.hpp)
+    fast_add_test_sources(Tests/DICOMMultiFrameStreamerTests.cpp)
 endif()
 if(FAST_MODULE_OpenIGTLink)
     fast_add_sources(
-            OpenIGTLinkStreamer.hpp
-            OpenIGTLinkStreamer.cpp
+        OpenIGTLinkStreamer.hpp
+        OpenIGTLinkStreamer.cpp
         Tests/DummyIGTLServer.cpp
         Tests/DummyIGTLServer.hpp
     )
     fast_add_process_object(OpenIGTLinkStreamer OpenIGTLinkStreamer.hpp)
     if(FAST_MODULE_Visualization)
     fast_add_test_sources(
-            Tests/OpenIGTLinkStreamerTests.cpp
+        Tests/OpenIGTLinkStreamerTests.cpp
     )
     endif()
 endif()

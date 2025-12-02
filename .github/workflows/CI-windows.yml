@@ -117,7 +117,7 @@ jobs:
         cmake ${{github.workspace}} -B ${{github.workspace}}/build `
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} `
             -DFAST_MODULE_OpenVINO=ON `
-            -DFAST_MODULE_Dicom=ON `
+            -DFAST_MODULE_DICOM=ON `
             -DFAST_MODULE_WholeSlideImaging=ON `
             -DFAST_MODULE_OpenIGTLink=ON `
             -DFAST_MODULE_Clarius=ON `
@@ -141,7 +141,7 @@ jobs:
             -B ${{github.workspace}}/build `
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} `
             -DFAST_MODULE_OpenVINO=ON `
-            -DFAST_MODULE_Dicom=ON `
+            -DFAST_MODULE_DICOM=ON `
             -DFAST_MODULE_WholeSlideImaging=ON `
             -DFAST_MODULE_OpenIGTLink=ON `
             -DFAST_MODULE_Clarius=ON `

@@ -8,7 +8,7 @@ Ultrasound data
 ---------------------
 Ultrasound image data comes in many formats; as 2D images or 3D volumes, and often ultrasound data is a sequence
 of images/volumes over time.
-FAST can read sequences of ultrasound data stored as videos, images (.png/.jpeg), metaimages (.mhd/.raw/.zraw) and in ultrasound file format (UFF, HDF5).
+FAST can read sequences of ultrasound data stored as videos, DICOM multi-frame files (.dcm), images (.png/.jpeg), metaimages (.mhd/.raw/.zraw) and in ultrasound file format (UFF, HDF5).
 FAST can also stream data in real-time from ultrasound scanners either using the OpenIGTLink protocol or from Clarius scanners using their Cast API.
 Let's look at how we can stream data from each of these sources.
 
@@ -20,6 +20,7 @@ fast.downloadTestDataIfNotExists()
 
 Reading and visualizing ultrasound images
 ---------------------
+
 
 ### Read ultrasound images from a video
 Use the MovieStreamer object to read image frames from a video.
@@ -86,6 +87,33 @@ for frame in fast.DataStream(streamer):
 @endcode
 
 @image html images/examples/python/video_frames.jpg width=400px;
+
+### Read ultrasound images from a DICOM multiframe file
+
+In the DICOM format, ultrasound recordings are typically stored as a multiframe file.
+With this file format, all ultrasound video frames are stored in the same file and might be compressed with JPEG or other
+image compression formats.
+Such DICOM files can be read using the DICOMMultiFrameStreamer.
+This streamer has a useful option to crop the images to the region of interest (ROI) that is stored in the DICOM file.
+This typically removes part of the scanner GUI that is in the image, while keeping the actual ultrasound image.
+The streamer also has options to convert the image to grayscale and loop. By default it will stream images in the framerate
+that is stored in the DICOM file. You can override the framerate by setting the framerate in the create method.
+If you want to stream as fast as possible, you can disable the use of the file framerate by setting useFramerate=False
+in create().
+
+@code{.py}
+import fast
+
+streamer = fast.DICOMMultiFrameStreamer.create(
+    'path_to_dicom_file.dcm',
+    loop=True,
+    grayscale=False,
+    cropToROI=True,
+)
+
+fast.display2D(streamer)
+@endcode
+
 
 ### Read a single ultrasound image and convert to numpy array
 

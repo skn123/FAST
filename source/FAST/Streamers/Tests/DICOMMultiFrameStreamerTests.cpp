@@ -1,13 +1,13 @@
 #include <FAST/Testing.hpp>
-#include <FAST/Streamers/DicomMultiFrameStreamer.hpp>
+#include <FAST/Streamers/DICOMMultiFrameStreamer.hpp>
 #include <FAST/Visualization/ImageRenderer/ImageRenderer.hpp>
 #include <FAST/Visualization/SimpleWindow.hpp>
 #include <FAST/Visualization/Widgets/PlaybackWidget/PlaybackWidget.hpp>
 
 using namespace fast;
 
-TEST_CASE("DicomMultiFrameStreamer", "[fast][DicomMultiFrameStreamer][visual]") {
-    auto streamer = DicomMultiFrameStreamer::create(
+TEST_CASE("DICOMMultiFrameStreamer", "[fast][DICOMMultiFrameStreamer][visual]") {
+    auto streamer = DICOMMultiFrameStreamer::create(
             "file",
             false,
             true,
