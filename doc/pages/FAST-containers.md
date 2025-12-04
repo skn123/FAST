@@ -23,13 +23,13 @@ The python containers have pyfast installed in a virtual environment which is ac
 Example of pulling the fast-python container with PoCL and Xvfb installed:
 
 ```bash
-docker pull ghcr.io/fast-imaging/fast-python:4.14.1-pocl-xvfb
+docker pull ghcr.io/fast-imaging/fast-python:4.15.0-pocl-xvfb
 ```
 
 Example of running the container and starting python:
 
 ```bash
-docker run -ti --rm ghcr.io/fast-imaging/fast-python:4.14.1-pocl-xvfb python
+docker run -ti --rm ghcr.io/fast-imaging/fast-python:4.15.0-pocl-xvfb python
 ```
 
 ### Library
@@ -40,13 +40,13 @@ C++ binaries, headers and tools.
 Example of pulling the fast-library container with PoCL and Xvfb installed:
 
 ```bash
-docker pull ghcr.io/fast-imaging/fast-library:4.14.1-pocl-xvfb
+docker pull ghcr.io/fast-imaging/fast-library:4.15.0-pocl-xvfb
 ```
 
 Example of running the container and executing the FAST systemCheck tool which prints system information:
 
 ```bash
-docker run -ti --rm ghcr.io/fast-imaging/fast-python:4.14.1-pocl-xvfb systemCheck --no-gui
+docker run -ti --rm ghcr.io/fast-imaging/fast-python:4.15.0-pocl-xvfb systemCheck --no-gui
 ```
 
 ### OpenCL
@@ -80,7 +80,7 @@ so by giving the docker container access to your X server which is done by:
 Example:
 ```bash
 # Pull a docker image with PoCL and no X server:
-docker pull ghcr.io/fast-imaging/fast-python:4.14.1-pocl-no_x
+docker pull ghcr.io/fast-imaging/fast-python:4.15.0-pocl-no_x
 
 # Run the systemCheck tool inside the docker container:
 docker run -it --rm \
@@ -88,7 +88,7 @@ docker run -it --rm \
     -e XAUTHORITY=$XAUTHORITY \
     -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
     -v $XAUTHORITY:$XAUTHORITY:ro \
-    ghcr.io/fast-imaging/fast-python:4.14.1-pocl-no_x \
+    ghcr.io/fast-imaging/fast-python:4.15.0-pocl-no_x \
     systemCheck
 ```
 
@@ -107,7 +107,7 @@ When running you have to give the docker container access to your X server, whic
 Example:
 ```bash
 # Pull a docker image with PoCL, Xvfb and VGL installed:
-docker pull ghcr.io/fast-imaging/fast-python:4.14.1-pocl-xvfb-vgl
+docker pull ghcr.io/fast-imaging/fast-python:4.15.0-pocl-xvfb-vgl
 
 # Run the systemCheck tool inside the docker container:
 docker run -it --rm \
@@ -115,7 +115,7 @@ docker run -it --rm \
     -e XAUTHORITY=$XAUTHORITY \
     -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
     -v $XAUTHORITY:$XAUTHORITY:ro \
-    ghcr.io/fast-imaging/fast-python:4.14.1-pocl-xvfb-vgl \
+    ghcr.io/fast-imaging/fast-python:4.15.0-pocl-xvfb-vgl \
     systemCheck
 ```
 
@@ -126,14 +126,14 @@ In this case you cannot use a Window or GUI in FAST. But you can render to an im
 Python example of headless rendering:
 ```bash
 # Pull a docker image with PoCL and Xvfb installed:
-docker pull ghcr.io/fast-imaging/fast-python:4.14.1-pocl-xvfb
+docker pull ghcr.io/fast-imaging/fast-python:4.15.0-pocl-xvfb
 
 # Run the docker container, mount the current directory and start python
-docker run -ti --rm -v .:/output/ ghcr.io/fast-imaging/fast-python:4.14.1-pocl-xvfb python
+docker run -ti --rm -v .:/output/ ghcr.io/fast-imaging/fast-python:4.15.0-pocl-xvfb python
 ```
 
 Then you can try the following:
-```python
+```py
 import fast
 
 importer = fast.ImageFileImporter\
@@ -156,12 +156,13 @@ This should render the image inside the container, and store it as 'headless_ren
 The build container is used for building, e.g. compiling, FAST.
 
 ```bash
-docker pull ghcr.io/fast-imaging/fast-build:4.14.1
+docker pull ghcr.io/fast-imaging/fast-build:4.15.0
 ```
 
 Running this container will checkout FAST from GitHub master branch and compile it:
+
 ```bash
-docker run -ti ghcr.io/fast-imaging/fast-build:4.14.1
+docker run -ti ghcr.io/fast-imaging/fast-build:4.15.0
 ```
 
 ## Container source
