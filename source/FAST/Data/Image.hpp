@@ -389,21 +389,21 @@ Image::pointer Image::create(uint width, uint height, uint depth, DataType type,
 
 template <class T>
 Image::pointer Image::create(uint width, uint height, DataType type, uint nrOfChannels, std::unique_ptr<T> ptr) {
-    auto resPtr = std::shared_ptr<Image>(new Image(width, height, type, nrOfChannels, DeviceManager::getInstance()->getDefaultDevice(), std::move(ptr)));
+    auto resPtr = std::shared_ptr<Image>(new Image(width, height, type, nrOfChannels, Host::getInstance(), std::move(ptr)));
     resPtr->setPtr(resPtr);
     return resPtr;
 }
 
 template <class T>
 Image::pointer Image::create(uint width, uint height, uint depth, DataType type, uint nrOfChannels, std::unique_ptr<T> ptr) {
-    auto resPtr = std::shared_ptr<Image>(new Image(width, height, depth, type, nrOfChannels, DeviceManager::getInstance()->getDefaultDevice(), std::move(ptr)));
+    auto resPtr = std::shared_ptr<Image>(new Image(width, height, depth, type, nrOfChannels, Host::getInstance(), std::move(ptr)));
     resPtr->setPtr(resPtr);
     return resPtr;
 }
 
 template <class T>
 Image::pointer Image::create(VectorXui size, DataType type, uint nrOfChannels, std::unique_ptr<T> ptr) {
-    auto resPtr = std::shared_ptr<Image>(new Image(size, type, nrOfChannels, DeviceManager::getInstance()->getDefaultDevice(), std::move(ptr)));
+    auto resPtr = std::shared_ptr<Image>(new Image(size, type, nrOfChannels, Host::getInstance(), std::move(ptr)));
     resPtr->setPtr(resPtr);
     return resPtr;
 }
