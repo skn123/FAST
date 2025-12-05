@@ -507,7 +507,7 @@ Image::Image(
         // 2D
         init(size.x(), size.y(), type, nrOfChannels);
     }
-    copyData(DeviceManager::getInstance()->getDefaultDevice(), data);
+    copyData(Host::getInstance(), data);
 }
 
 
@@ -563,7 +563,7 @@ Image::Image(
         const void* const data) : Image() {
 
 	init(width, height, depth, type, nrOfChannels);
-	copyData(DeviceManager::getInstance()->getDefaultDevice(), data);
+	copyData(Host::getInstance(), data);
 }
 
 Image::Image(
@@ -625,7 +625,7 @@ Image::Image(
         const void* const data) : Image() {
 
 	init(width, height, type, nrOfChannels);
-	copyData(DeviceManager::getInstance()->getDefaultDevice(), data);
+	copyData(Host::getInstance(), data);
 }
 
 void Image::copyData(ExecutionDevice::pointer device, const void* const data) {
