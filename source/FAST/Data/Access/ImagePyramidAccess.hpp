@@ -119,6 +119,12 @@ public:
 	void release();
 	~ImagePyramidAccess() override;
 	void setJPEGTables(uint32_t tableCount, void* tableData);
+	// Deal with SWIG issue:
+    void enableRuntimeMeasurements() { Object::enableRuntimeMeasurements(); };
+    void disableRuntimeMeasurements() { Object::disableRuntimeMeasurements(); };
+    RuntimeMeasurement::pointer getRuntime() { return Object::getRuntime(); };
+    RuntimeMeasurement::pointer getRuntime(std::string name) { return Object::getRuntime(name); };
+    RuntimeMeasurementsManager::pointer getAllRuntimes() { return Object::getAllRuntimes(); };
 private:
     std::unique_ptr<uchar[]> getPatchDataChar(int level, int x, int y, int width, int height);
 	std::shared_ptr<ImagePyramid> m_image;

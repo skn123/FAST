@@ -85,7 +85,7 @@ std::unique_ptr<uchar[]> ImagePyramidAccess::getPatchDataChar(int level, int x, 
                 (y - (y/tileHeight)*tileHeight) + height <= tileHeight
                 ) {
             // We only need to read 1 tile
-            mRuntimeManager->startRegularTimer("simple");
+            mRuntimeManager->startRegularTimer("simple_crop");
             auto tileData = std::make_unique<uchar[]>(tileWidth*tileHeight*bytesPerPixel);
             {
                 // From TIFFReadTile documentation: Return the data for the tile containing the specified coordinates.
@@ -124,7 +124,7 @@ std::unique_ptr<uchar[]> ImagePyramidAccess::getPatchDataChar(int level, int x, 
                 }
             }
             mRuntimeManager->stopRegularTimer("Crop tile");
-            mRuntimeManager->stopRegularTimer("simple");
+            mRuntimeManager->stopRegularTimer("simple_crop");
         } else {
             mRuntimeManager->startRegularTimer("full");
             // Create buffer to contain all tiles
@@ -220,7 +220,9 @@ std::unique_ptr<uchar[]> ImagePyramidAccess::getPatchDataChar(int level, int x, 
         }
     } else if(m_fileHandle != nullptr) {
         int scale = (float)m_image->getFullWidth()/levelWidth;
+        mRuntimeManager->startRegularTimer("openslide_read_region");
         openslide_read_region(m_fileHandle, (uint32_t*)data.get(), x * scale, y * scale, level, width, height);
+        mRuntimeManager->stopRegularTimer("openslide_read_region");
     }
 
     return data;
@@ -253,7 +255,9 @@ std::shared_ptr<Image> ImagePyramidAccess::getPatchAsImage(int level, int offset
         case TYPE_UINT8:
             {
                 auto data = getPatchData<uchar>(level, offsetX, offsetY, width, height);
+                mRuntimeManager->startRegularTimer("create_image_object");
                 image = Image::create(width, height, m_image->getDataType(), m_image->getNrOfChannels(), std::move(data));
+                mRuntimeManager->stopRegularTimer("create_image_object");
             }
             break;
         case TYPE_UINT16:
@@ -294,12 +298,14 @@ std::shared_ptr<Image> ImagePyramidAccess::getPatchAsImage(int level, int offset
     SceneGraph::setParentNode(image, std::dynamic_pointer_cast<SpatialDataObject>(m_image));
 
     if(m_fileHandle != nullptr && convertToRGB) {
+        mRuntimeManager->startRegularTimer("convert_to_rgb");
         // Data is stored as BGRA, need to delete alpha channel and reverse it
         auto channelConverter = ImageChannelConverter::New();
         channelConverter->setChannelsToRemove(false, false, false, true);
         channelConverter->setReverseChannels(true);
         channelConverter->setInputData(image);
         image = channelConverter->updateAndGetOutputData<Image>();
+        mRuntimeManager->stopRegularTimer("convert_to_rgb");
     }
     return image;
 }
@@ -368,10 +374,14 @@ uint32_t ImagePyramidAccess::writeTileToTIFF(int level, int x, int y, Image::poi
     if(m_image->getCompression() == ImageCompression::NEURAL_NETWORK) {
         return writeTileToTIFFNeuralNetwork(level, x, y, image);
     } else if(m_image->getCompression() == ImageCompression::JPEGXL) {
+        mRuntimeManager->startRegularTimer("get_image_access_for_writing");
         auto access = image->getImageAccess(ACCESS_READ);
+        mRuntimeManager->stopRegularTimer("get_image_access_for_writing");
         return writeTileToTIFFJPEGXL(level, x, y, (uchar*)access->get());
     } else if(m_image->getCompression() == ImageCompression::JPEG) {
+        mRuntimeManager->startRegularTimer("get_image_access_for_writing");
         auto access = image->getImageAccess(ACCESS_READ);
+        mRuntimeManager->stopRegularTimer("get_image_access_for_writing");
         return writeTileToTIFFJPEG(level, x, y, (uchar*)access->get());
     } else {
         auto access = image->getImageAccess(ACCESS_READ);
@@ -390,28 +400,36 @@ uint32_t ImagePyramidAccess::writeTileToTIFF(int level, int x, int y, uchar *dat
 
 uint32_t ImagePyramidAccess::writeTileToTIFFJPEGXL(int level, int x, int y, uchar *data) {
     std::lock_guard<std::mutex> lock(m_readMutex);
-    TIFFSetDirectory(m_tiffHandle, level);
-    uint32_t tile_id = TIFFComputeTile(m_tiffHandle, x, y, 0, 0);
+    mRuntimeManager->startRegularTimer("jpegxl_compression");
     JPEGXLCompression jxl;
     std::vector<uchar> compressed;
     jxl.compress(data, m_image->getLevelTileWidth(level), m_image->getLevelTileHeight(level), &compressed, m_image->getCompressionQuality());
+    mRuntimeManager->stopRegularTimer("jpegxl_compression");
+    mRuntimeManager->startRegularTimer("tiff_write_tile");
+    TIFFSetDirectory(m_tiffHandle, level);
+    uint32_t tile_id = TIFFComputeTile(m_tiffHandle, x, y, 0, 0);
     TIFFSetWriteOffset(m_tiffHandle, 0); // Set write offset to 0, so that we dont appen data
     TIFFWriteRawTile(m_tiffHandle, tile_id, (void *) compressed.data(), compressed.size()); // This appends data..
     TIFFCheckpointDirectory(m_tiffHandle);
+    mRuntimeManager->stopRegularTimer("tiff_write_tile");
     return tile_id;
 }
 
 
 uint32_t ImagePyramidAccess::writeTileToTIFFJPEG(int level, int x, int y, uchar *data) {
     std::lock_guard<std::mutex> lock(m_readMutex);
-    TIFFSetDirectory(m_tiffHandle, level);
-    uint32_t tile_id = TIFFComputeTile(m_tiffHandle, x, y, 0, 0);
+    mRuntimeManager->startRegularTimer("jpeg_compression");
     JPEGCompression jpeg;
     std::vector<uchar> compressed;
     jpeg.compress(data, m_image->getLevelTileWidth(level), m_image->getLevelTileHeight(level), &compressed, m_image->getCompressionQuality());
+    mRuntimeManager->stopRegularTimer("jpeg_compression");
+    mRuntimeManager->startRegularTimer("tiff_write_tile");
+    TIFFSetDirectory(m_tiffHandle, level);
+    uint32_t tile_id = TIFFComputeTile(m_tiffHandle, x, y, 0, 0);
     TIFFSetWriteOffset(m_tiffHandle, 0); // Set write offset to 0, so that we dont appen data
     TIFFWriteRawTile(m_tiffHandle, tile_id, (void *) compressed.data(), compressed.size()); // This appends data..
     TIFFCheckpointDirectory(m_tiffHandle);
+    mRuntimeManager->stopRegularTimer("tiff_write_tile");
     return tile_id;
 }
 
@@ -441,6 +459,7 @@ void ImagePyramidAccess::setPatch(int level, int x, int y, Image::pointer patch,
         throw Exception("setPatch only available for TIFF backend ImagePyramids");
 
     if(m_image->getLevelTileWidth(level) > patch->getWidth() || m_image->getLevelTileHeight(level) > patch->getHeight()) {
+        mRuntimeManager->startRegularTimer("padding");
         // Padding needed
         auto paddedImage = Image::create(m_image->getLevelTileWidth(level), m_image->getLevelTileHeight(level), patch->getDataType(), m_image->getNrOfChannels());
         if(m_image->getNrOfChannels() >= 3) {
@@ -458,6 +477,7 @@ void ImagePyramidAccess::setPatch(int level, int x, int y, Image::pointer patch,
             device->getCommandQueue().finish();
         }
         patch = paddedImage;
+        mRuntimeManager->stopRegularTimer("padding");
     }
 
     // Write tile to this level
@@ -675,6 +695,7 @@ void ImagePyramidAccess::setBlankPatch(int level, int x, int y) {
         throw Exception("setBlankPatch only available for TIFF backend ImagePyramids");
 
     std::lock_guard<std::mutex> lock(m_readMutex);
+    mRuntimeManager->startRegularTimer("write_blank_patch");
     TIFFSetDirectory(m_tiffHandle, level);
     uint32_t tile_id = TIFFComputeTile(m_tiffHandle, x, y, 0, 0);
     TIFFSetWriteOffset(m_tiffHandle, 0); // Set write offset to 0, so that we dont appen data
@@ -682,6 +703,7 @@ void ImagePyramidAccess::setBlankPatch(int level, int x, int y) {
     char data = 0;
     TIFFWriteRawTile(m_tiffHandle, tile_id, &data, 0);
     TIFFCheckpointDirectory(m_tiffHandle);
+    mRuntimeManager->stopRegularTimer("write_blank_patch");
     m_initializedPatchList.insert(std::to_string(level) + "-" + std::to_string(tile_id));
 
     // TODO Propagate or not?
