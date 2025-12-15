@@ -180,3 +180,56 @@ TEST_CASE("Create image pyramid with custom level sizes", "[fast][ImagePyramid]"
     CHECK(pyramid->getLevelScale(1) == Approx(1.5f).margin(0.01));
     CHECK(pyramid->getLevelScale(2) == Approx(4.5f).margin(0.01));
 }
+
+TEST_CASE("Create image pyramid with custom level sizes including level 0", "[fast][ImagePyramid]") {
+    std::vector<Vector2i> sizes = {
+            {22000, 13000},
+            {22000/1.5f, 13000/1.5f},
+            {22000/4.5f, 13000/4.5f}
+    };
+    auto pyramid = ImagePyramid::create(22000, 13000, 1, 512, 512, ImageCompression::JPEG, 90,
+                                        fast::TYPE_UINT8, {}, sizes);
+
+    CHECK(pyramid->getNrOfLevels() == 3);
+    CHECK(pyramid->getWidth() == 22000);
+    CHECK(pyramid->getHeight() == 13000);
+    CHECK(pyramid->getLevelWidth(1) == sizes[1].x());
+    CHECK(pyramid->getLevelHeight(1) == sizes[1].y());
+    CHECK(pyramid->getLevelWidth(2) == sizes[2].x());
+    CHECK(pyramid->getLevelHeight(2) == sizes[2].y());
+    CHECK_THROWS(pyramid->getLevelWidth(3));
+    CHECK(pyramid->getDataType() == TYPE_UINT8);
+    CHECK(pyramid->getLevelTileWidth(0) == 512);
+    CHECK(pyramid->getLevelTileHeight(0) == 512);
+    CHECK(pyramid->getCompression() == ImageCompression::JPEG);
+    CHECK(pyramid->getNrOfChannels() == 1);
+    CHECK(pyramid->getLevelScale(0) == Approx(1.0f).margin(0.01));
+    CHECK(pyramid->getLevelScale(1) == Approx(1.5f).margin(0.01));
+    CHECK(pyramid->getLevelScale(2) == Approx(4.5f).margin(0.01));
+}
+
+TEST_CASE("Invalid level sizes", "[fast][ImagePyramid]") {
+    std::vector<Vector2i> sizes = {
+            {24000, 13000},
+            {128, 128}
+    };
+    CHECK_THROWS(
+        auto pyramid = ImagePyramid::create(22000, 13000, 1, 512, 512, ImageCompression::JPEG, 90,
+                                        fast::TYPE_UINT8, {}, sizes);
+    );
+
+}
+
+TEST_CASE("getLevelSizes", "[fast][ImagePyramid]") {
+    std::vector<Vector2i> sizes = {
+            {22000, 13000},
+            {22000/1.5f, 13000/1.5f},
+            {22000/4.5f, 13000/4.5f}
+    };
+    auto pyramid = ImagePyramid::create(22000, 13000, 1, 512, 512, ImageCompression::JPEG, 90,
+                                        fast::TYPE_UINT8, {}, sizes);
+    auto levelSizes = pyramid->getLevelSizes();
+    for(int i = 0; i < 3; ++i) {
+        CHECK(levelSizes[i] == sizes[i]);
+    }
+}

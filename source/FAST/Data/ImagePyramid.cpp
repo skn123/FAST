@@ -101,6 +101,16 @@ ImagePyramid::ImagePyramid(int width, int height, int channels, int patchWidth, 
                     break;
                 if(levelSizes[currentLevel-1].x() <= 2 && levelSizes[currentLevel-1].y() <= 2)
                     throw Exception("Invalid level size smaller than 2");
+                if(currentLevel == 1 && levelSizes[0].x() == currentWidth && levelSizes[0].y() == currentHeight) {
+                    // User has specified width and height of level 0 in levelSizes: skip it, as this level is already created
+                    ++currentLevel;
+                    continue;
+                }
+                if(levelSizes[currentLevel-1].x() >= currentWidth || levelSizes[currentLevel-1].y() >= currentHeight)
+                    throw Exception("Invalid level size, each size must be smaller than previous level."
+                                    "Current: " + std::to_string(currentWidth) + " " + std::to_string(currentHeight) + " "
+                                    "Next: " + std::to_string(levelSizes[currentLevel-1].x()) + " " +  std::to_string(levelSizes[currentLevel-1].y())
+                    );
                 currentWidth = levelSizes[currentLevel-1].x();
                 currentHeight = levelSizes[currentLevel-1].y();
             } else if(!levelDownsamples.empty()) {
@@ -682,5 +692,13 @@ int ImagePyramid::getWidth() const {
 }
 int ImagePyramid::getHeight() const {
     return getLevelHeight(0);
+}
+
+std::vector<Vector2i> ImagePyramid::getLevelSizes() const {
+    std::vector<Vector2i> sizes;
+    for(int i = 0; i < getNrOfLevels(); ++i) {
+        sizes.emplace_back(getLevelWidth(i), getLevelHeight(i));
+    }
+    return sizes;
 }
 }

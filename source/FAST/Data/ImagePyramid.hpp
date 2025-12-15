@@ -82,11 +82,16 @@ class FAST_EXPORT ImagePyramid : public SpatialDataObject {
         int getFullHeight();
         int getWidth() const;
         int getHeight() const;
+        /**
+         * @brief Get size (width and height) for each level in the image pyramid
+         * @return list of image pyramid level sizes
+         */
+        std::vector<Vector2i> getLevelSizes() const;
         int getNrOfChannels() const;
         bool isBGRA() const;
         bool usesTIFF() const;
         /**
-         * Whether all patches in entire pyramid has been initialized.
+         * @brief Whether all patches in entire pyramid has been initialized.
          */
         bool isPyramidFullyInitialized() const;
         bool usesOpenSlide() const;
