@@ -17,7 +17,7 @@ Learn best by example? Check out all the examples for [C++](https://fast-imaging
 
 For more examples and documentation, go to [fast-imaging.github.io](https://fast-imaging.github.io).
 
-Need help? Post your questions on the [Discussions](https://github.com/FAST-Imaging/FAST/discussions/) page.
+Need help? Post your questions on the [Discussions](https://github.com/FAST-Imaging/FAST/discussions/new?category=q-a) page.
 
 ### Main features
 
