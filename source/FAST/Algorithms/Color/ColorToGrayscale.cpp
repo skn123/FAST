@@ -2,6 +2,7 @@
 #include <FAST/Data/Image.hpp>
 
 namespace fast {
+
 ColorToGrayscale::ColorToGrayscale() {
     createInputPort(0);
     createOutputPort(0);
@@ -23,22 +24,12 @@ void ColorToGrayscale::execute() {
     output->setSpacing(image->getSpacing());
     SceneGraph::setParentNode(output, image);
 
-    auto device = std::dynamic_pointer_cast<OpenCLDevice>(getMainDevice());
+    auto kernel = getKernel("convert");
 
-    cl::Kernel kernel(getOpenCLProgram(device), "convert");
+    kernel.setArg("input", image);
+    kernel.setArg("output", output);
 
-    auto inputAccess = image->getOpenCLImageAccess(ACCESS_READ, device);
-    auto outputAccess = output->getOpenCLImageAccess(ACCESS_READ_WRITE, device);
-
-    kernel.setArg(0, *inputAccess->get2DImage());
-    kernel.setArg(1, *outputAccess->get2DImage());
-
-    device->getCommandQueue().enqueueNDRangeKernel(
-            kernel,
-            cl::NullRange,
-            cl::NDRange(image->getWidth(), image->getHeight()),
-            cl::NullRange
-    );
+    getQueue().add(kernel, image->getSize());
 
     addOutputData(output);
 }

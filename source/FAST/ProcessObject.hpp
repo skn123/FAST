@@ -11,10 +11,10 @@
 #include <FAST/Config.hpp>
 #include <FAST/DataChannels/DataChannel.hpp>
 #include <FAST/DataStream.hpp>
+#include <FAST/OpenCLProgram.hpp>
 
 namespace fast {
 
-class OpenCLProgram;
 
 /**
  * @defgroup segmentation Segmentation
@@ -194,7 +194,6 @@ class FAST_EXPORT  ProcessObject : public AttributeObject {
 
         virtual void waitToFinish() {};
 
-        void createOpenCLProgram(std::string sourceFilename, std::string name = "");
         cl::Program getOpenCLProgram(
                 std::shared_ptr<OpenCLDevice> device,
                 std::string name = "",
@@ -242,6 +241,78 @@ class FAST_EXPORT  ProcessObject : public AttributeObject {
 
         std::mutex m_mutex;
 
+        // OpenCL
+        /**
+         * @brief Get OpenCL Kernel from a OpenCL program
+         * Get an OpenCL Kernel from an OpenCL program created in this process object using createOpenCLProgram or createInlineOpenCLProgram
+         * @param name
+         * @param programName
+         * @param buildOptions
+         * @param device
+         * @return
+         */
+        Kernel getKernel(std::string name, std::string programName = "", std::string buildOptions = "", OpenCLDevice::pointer device = nullptr);
+        Queue getQueue(OpenCLDevice::pointer device = nullptr);
+        OpenCLDevice::pointer getMainOpenCLDevice() const;
+        /**
+         * @brief Create OpenCL program from a file
+         * @param sourceFilename
+         * @param name
+         */
+        void createOpenCLProgram(std::string sourceFilename, std::string name = "");
+        /**
+         * @brief Create OpenCL program from source code string
+         * @param sourceCode
+         * @param name
+         */
+        void createInlineOpenCLProgram(std::string sourceCode, std::string name = "");
+        /**
+         * @brief Create an uninitialized OpenCL buffer
+         * @param size
+         * @param kernelAccess
+         * @param hostAccess
+         * @param device If no device is provided, the main device for this process object is used.
+         * @return OpenCL buffer
+         */
+        OpenCLBuffer createBuffer(
+                std::size_t size,
+                KernelMemoryAccess kernelAccess = KernelMemoryAccess::READ_WRITE,
+                HostMemoryAccess hostAccess = HostMemoryAccess::UNSPECIFIED,
+                OpenCLDevice::pointer device = nullptr
+        ) const;
+        /**
+        * @brief Create an OpenCL buffer of the provided data
+        * @param data
+        * @param kernelAccess
+        * @param hostAccess
+        * @param device If no device is provided, the main device for this process object is used.
+        * @return OpenCL buffer
+        */
+        template <class T>
+        OpenCLBuffer createBuffer(
+                const std::vector<T>& data,
+                KernelMemoryAccess kernelAccess = KernelMemoryAccess::READ_WRITE,
+                HostMemoryAccess hostAccess = HostMemoryAccess::UNSPECIFIED,
+                OpenCLDevice::pointer device = nullptr
+        ) const;
+#ifndef SWIG
+        /**
+         * @brief Create an OpenCL buffer of the provided data
+         * @param size data size in number of bytes
+         * @param data pointer to data
+         * @param kernelAccess
+         * @param hostAccess
+         * @param device If no device is provided, the main device for this process object is used.
+         * @return OpenCL Buffer
+         */
+        OpenCLBuffer createBuffer(
+                std::size_t size,
+                void* data,
+                KernelMemoryAccess kernelAccess = KernelMemoryAccess::READ_WRITE,
+                HostMemoryAccess hostAccess = HostMemoryAccess::UNSPECIFIED,
+                OpenCLDevice::pointer device = nullptr
+        ) const;
+#endif
 };
 
 template<class DataType>
@@ -304,5 +375,13 @@ std::shared_ptr<DataType> ProcessObject::runAndGetOutputData(uint portID, int64_
     return castedObject;
 }
 
+
+template<class T>
+OpenCLBuffer ProcessObject::createBuffer(const std::vector<T>& data, KernelMemoryAccess kernelAccess, HostMemoryAccess hostAccess,
+                                         OpenCLDevice::pointer device) const {
+    if(!device)
+        device = getMainOpenCLDevice();
+    return OpenCLBuffer(data.size()*sizeof(T), device, kernelAccess, hostAccess, data.data());
+}
 
 }; // end namespace fast

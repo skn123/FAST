@@ -33,8 +33,16 @@ using Eigen::Affine3f;
 using Eigen::AngleAxisf;
 typedef Eigen::Matrix<uint, Eigen::Dynamic, 1> VectorXui;
 typedef Eigen::Matrix<uint, 4, 1> Vector4ui;
-typedef Eigen::Matrix<uint, 3, 1> Vector3ui;
+typedef Eigen::Matrix<uint, 3, 1> EigenVector3ui;
 typedef Eigen::Matrix<uint, 2, 1> Vector2ui;
+
+class FAST_EXPORT Vector3ui : public Eigen::Matrix<uint, 3, 1> {
+    public:
+        using EigenVector3ui::EigenVector3ui; // Inherit constructors
+        operator std::vector<int>() const {
+            return std::vector<int>{(int)x(), (int)y(), (int)z()};
+        }
+};
 
 enum DataType {
     TYPE_FLOAT,

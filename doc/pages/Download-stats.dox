@@ -1,0 +1,87 @@
+/** @page download-stats Download Statistics
+
+
+PyPi (pip) Downloads
+--------------------
+![](https://raw.githubusercontent.com/FAST-Imaging/pip-download-statistics/refs/heads/main/badges/all_time.svg)
+
+@htmlonly
+<div class="m-container">
+    <div class="m-row ">
+        <div class="m-col-m-3">
+            <div class="m-button m-primary tab-link 2025"><a href="javascript:showYear(2025)">2025</a></div>
+        </div>
+        <div class="m-col-m-3">
+            <div class="m-button m-default tab-link 2026"><a href="javascript:showYear(2026)">2026</a></div>
+        </div>
+    </div>
+</div>
+
+<div class="stats 2026" style="display: block;">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/pip-download-statistics/refs/heads/main/plots/2026.svg">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/pip-download-statistics/refs/heads/main/plots/2026-OS.svg">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/pip-download-statistics/refs/heads/main/plots/2026-python-version.svg">
+</div>
+
+<div class="stats 2025" style="display: none;">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/pip-download-statistics/refs/heads/main/plots/2025.svg">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/pip-download-statistics/refs/heads/main/plots/2025-OS.svg">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/pip-download-statistics/refs/heads/main/plots/2025-python-version.svg">
+</div>
+
+@endhtmlonly
+
+GitHub Downloads
+--------------------
+![](https://raw.githubusercontent.com/FAST-Imaging/github-statistics/refs/heads/main/badges/total.svg)
+
+@htmlonly
+<div class="m-container">
+    <div class="m-row ">
+        <div class="m-col-m-3">
+            <div class="m-button m-primary tab-link 2025"><a href="javascript:showYear(2025)">2025</a></div>
+        </div>
+        <div class="m-col-m-3">
+            <div class="m-button m-default tab-link 2026"><a href="javascript:showYear(2026)">2026</a></div>
+        </div>
+    </div>
+</div>
+
+<div class="stats 2026" style="display: block;">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/github-statistics/refs/heads/main/plots/2026.svg">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/github-statistics/refs/heads/main/plots/2026-OS.svg">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/github-statistics/refs/heads/main/plots/2026-file-type.svg">
+</div>
+
+<div class="stats 2025" style="display: none;">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/github-statistics/refs/heads/main/plots/2025.svg">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/github-statistics/refs/heads/main/plots/2025-OS.svg">
+<img src="https://raw.githubusercontent.com/FAST-Imaging/github-statistics/refs/heads/main/plots/2025-file-type.svg">
+</div>
+@endhtmlonly
+
+@htmlonly
+<script type="text/javascript">
+function showYear(year) {
+    let elements = document.getElementsByClassName("stats");
+    year = year.toString();
+    for(let i = 0; i < elements.length; ++i) {
+        if(elements[i].classList.contains(year)) {
+            elements[i].style.display = "block";
+        } else {
+            elements[i].style.display = "none";
+        }
+    }
+    let buttons = document.getElementsByClassName("tab-link");
+    for(let i = 0; i < buttons.length; ++i) {
+        if(buttons[i].classList.contains(year)) {
+            buttons[i].classList.replace("m-primary", "m-default");
+        } else {
+            buttons[i].classList.replace("m-default", "m-primary");
+        }
+    }
+}
+</script>
+@endhtmlonly
+
+*/

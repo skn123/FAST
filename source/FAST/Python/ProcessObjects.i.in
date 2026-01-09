@@ -7,6 +7,26 @@
 %feature("director") PythonRandomAccessStreamer;
 %shared_ptr(fast::PythonRandomAccessStreamer)
 
+%template(setIntArg) fast::Kernel::setArg<int>;
+%template(setShortArg) fast::Kernel::setArg<short>;
+%template(setCharArg) fast::Kernel::setArg<char>;
+%template(setUIntArg) fast::Kernel::setArg<uint>;
+%template(setUShortArg) fast::Kernel::setArg<ushort>;
+%template(setUCharArg) fast::Kernel::setArg<uchar>;
+%template(setFloatArg) fast::Kernel::setArg<float>;
+
+%template(setIntArgData) fast::Kernel::setArgData<int>;
+%template(setShortArgData) fast::Kernel::setArgData<short>;
+%template(setCharArgData) fast::Kernel::setArgData<char>;
+%template(setUIntArgData) fast::Kernel::setArgData<uint>;
+%template(setUShortArgData) fast::Kernel::setArgData<ushort>;
+%template(setUCharArgData) fast::Kernel::setArgData<uchar>;
+%template(setFloatArgData) fast::Kernel::setArgData<float>;
+
+%feature("shadow") fast::PythonProcessObject::getQueue(fast::OpenCLDevice::pointer device) %{
+def getQueue(self, device: "fast::OpenCLDevice::pointer"=None) -> "fast::Queue":
+    return _fast.PythonProcessObject_getQueue(self, device)
+%}
 
 %inline %{
 
@@ -64,6 +84,34 @@
 
             virtual void stopPipeline() override {
                 ProcessObject::stopPipeline();
+            }
+
+            using ProcessObject::getKernel;
+            using ProcessObject::createInlineOpenCLProgram;
+            using ProcessObject::createOpenCLProgram;
+            using ProcessObject::getQueue;
+
+            OpenCLBuffer createBuffer(
+                    std::size_t size,
+                    KernelMemoryAccess kernelAccess = KernelMemoryAccess::READ_WRITE,
+                    HostMemoryAccess hostAccess = HostMemoryAccess::UNSPECIFIED,
+                    OpenCLDevice::pointer device = nullptr
+            ) const {
+                return ProcessObject::createBuffer(size, kernelAccess, hostAccess, device);
+            }
+            template <class T>
+            OpenCLBuffer createBuffer(
+                    const std::vector<T>& data,
+                    KernelMemoryAccess kernelAccess = KernelMemoryAccess::READ_WRITE,
+                    HostMemoryAccess hostAccess = HostMemoryAccess::UNSPECIFIED,
+                    OpenCLDevice::pointer device = nullptr
+            ) const {
+                return ProcessObject::createBuffer<T>(data, kernelAccess, hostAccess, device);
+            }
+
+            // Cant use 'using' here due to shadow
+            Queue getQueue(fast::OpenCLDevice::pointer device = nullptr) {
+                return ProcessObject::getQueue(device);
             }
 
         }; // end class python process object
@@ -210,10 +258,19 @@
             }
         }; // end class python random access streamer
     } // end namespace
-    %}
+%}
 
-    // Extend PythonProcessObject with some Python code
-    %extend fast::PythonProcessObject {
+
+%template(createIntBuffer) fast::PythonProcessObject::createBuffer<int>;
+%template(createUIntBuffer) fast::PythonProcessObject::createBuffer<uint>;
+%template(createCharBuffer) fast::PythonProcessObject::createBuffer<char>;
+%template(createUCharBuffer) fast::PythonProcessObject::createBuffer<uchar>;
+%template(createShortBuffer) fast::PythonProcessObject::createBuffer<short>;
+%template(createUShortBuffer) fast::PythonProcessObject::createBuffer<ushort>;
+%template(createFloatBuffer) fast::PythonProcessObject::createBuffer<float>;
+
+// Extend PythonProcessObject with some Python code
+%extend fast::PythonProcessObject {
     %pythoncode "@PROJECT_SOURCE_DIR@/source/FAST/Python/ProcessObjectExtensions.py"
 }
 // Extend PythonStreamer with some Python code
@@ -251,4 +308,71 @@
 
         Swig::DirectorMethodException::raise(err_msg.c_str());
     }
+}
+
+%extend fast::Kernel {
+%pythoncode %{
+    def setArg(self, id:Union[str, int], data):
+        arg = self.getArg(id)
+        if not isinstance(data, fast.Image) and not isinstance(data, fast.Tensor) and hasattr(data, '__array_interface__'):
+            # NumPy array or similar
+            # Make sure it is C contiguous first
+            mem = memoryview(data)
+            import copy
+            array_interface = copy.copy(data.__array_interface__)
+            typestr = array_interface['typestr'][1:]
+            if typestr not in _str_to_data_type:
+                raise TypeError('Unsupported input type given to Kernel.setArg: ' + typestr)
+            type = _str_to_data_type[typestr]
+            shape = array_interface['shape']
+            if mem.c_contiguous:
+                data = list(mem.cast('b').cast(mem.format)) # Trick for flattening the data array
+            else:
+                mem = memoryview(mem.tobytes(order='C')).cast(mem.format) # Convert to C contiguous
+                data = list(mem)
+        if isinstance(data, fast.Tensor):
+            self.setTensorArg(id, data, fast.ACCESS_READ_WRITE)
+        elif isinstance(data, list):
+            type = ''.join(char for char in arg.type if char.isalpha())
+            if type == 'float':
+                self.setFloatArgData(id, data)
+            elif type == 'int':
+                self.setIntArgData(id, data)
+            elif type == 'short':
+                self.setShortArgData(id, data)
+            elif type == 'char':
+                self.setCharArgData(id, data)
+            elif type == 'uint':
+                self.setUIntArgData(id, data)
+            elif type == 'ushort':
+                self.setUShortArgData(id, data)
+            elif type == 'uchar':
+                self.setUCharArgData(id, data)
+            else:
+                raise ValueError('Not able to determine kernel argument type: ' + arg.type + ' in Kernel.setArg. Use the appropriate typed setArg/setArgData function instead, e.g. setFloatArg/setIntArg etc. ')
+        else:
+            if arg.type == 'float':
+                self.setFloatArg(id, data)
+            elif arg.type == 'int':
+                self.setIntArg(id, data)
+            elif arg.type == 'short':
+                self.setShortArg(id, data)
+            elif arg.type == 'char':
+                self.setCharArg(id, data)
+            elif arg.type == 'uint':
+                self.setUIntArg(id, data)
+            elif arg.type == 'ushort':
+                self.setUShortArg(id, data)
+            elif arg.type == 'uchar':
+                self.setUCharArg(id, data)
+            elif arg.type == 'image2d_t' or arg.type == 'image3d_t':
+                accessMap = {
+                    KernelArgumentAccess_READ_ONLY: ACCESS_READ,
+                    KernelArgumentAccess_WRITE_ONLY: ACCESS_READ_WRITE,
+                    KernelArgumentAccess_READ_WRITE: ACCESS_READ_WRITE,
+                }
+                self.setImageArg(id, data, accessMap[arg.access])
+            else:
+                raise ValueError('Not able to determine kernel argument type: ' + arg.type + ' in Kernel.setArg. Use the appropriate typed setArg function instead, e.g. setFloatArg/setIntArg etc. ')
+%}
 }

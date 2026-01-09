@@ -870,6 +870,8 @@ std::string getCLErrorString(cl_int err) {
         return std::string("Invalid buffer size");
     case CL_INVALID_MIP_LEVEL:
         return std::string("Invalid mip-map level");
+    case CL_KERNEL_ARG_INFO_NOT_AVAILABLE:
+        return std::string("Kernel Arg info not available");
     default:
         return std::string("Unknown");
     }

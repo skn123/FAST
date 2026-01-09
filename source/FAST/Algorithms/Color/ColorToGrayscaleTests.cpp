@@ -6,7 +6,7 @@
 using namespace fast;
 
 TEST_CASE("Color to grayscale", "[fast][ColorToGrayscale]") {
-    auto importer = ImageFileImporter::create(Config::getTestDataPath() + "US/Heart/ApicalFourChamber/US-2D_0.mhd");
+    auto importer = ImageFileImporter::create(Config::getTestDataPath() + "US/US-2D.bmp");
     auto input = importer->runAndGetOutputData<Image>();
 
     {

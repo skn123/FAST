@@ -1,0 +1,107 @@
+namespace fast {
+/** @page python-tutorial-opencl GPU Processing with OpenCL and FAST in Python
+@tableofcontents
+
+Introduction
+--------------------------
+
+[OpenCL (Open Computing Language)](https://www.khronos.org/opencl/) is an open and cross-platform standard for parallel programming on different
+processors such as multi-core CPUs and GPUs.
+OpenCL is similar to [CUDA](https://developer.nvidia.com/cuda/toolkit), however CUDA is for running on NVIDIA GPUs only, while OpenCL can run on processors
+from different vendors including NVIDIA, Intel and AMD.
+It can also be compared to [Metal](https://developer.apple.com/metal/), however Metal is only for Apple operating systems (e.g. macOS & iOS), while OpenCL can run on any operating system (e.g. Windows, Linux, Android & macOS).
+The OpenCL standard is maintained by the [Khronos Group](https://www.khronos.org/) a non-profit organization.
+This group is also behind the OpenGL and Vulkan standards. While OpenGL and Vulkan are primarily for visualization, OpenCL is primarily for general computations.
+
+The main goal of FAST is to make it easier to do high-performance processing, neural network inference, and visualization of medical images utilizing multi-core CPUs and GPUs.
+To achieve this, FAST is built with OpenCL at its core, additionally FAST uses OpenGL to provide accelerated visualization.
+While there are pure OpenCL APIs for Python, like [PyOpenCL](https://github.com/inducer/pyopencl), FAST provides a high-level API to OpenCL
+which allows you to do high performance processing and visualization on medical images with very few lines of code.
+This tutorial will show you can do this from Python, and it assumes you have already read the [introduction tutorial to FAST](@ref python-tutorial-intro).
+
+Key OpenCL concepts
+----------------------------------
+
+Below is a list of some key concepts which you should know about when using OpenCL. A more comprehensive list can be found in the [OpenCL documentation](https://registry.khronos.org/OpenCL/specs/3.0-unified/html/OpenCL_API.html#_glossary).
+
+- **Platform** - In order to use OpenCL you need an OpenCL platform installed on your system. Most processor vendors provide their
+    own OpenCL platform. NVIDIA provides an OpenCL platform through CUDA, and Intel and AMD also provide their own. Apple also have an OpenCL platform, however
+    while still available it is deprecated in favor of Metal. There is also an independent OpenCL implementation called portable computing language (PoCL).
+- **Device** - A device is basically a processor that you can OpenCL code on using a specific platform.
+- **Context** - An OpenCL context, is a collection of devices for a given platform, which you need to create before you run anything.
+- **Kernel** - An OpenCL kernel is a function written in the OpenCL Language (which is very similar to C) which can be executed in parallel.
+- **Program** - An OpenCL program can consist of multiple kernels. OpenCL programs have to be compiled for a given device and platform.
+- **Command Queue** - When you want to perform some operation with OpenCL, e.g. running a kernel, read or write data, you add those commands to a queue,
+    which by default are executed in the order they were added to the command queue.
+- **Host** - The host refers to the processor/program that is running the main program and setting up the command queue.
+- **N-D Range** - A multi (N) dimensional range.
+- **Buffer** - A buffer is a piece of memory allocated on a specific device. We can use this to read and write data to a device which can then be used in a kernel.
+- **Image** - An OpenCL image is a 2D/3D memory object, usually stored in texture memory on GPUs, which can only be read using a sampler.
+- **Sampler** - We use a sampler to read data from an OpenCL image. This can be used to specify whether interpolation should be used, what kind of coordinates to use, and how to handle out-of-bound reads.
+- **Work-item** - Each instance of the kernel is called a work-item. When running an N-D Range kernel, the number of work-items created is equal to the product of the N-D range.
+    E.g. if the global N-D range size is [256, 128, 6], the total number of work-items is 256*128*6, and each item get a unique N-D global ID which can be accessed using the get_global_id(dim) function.
+- **Work-group** - Work-items are grouped into work-groups. All work-items in a work-group have a shared memory which they can access.
+- **Global memory** - A memory accessible by all work-items.
+- **Shared memory** - A memory local to each work-group, thus only accessible by other work-items in the work-group.
+- **Constant memory** - A read-only memory which can potentially be read from faster than global memory.
+- **Texture memory** - GPUs which are made for graphics, typically have a specialized texture memory, which usually provides 2D/3D spatial caching, hardware accelerated linear interpolation and type conversion.
+    To use this memory with OpenCL you need to use OpenCL image objects.
+
+Simple example - Inverting an image
+----------------------------------
+
+In this example we will create a process object which inverts an uint8 image in parallel using OpenCL.
+We then use this process object in a pipeline were we stream and loop an ultrasound recording into the inverter
+and display it.
+
+@include Python/python_process_object_opencl.py
+
+### Python Code Explanation
+1. The first step is to create the OpenCL program in the constructor (__init__) of the process object.
+    Here we do this inline using ProcessObject::createInlineOpenCLProgram providing the OpenCL code as a string.
+    However the OpenCL code can also be stored in a separate file and then loaded and created using the
+    ProcessObject::createOpenCLProgram instead.
+2. In the execute, method we first get the input image, and create an output image of the same size and data type as
+    the input image using Image::createFromImage.
+3. We then retrieve the kernel using ProcessObject::getKernel by specifying the name of the kernel. Note that the kernel
+    is compiled at this point. To avoid unnecessary compilation, the compiled code is cached both to disk and in memory.
+4. Next, we have to specify the data to assign to each kernel argument using the Kernel::setArg method.
+5. Finally, we get the command queue using ProcessObject::getQueue() and add the kernel we just created to the queue
+    and specify the global size of the command to be equal to the image size. Thus it will run the kernel for each pixel in the image
+    and the pixel coordinate/work-item ID.
+
+With these very few lines of FAST code, we can do some parallel image processing.
+However, there is a lot of OpenCL magic happening under the hood here which FAST handles for you:
+- Setting up the OpenCL context with a device.
+- Setting up OpenCL-OpenGL interoperability if possible.
+- Allocating memory on the device.
+- FAST interprets the arguments of the kernel to figure out what kind of memory object is needed.
+- Reading and writing the image data.
+- Compiling the kernel and caching the binary.
+
+### OpenCL Code Explanation
+1. The first line of the OpenCL code on the constructor is used to create a **sampler** which is needed to read from the image object.
+    <b>CLK_NORMALIZED_COORDS_FALSE</b> means that we use integer pixel coordinates, <b>CLK_FILTER_NEAREST</b> specifies that no interpolation is to be used,
+    and <b>CLK_ADDRESS_NONE</b> means that no out-of-bounds handling is needed (because we know we are only reading within the image).
+2. Next, we declare the kernel, its name ('invert') and its arguments. The two arguments have the type **image2d_t** which means a 2D OpenCL image.
+    OpenCL image arguments also have to be declared with an access qualifier, e.g. <b>__read_only</b> or <b>__write_only</b>.
+3. In the first line of the kernel, we get the 2D global work-item ID using **get_global_id(dim)**. Since we queued the kernel with
+    an N-D range equal to the size (W=width, H=height) of the input image, the global ID will be from 0 to W, and 0 to H for dimensions 0 and 1.
+    We store the position in a int2 primitive which is a two component integer vector.
+4. Next, we read the value of the pixel of the input image using the global ID position, the sampler, and a specialized read_image function.
+    Since we know the input image data type to be 8 bit unsigned integer, we use the read_image<b>ui</b> function.
+    Note that there exist a read_image<b>f</b> and a read_image<b>i</b> function as well. The read_image functions always return a 4 component vector,
+    even though the image is just a single channel image. We use .x to get first component.
+5. Finally, we use a similar specialization write_image function <b>write_imageui</b>, to write the inverted pixel '255 - value' to the output image at the same pixel position.
+
+Next steps
+---------------------
+
+You have now finished the Python OpenCL GPU processing tutorial.
+
+- See more [Python Tutorials](@ref python-tutorials).
+- Check out some [Python Examples](@ref python-examples).
+- Review [Concepts & Glossary](@ref concepts) used in FAST.
+*/
+
+}

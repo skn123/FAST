@@ -27,6 +27,7 @@ import $module
 #include <FAST/Visualization/Renderer.hpp>
 #include <FAST/Data/DataTypes.hpp>
 #include <FAST/Data/SimpleDataObject.hpp>
+#include <FAST/OpenCLProgram.hpp>
 @PYFAST_HEADER_INCLUDES@
 
 using namespace fast;
@@ -121,6 +122,7 @@ public
 // FAST CORE LIBRARY
 
 // Ignore statements
+%ignore OpenCLProgram;
 %ignore getDevice;
 %ignore ReporterEnd::~ReporterEnd();
 %ignore QObject;
@@ -142,7 +144,7 @@ public
 
 %nodefaultdtor Config;
 
-// unique_ptr declerations
+// unique_ptr declarations
 %unique_ptr(fast::OpenCLImageAccess)
 %unique_ptr(fast::ImageAccess)
 %unique_ptr(fast::OpenCLBufferAccess)
@@ -155,7 +157,7 @@ public
 %unique_ptr(fast::ImagePyramidAccess)
 %unique_ptr(fast::OpenGLTextureAccess)
 
-// Shared_ptr declerations
+// Shared_ptr declarations
 %shared_ptr(fast::RuntimeMeasurement)
 %shared_ptr(fast::RuntimeMeasurementsManager)
 %shared_ptr(fast::Object)
@@ -373,6 +375,7 @@ void _freePointer(std::size_t pointer, fast::DataType type) {
 %include <FAST/DeviceCriteria.hpp>
 %include <FAST/DataChannels/DataChannel.hpp>
 %include <FAST/ExecutionDevice.hpp>
+%include <FAST/OpenCLProgram.hpp>
 %include <FAST/Attribute.hpp>
 %include <FAST/ProcessObject.hpp>
 %include <FAST/Config.hpp>
@@ -438,6 +441,13 @@ static void* _intToVoidPointer(std::size_t intPointer) {
       'version': 3,
       'strides': None,
     }
+
+  def __array__(self, dtype=None, copy=None):
+    try:
+      import numpy as np
+    except ImportError:
+      raise RuntimeError('fast.Image.__array__ method requires numpy.')
+    return np.asarray(self, dtype=dtype)
 
   @staticmethod
   def createFromTensor(tensor):
@@ -633,10 +643,11 @@ static float* _intToFloatPointer(std::size_t intPointer) {
 %pythoncode "@PROJECT_SOURCE_DIR@/source/FAST/Python/Shortcuts.py"
 
 %extend fast::ProcessObject {
-%pythoncode %{
-   def getDataStream(self):
-       return DataStream(self)
-%}
+    %pythoncode %{
+       def getDataStream(self):
+           return DataStream(self)
+    %}
+
 }
 
 /*

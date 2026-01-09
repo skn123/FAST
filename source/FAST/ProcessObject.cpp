@@ -6,6 +6,7 @@
 #include <FAST/DataChannels/QueuedDataChannel.hpp>
 #include <FAST/DataChannels/NewestFrameDataChannel.hpp>
 #include <FAST/DataChannels/StaticDataChannel.hpp>
+#include <FAST/OpenCL.hpp>
 
 
 namespace fast {
@@ -322,7 +323,7 @@ void ProcessObject::setDeviceCriteria(uint deviceNumber,
 }
 
 void ProcessObject::createOpenCLProgram(std::string sourceFilename, std::string name) {
-    OpenCLProgram::pointer program = OpenCLProgram::New();
+    auto program = OpenCLProgram::New();
     program->setName(name);
     program->setSourceFilename(sourceFilename);
     mOpenCLPrograms[name] = program;
@@ -447,6 +448,49 @@ bool ProcessObject::hasReceivedLastFrameFlag() const {
             lastFrame = true;
     }
     return lastFrame;
+}
+
+Kernel ProcessObject::getKernel(std::string name, std::string programName, std::string buildOptions, OpenCLDevice::pointer device) {
+    if(!device)
+        device = getMainOpenCLDevice();
+    auto program = getOpenCLProgram(device, programName, buildOptions);
+    auto kernel = cl::Kernel(program, name.c_str());
+    return Kernel(kernel, device);
+}
+
+Queue ProcessObject::getQueue(OpenCLDevice::pointer device) {
+    if(!device) {
+        device = std::dynamic_pointer_cast<OpenCLDevice>(getMainDevice());
+        if(!device)
+            throw Exception("Main device was set to Host. Cannot run OpenCL on Host");
+    }
+    return Queue(device->getCommandQueue());
+}
+
+OpenCLDevice::pointer ProcessObject::getMainOpenCLDevice() const {
+    auto device = std::dynamic_pointer_cast<OpenCLDevice>(getMainDevice());
+    if(!device)
+        throw Exception("Cannot getMainOpenCLDevice because main device was Host");
+    return device;
+}
+
+void ProcessObject::createInlineOpenCLProgram(std::string sourceCode, std::string name) {
+    auto program = OpenCLProgram::New();
+    program->setName(name);
+    program->setSourceCode(sourceCode);
+    mOpenCLPrograms[name] = program;
+}
+
+OpenCLBuffer ProcessObject::createBuffer(std::size_t size, KernelMemoryAccess kernelAccess, HostMemoryAccess hostAccess,
+                        OpenCLDevice::pointer device) const {
+    return createBuffer(size, nullptr, kernelAccess, hostAccess, device);
+}
+
+OpenCLBuffer ProcessObject::createBuffer(std::size_t size, void* data, KernelMemoryAccess kernelAccess, HostMemoryAccess hostAccess,
+                    OpenCLDevice::pointer device) const {
+    if(!device)
+        device = getMainOpenCLDevice();
+    return OpenCLBuffer(size, device, kernelAccess, hostAccess, data);
 }
 
 } // namespace fast

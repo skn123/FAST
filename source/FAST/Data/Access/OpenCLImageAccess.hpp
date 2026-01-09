@@ -17,6 +17,7 @@ class OpenCLDevice;
 class FAST_EXPORT  OpenCLImageAccess {
     public:
         cl::Image* get() const;
+        int getDimensions() const;
         cl::Image2D* get2DImage() const;
         cl::Image3D* get3DImage() const;
         OpenCLImageAccess(cl::Image2D* image, std::shared_ptr<Image> object);
@@ -30,6 +31,7 @@ class FAST_EXPORT  OpenCLImageAccess {
         cl::Image* mImage;
         bool mIsDeleted;
         std::shared_ptr<Image> mImageObject;
+        int m_dims;
 
 };
 
