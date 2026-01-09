@@ -343,6 +343,11 @@ Here is a complete example on how to do this:
 
 @include Python/python_process_object.py
 
+## Run OpenCL code from Python
+
+FAST provides a high-level interface for using OpenCL in process objects in Python.
+[See the GPU processing in Python tutorial for more information](@ref python-tutorial-opencl).
+
 Exporting data
 ---------------------
 To save data in a given file format, you can use any of the [FAST Exporters](@ref exporters).

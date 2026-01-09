@@ -33,10 +33,11 @@ using Eigen::Affine3f;
 using Eigen::AngleAxisf;
 typedef Eigen::Matrix<uint, Eigen::Dynamic, 1> VectorXui;
 typedef Eigen::Matrix<uint, 4, 1> Vector4ui;
-typedef Eigen::Matrix<uint, 3, 1> EigenVector3ui;
 typedef Eigen::Matrix<uint, 2, 1> Vector2ui;
 
-class FAST_EXPORT Vector3ui : public Eigen::Matrix<uint, 3, 1> {
+// This to make sure the Vector3ui can be implicitly converted to std::vector<int>
+typedef Eigen::Matrix<uint, 3, 1> EigenVector3ui;
+class FAST_EXPORT Vector3ui : public EigenVector3ui {
     public:
         using EigenVector3ui::EigenVector3ui; // Inherit constructors
         operator std::vector<int>() const {

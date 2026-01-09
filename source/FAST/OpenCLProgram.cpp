@@ -46,6 +46,7 @@ cl::Program OpenCLProgram::build(std::shared_ptr<OpenCLDevice> device,
             device->createProgramFromSourceWithName(programName, mSourceFilename, buildOptions);
     } else {
         // Only create program if it doesn't exist for this device from before
+        // TODO consider using hash instead of potentially long source code string as name here
         programName = m_sourceCode + buildOptions;
         if(!device->hasProgram(programName))
             device->createProgramFromStringWithName(programName, m_sourceCode, buildOptions);
