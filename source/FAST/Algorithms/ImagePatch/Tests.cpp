@@ -13,6 +13,8 @@
 #include <FAST/Visualization/VolumeRenderer/AlphaBlendingVolumeRenderer.hpp>
 #include <FAST/Algorithms/TissueSegmentation/TissueSegmentation.hpp>
 #include <FAST/Algorithms/RunUntilFinished/RunUntilFinished.hpp>
+#include <FAST/Tests/DataComparison.hpp>
+#include <FAST/Visualization/Shortcuts.hpp>
 
 using namespace fast;
 
@@ -301,4 +303,107 @@ TEST_CASE("Patch generator and stitcher at given magnification") {
     CHECK(image->getFullHeight() == fast::round(wsi->getLevelHeight(1)/2.00401));
     //auto renderer = ImagePyramidRenderer::create()->connect(image);
     //SimpleWindow2D::create()->connect(renderer)->run();
+}
+
+TEST_CASE("PatchGenerator and PatchStitcher on ImagePyramid with overlap", "[fast][wsi][patchgenerator]patchstitcher][hmf22]") {
+    // Create pyramid with single level
+    const int width = 4000;
+    const int height = 3129;
+    auto pyramid = ImagePyramid::create(width, height, 1, 512, 512, ImageCompression::RAW, 90, TYPE_UINT8, {});
+
+    // Fill image with random data
+    {
+        auto access = pyramid->getAccess(ACCESS_READ_WRITE);
+        for(int x = 0; x < pyramid->getLevelTilesX(0); ++x) {
+            for(int y = 0; y < pyramid->getLevelTilesY(0); ++y) {
+                void* data = allocateRandomData(512*512, TYPE_UINT8);
+                auto image = Image::create(512, 512, TYPE_UINT8, 1, data);
+                access->setPatch(0, x*512, y*512, image, false);
+                deleteArray(data, TYPE_UINT8);
+            }
+        }
+    }
+
+    auto generator = PatchGenerator::create(512, 512, 1, 0, -1, 0.1)
+            ->connect(pyramid);
+
+    auto stitcher = PatchStitcher::create(false, true)->connect(generator);
+
+    auto finish = RunUntilFinished::create()->connect(stitcher);
+    auto newPyramid = finish->runAndGetOutputData<ImagePyramid>();
+    std::cout << newPyramid->getLevelTileWidth(0) << " " << newPyramid->getLevelTileHeight(0) << std::endl;
+
+    auto pyramidImage1 = pyramid->getAccess(ACCESS_READ)->getLevelAsImage(0);
+    auto pyramidImage2 = newPyramid->getAccess(ACCESS_READ)->getLevelAsImage(0);
+
+    int max = 0;
+    {
+        auto accessImage1 = pyramidImage1->getImageAccess(ACCESS_READ_WRITE);
+        auto accessImage2 = pyramidImage2->getImageAccess(ACCESS_READ);
+        for(int i = 0; i < pyramidImage1->getNrOfVoxels(); ++i) {
+            int value1 = accessImage1->getScalarFast<uchar>(i);
+            int value2 = accessImage2->getScalarFast<uchar>(i);
+            CHECK(value1 == value2);
+            int diff = std::abs(value1 - value2);
+            if(value1 != value2) {
+                std::cout << value1 << " " << value2 << std::endl;
+                if(diff > max)
+                    max = diff;
+            }
+            accessImage1->setScalarFast<uchar>(i, (uchar)diff);
+        }
+    }
+
+    /*
+    Display2DArgs args;
+    args.image = pyramidImage1;
+    args.intensityWindow = max;
+    args.intensityLevel = max/2;
+    display2D(args);
+    std::cout << "max diff: " << (int)max << std::endl;
+     */
+}
+
+TEST_CASE("PatchGenerator and PatchStitcher on Image with overlap", "[fast][wsi][patchgenerator]patchstitcher][hmf22]") {
+    // Create pyramid with single level
+    const int width = 4000;
+    const int height = 3129;
+    void* data = allocateRandomData(width*height, TYPE_UINT8);
+    auto image = Image::create(width, height, TYPE_UINT8, 1, data);
+    deleteArray(data, TYPE_UINT8);
+
+    auto generator = PatchGenerator::create(512, 512, 1, 0, -1, 0.1)
+            ->connect(image);
+
+    auto stitcher = PatchStitcher::create(false, false)->connect(generator);
+
+    auto finish = RunUntilFinished::create()->connect(stitcher);
+    auto newImage = finish->runAndGetOutputData<Image>();
+
+    int max = 0;
+    {
+        auto accessImage1 = image->getImageAccess(ACCESS_READ_WRITE);
+        auto accessImage2 = newImage->getImageAccess(ACCESS_READ);
+        for(int i = 0; i < image->getNrOfVoxels(); ++i) {
+            int value1 = accessImage1->getScalarFast<uchar>(i);
+            int value2 = accessImage2->getScalarFast<uchar>(i);
+            CHECK(value1 == value2);
+            int diff = std::abs(value1 - value2);
+            if(value1 != value2) {
+                std::cout << value1 << " " << value2 << std::endl;
+                if(diff > max)
+                    max = diff;
+            }
+            accessImage1->setScalarFast<uchar>(i, (uchar)diff);
+        }
+    }
+
+    /*
+    Display2DArgs args;
+    args.image = pyramidImage1;
+    args.intensityWindow = max;
+    args.intensityLevel = max/2;
+    display2D(args);
+    std::cout << "max diff: " << (int)max << std::endl;
+     */
 }
