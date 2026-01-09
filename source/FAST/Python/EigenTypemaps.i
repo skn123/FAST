@@ -49,11 +49,29 @@
         return true;
     }
 
+    template <class U>
+    PyObject* convertNumber(U x);
+
+    template <>
+    PyObject* convertNumber(float x) {
+        return PyFloat_FromDouble((double)x);
+    }
+
+    template <>
+    PyObject* convertNumber(int x) {
+        return PyLong_FromLong((long)x);
+    }
+
+    template <>
+    PyObject* convertNumber(unsigned int x) {
+        return PyLong_FromUnsignedLong((unsigned long)x);
+    }
+
     template <class T>
     bool EigenVectorToPyTuple(T input, PyObject** output) {
         *output = PyTuple_New(input.size());
         for(int i = 0; i < input.size(); i++) {
-            PyTuple_SetItem(*output, i, PyFloat_FromDouble((double)input(i)));
+            PyTuple_SetItem(*output, i, convertNumber(input(i)));
         }
         return true;
     }
@@ -198,7 +216,6 @@
 }
 
 %enddef // End eigen vector typemaps macro
-// TODO better signed/unsigned integer handling
 
 // Matrix typemaps
 %define %eigen_matrix_typemaps(CLASS...)
@@ -241,7 +258,7 @@
     for(Py_ssize_t i = 0 ; i != $1.rows(); ++i) {
         PyObject* innerList = PyList_New($1.cols());
         for(Py_ssize_t j = 0 ; j != $1.cols(); ++j) {
-            PyList_SetItem(innerList, j, PyFloat_FromDouble((double)$1(i, j)));
+            PyList_SetItem(innerList, j, convertNumber($1(i, j)));
         }
         PyList_SetItem($result, i, innerList);
     }
