@@ -319,13 +319,12 @@ void Kernel::setArg(int index, OpenCLBuffer buffer) {
 
 template <>
 void Kernel::setArg(const std::string& name, OpenCLBuffer buffer) {
-    if(m_argInfoByName.count(name) == 0)
-        throw Exception("Kernel argument with name " + name + " was not found.");
-    setArg(m_argInfoByName[name].index, buffer);
+    setArg(getIndex(name), buffer);
 }
 
 template <>
 void Kernel::setArg(int index, Image::pointer image) {
+    checkIndex(index);
     accessType access = ACCESS_READ;
     auto kernelAccess = m_argInfoByIndex.at(index).access;
     if(kernelAccess == KernelArgumentAccess::WRITE_ONLY || kernelAccess == KernelArgumentAccess::READ_WRITE) {
@@ -335,7 +334,7 @@ void Kernel::setArg(int index, Image::pointer image) {
 }
 
 template <>
-void Kernel::setArg(const std::string& name, Image::pointer image) {
+void Kernel::setArg(const std::string& name, std::shared_ptr<Image> image) {
     setArg(getIndex(name), image);
 }
 

@@ -193,25 +193,25 @@ void Kernel::setArg(const std::string& name, std::size_t size, T data) {
 
 // Kernel::setArg specializations
 template <>
-void Kernel::setArg(int index, OpenCLBuffer buffer);
+FAST_EXPORT void Kernel::setArg(int index, OpenCLBuffer buffer);
 template <>
-void Kernel::setArg(const std::string& name, OpenCLBuffer buffer);
+FAST_EXPORT void Kernel::setArg(const std::string& name, OpenCLBuffer buffer);
 template <>
-void Kernel::setArg(int index, std::shared_ptr<Image> image);
+FAST_EXPORT void Kernel::setArg(int index, std::shared_ptr<Image> image);
 template <>
-void Kernel::setArg(const std::string& name, std::shared_ptr<Image> image);
+FAST_EXPORT void Kernel::setArg(const std::string& name, std::shared_ptr<Image> image);
 template <>
-void Kernel::setArg(int index, std::shared_ptr<Tensor> tensor);
+FAST_EXPORT void Kernel::setArg(int index, std::shared_ptr<Tensor> tensor);
 template <>
-void Kernel::setArg(const std::string& name, std::shared_ptr<Tensor> tensor);
+FAST_EXPORT void Kernel::setArg(const std::string& name, std::shared_ptr<Tensor> tensor);
 template <>
-void Kernel::setArg(int index, std::unique_ptr<OpenCLImageAccess> access);
+FAST_EXPORT void Kernel::setArg(int index, std::unique_ptr<OpenCLImageAccess> access);
 template <>
-void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLImageAccess> access);
+FAST_EXPORT void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLImageAccess> access);
 template <>
-void Kernel::setArg(int index, std::unique_ptr<OpenCLBufferAccess> access);
+FAST_EXPORT void Kernel::setArg(int index, std::unique_ptr<OpenCLBufferAccess> access);
 template <>
-void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLBufferAccess> access);
+FAST_EXPORT void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLBufferAccess> access);
 
 /**
  * @brief Wrapper for OpenCL CommandQueue
