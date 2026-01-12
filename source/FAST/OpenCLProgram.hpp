@@ -221,7 +221,7 @@ FAST_EXPORT void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLB
 class FAST_EXPORT Queue {
     public:
         Queue(cl::CommandQueue clQueue);
-        void add(const Kernel& kernel, std::vector<int> globalSize, std::vector<int> offset = {}, std::vector<int> groupSize = {});
+        void add(const Kernel& kernel, std::vector<int> globalSize, std::vector<int> offset = std::vector<int>(), std::vector<int> groupSize = std::vector<int>());
         void finish();
         void addReadBuffer(OpenCLBuffer buffer, bool block, std::size_t offset, std::size_t size, void* pointerToData);
         void addWriteBuffer(OpenCLBuffer buffer, bool block, std::size_t offset, std::size_t size, void* pointerToData);
