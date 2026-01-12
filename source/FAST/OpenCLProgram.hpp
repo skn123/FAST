@@ -193,25 +193,25 @@ void Kernel::setArg(const std::string& name, std::size_t size, T data) {
 
 // Kernel::setArg specializations
 template <>
-void Kernel::setArg(int index, OpenCLBuffer buffer);
+FAST_EXPORT void Kernel::setArg(int index, OpenCLBuffer buffer);
 template <>
-void Kernel::setArg(const std::string& name, OpenCLBuffer buffer);
+FAST_EXPORT void Kernel::setArg(const std::string& name, OpenCLBuffer buffer);
 template <>
-void Kernel::setArg(int index, std::shared_ptr<Image> image);
+FAST_EXPORT void Kernel::setArg(int index, std::shared_ptr<Image> image);
 template <>
-void Kernel::setArg(const std::string& name, std::shared_ptr<Image> image);
+FAST_EXPORT void Kernel::setArg(const std::string& name, std::shared_ptr<Image> image);
 template <>
-void Kernel::setArg(int index, std::shared_ptr<Tensor> tensor);
+FAST_EXPORT void Kernel::setArg(int index, std::shared_ptr<Tensor> tensor);
 template <>
-void Kernel::setArg(const std::string& name, std::shared_ptr<Tensor> tensor);
+FAST_EXPORT void Kernel::setArg(const std::string& name, std::shared_ptr<Tensor> tensor);
 template <>
-void Kernel::setArg(int index, std::unique_ptr<OpenCLImageAccess> access);
+FAST_EXPORT void Kernel::setArg(int index, std::unique_ptr<OpenCLImageAccess> access);
 template <>
-void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLImageAccess> access);
+FAST_EXPORT void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLImageAccess> access);
 template <>
-void Kernel::setArg(int index, std::unique_ptr<OpenCLBufferAccess> access);
+FAST_EXPORT void Kernel::setArg(int index, std::unique_ptr<OpenCLBufferAccess> access);
 template <>
-void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLBufferAccess> access);
+FAST_EXPORT void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLBufferAccess> access);
 
 /**
  * @brief Wrapper for OpenCL CommandQueue
@@ -221,7 +221,7 @@ void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLBufferAccess>
 class FAST_EXPORT Queue {
     public:
         Queue(cl::CommandQueue clQueue);
-        void add(const Kernel& kernel, std::vector<int> globalSize, std::vector<int> offset = {}, std::vector<int> groupSize = {});
+        void add(const Kernel& kernel, std::vector<int> globalSize, std::vector<int> offset = std::vector<int>(), std::vector<int> groupSize = std::vector<int>());
         void finish();
         void addReadBuffer(OpenCLBuffer buffer, bool block, std::size_t offset, std::size_t size, void* pointerToData);
         void addWriteBuffer(OpenCLBuffer buffer, bool block, std::size_t offset, std::size_t size, void* pointerToData);

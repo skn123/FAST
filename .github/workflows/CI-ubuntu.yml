@@ -218,6 +218,7 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
+          sudo apt update
           sudo apt install libpocl2 xvfb libgl1 libopengl0 libusb-1.0-0 libxcb-xinerama0 libglib2.0-0
       - name: Download wheel artifact
         uses: actions/download-artifact@v4

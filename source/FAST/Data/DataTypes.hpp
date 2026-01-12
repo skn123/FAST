@@ -36,10 +36,9 @@ typedef Eigen::Matrix<uint, 4, 1> Vector4ui;
 typedef Eigen::Matrix<uint, 2, 1> Vector2ui;
 
 // This to make sure the Vector3ui can be implicitly converted to std::vector<int>
-typedef Eigen::Matrix<uint, 3, 1> EigenVector3ui;
-class FAST_EXPORT Vector3ui : public EigenVector3ui {
+class Vector3ui : public Eigen::Matrix<uint, 3, 1> {
     public:
-        using EigenVector3ui::EigenVector3ui; // Inherit constructors
+        using Eigen::Matrix<uint, 3, 1>::Matrix; // inherit constructors
         operator std::vector<int>() const {
             return std::vector<int>{(int)x(), (int)y(), (int)z()};
         }
