@@ -4,18 +4,24 @@
 
 namespace fast {
 
-ImageInverter::ImageInverter() {
+ImageInverter::ImageInverter(float min, float max) {
     createInputPort(0);
     createOutputPort(0);
     createOpenCLProgram(Config::getKernelSourcePath() + "Algorithms/ImageInverter/ImageInverter2D.cl", "2D");
     createOpenCLProgram(Config::getKernelSourcePath() + "Algorithms/ImageInverter/ImageInverter3D.cl", "3D");
+    m_min = min;
+    m_max = max;
 }
 
 void ImageInverter::execute() {
     auto input = getInputData<Image>();
 
-    float max = input->calculateMaximumIntensity();
-    float min = input->calculateMinimumIntensity();
+    float max = m_max;
+    if(std::isnan(max))
+        max = input->calculateMaximumIntensity();
+    float min = m_min;
+    if(std::isnan(min))
+        min = input->calculateMinimumIntensity();
 
     auto output = Image::createFromImage(input);
     Vector3ui size = input->getSize();
