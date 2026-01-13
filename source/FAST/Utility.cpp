@@ -1389,7 +1389,7 @@ void downloadAndExtractZipFile(const std::string& URL, const std::string& destin
 
 std::string getAbsolutePath(std::string path) {
 #ifdef WIN32
-    int BUFFER_SIZE = 4096;
+    constexpr int BUFFER_SIZE = 4096;
     char pathBuffer[BUFFER_SIZE];
     char* file_part_ptr = NULL;
     DWORD length = GetFullPathNameA(
