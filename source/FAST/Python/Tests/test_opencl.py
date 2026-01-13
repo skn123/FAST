@@ -14,7 +14,7 @@ class OpenCLProcessObject(fast.PythonProcessObject):
 
         # Create an image invert OpenCL kernel
         if loadFromFile:
-            self.createOpenCLProgram('opencl_kernel.cl')
+            self.createOpenCLProgram(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'opencl_kernel.cl'))
         else:
             self.createInlineOpenCLProgram(
                 '''
