@@ -7,6 +7,7 @@
 %feature("director") PythonRandomAccessStreamer;
 %shared_ptr(fast::PythonRandomAccessStreamer)
 
+%template(setBufferArg) fast::Kernel::setArg<fast::OpenCLBuffer>;
 %template(setIntArg) fast::Kernel::setArg<int>;
 %template(setShortArg) fast::Kernel::setArg<short>;
 %template(setCharArg) fast::Kernel::setArg<char>;
@@ -332,6 +333,8 @@ def getQueue(self, device: "fast::OpenCLDevice::pointer"=None) -> "fast::Queue":
                 data = list(mem)
         if isinstance(data, fast.Tensor):
             self.setTensorArg(id, data, fast.ACCESS_READ_WRITE)
+        elif isinstance(data, fast.OpenCLBuffer):
+            self.setBufferArg(id, data)
         elif isinstance(data, list):
             type = ''.join(char for char in arg.type if char.isalpha())
             if type == 'float':
