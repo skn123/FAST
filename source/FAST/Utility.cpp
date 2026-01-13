@@ -1386,6 +1386,34 @@ void downloadAndExtractZipFile(const std::string& URL, const std::string& destin
     // Wait for it to finish
     eventLoop->exec();
 }
+
+std::string getAbsolutePath(std::string path) {
+#ifdef WIN32
+    int BUFFER_SIZE = 4096;
+    char pathBuffer[BUFFER_SIZE];
+    char* file_part_ptr = NULL;
+    DWORD length = GetFullPathNameA(
+            path.c_str(),
+            BUFFER_SIZE,
+            pathBuffer,
+            NULL
+            );
+    if(length == 0) {
+        throw Exception("Unable to get absolute path of file " + path);
+    } else if(length > BUFFER_SIZE) {
+        throw Exception("Buffer too small, when getting absolute path of file " + path);
+    }
+    std::string result = path;
+#else
+    char pathBuffer[PATH_MAX];
+    char* realPath = realpath(path.c_str(), pathBuffer);
+    if(realPath == nullptr)
+        throw Exception("Unable to get absolute path of file " + path);
+    std::string result = pathBuffer;
+#endif
+    return result;
+}
+
 #else
 static void downloadAndExtractZipFile(const std::string& URL, const std::string& destination) {
     throw NotImplementedException();
