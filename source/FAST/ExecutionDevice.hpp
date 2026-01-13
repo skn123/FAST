@@ -109,6 +109,7 @@ class FAST_EXPORT  OpenCLDevice : public ExecutionDevice {
         cl::Program readBinary(std::string filename);
         cl::Program buildProgramFromBinary(std::string filename, std::string buildOptions);
         cl::Program buildSources(cl::Program::Sources source, std::string buildOptions);
+        std::tuple<std::string, std::string, std::vector<std::string>> getBinaryName(std::string filename, std::string buildOptions);
 
         cl::Context context;
         std::vector<cl::CommandQueue> queues;

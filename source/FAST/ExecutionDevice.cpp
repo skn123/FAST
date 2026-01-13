@@ -140,6 +140,45 @@ bool OpenCLDevice::isImageFormatSupported(cl_channel_order order, cl_channel_typ
 }
 
 
+std::tuple<std::string, std::string, std::vector<std::string>> OpenCLDevice::getBinaryName(std::string filename, std::string buildOptions) {
+    std::string deviceName = getDevice(0).getInfo<CL_DEVICE_NAME>();
+    std::string name = getFileName(filename);
+    std::string binaryPath = Config::getKernelBinaryPath();
+    std::size_t buildHash = std::hash<std::string>{}(buildOptions + deviceName);
+    std::size_t pathHash = std::hash<std::string>{}(getDirName(getAbsolutePath(filename)));
+    std::string folder = join(binaryPath, "OpenCL", std::to_string(pathHash));
+    std::string append = ""; // Used in the very rare event if we have a hash conflict
+    bool hashConflict = false;
+    std::vector<std::string> lines;
+    std::string binaryFilename;
+    std::string cacheFilename;
+    do {
+        std::string binaryName = join(folder, name + "_" + std::to_string(buildHash) + append);
+        binaryFilename = binaryName + ".bin";
+        cacheFilename = binaryName + ".cache";
+
+        // Read cache file
+        if(fileExists(cacheFilename)) {
+            std::ifstream cacheFile(cacheFilename.c_str());
+            std::string cache(
+                    std::istreambuf_iterator<char>(cacheFile),
+                    (std::istreambuf_iterator<char>()));
+            lines = split(cache, "\n");
+            if(lines.size() != 4) {
+                throw Exception("Error parsing OpenCL binary cache file. Expected 4 lines.");
+            }
+            bool wrongDeviceID = lines[1] != deviceName;
+            bool wrongPath = lines[2] != getAbsolutePath(filename);
+            if(wrongDeviceID || wrongPath) {
+                Reporter::warning() << "Kernel binary " << filename << " got hash conflict." << Reporter::end();
+                hashConflict = true;
+                append += "_x";
+            }
+        }
+    } while(hashConflict);
+    return {binaryFilename, cacheFilename, lines};
+}
+
 std::string readFile(std::string filename) {
     std::string retval = "";
 
@@ -340,23 +379,9 @@ cl::Program OpenCLDevice::writeBinary(std::string filename, std::string buildOpt
     std::vector<std::vector<uchar>> binaries;
     binaries = program.getInfo<CL_PROGRAM_BINARIES>();
 
-    std::string deviceName = getDevice(0).getInfo<CL_DEVICE_NAME>();
-    std::size_t hash = std::hash<std::string>{}(buildOptions + deviceName);
-    std::string binaryPath = Config::getKernelBinaryPath();
-    // TODO fix this for both install and build
-    std::string kernelSourcePath = Config::getKernelSourcePath();
-    std::string binaryFilename = binaryPath + filename.substr(kernelSourcePath.size()) + "_" + std::to_string(hash) + ".bin";
-    std::string cacheFilename = binaryPath + filename.substr(kernelSourcePath.size()) + "_" + std::to_string(hash) + ".cache";
+    auto [binaryFilename, cacheFilename, cacheData] = getBinaryName(filename, buildOptions);
+    createDirectories(getDirName(binaryFilename));
 
-    // Create directories if they don't exist
-    if(binaryFilename.rfind("/") != std::string::npos) {
-        std::string directoryPath = binaryFilename.substr(0, binaryFilename.rfind("/"));
-//        QDir dir(directoryPath.c_str());
-//        if (!dir.exists()) {
-//            dir.mkpath(".");
-//        }
-        createDirectories(directoryPath);
-    }
     FILE * file = fopen(binaryFilename.c_str(), "wb");
     if(!file)
         throw Exception("Could not write kernel binary to file: " + binaryFilename);
@@ -369,6 +394,7 @@ cl::Program OpenCLDevice::writeBinary(std::string filename, std::string buildOpt
     std::string timeStr = modifiedDate + "\n";
     std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
     timeStr += devices[0].getInfo<CL_DEVICE_NAME>() + "\n";
+    timeStr += getAbsolutePath(filename) + "\n";
     timeStr += buildOptions;
     fwrite(timeStr.c_str(), sizeof(char), timeStr.size(), cacheFile);
     fclose(cacheFile);
@@ -399,47 +425,23 @@ cl::Program OpenCLDevice::readBinary(std::string filename) {
 }
 
 cl::Program OpenCLDevice::buildProgramFromBinary(std::string filename, std::string buildOptions) {
-    cl::Program program;
-
-    std::string deviceName = getDevice(0).getInfo<CL_DEVICE_NAME>();
-    std::size_t hash = std::hash<std::string>{}(buildOptions + deviceName);
-    std::string binaryPath = Config::getKernelBinaryPath();
     std::string kernelSourcePath = Config::getKernelSourcePath();
-    std::string binaryFilename = binaryPath + filename.substr(kernelSourcePath.size()) + "_" + std::to_string(hash) + ".bin";
-    std::string cacheFilename = binaryPath + filename.substr(kernelSourcePath.size()) + "_" + std::to_string(hash) + ".cache";
 
     // Check if a binary file exists
-    std::ifstream binaryFile(binaryFilename.c_str(), std::ios_base::binary | std::ios_base::in);
-    if(binaryFile.fail()) {
+    cl::Program program;
+    auto [binaryFilename, cacheFilename, cacheData] = getBinaryName(filename, buildOptions);
+    if(!fileExists(binaryFilename)) {
         program = writeBinary(filename, buildOptions);
     } else {
         // Compare modified dates of binary file and source file
+        auto modifiedDate = getModifiedDate(filename);
+        bool outOfDate = modifiedDate != cacheData[0];
+        bool buildOptionsChanged = buildOptions != cacheData[3];
 
-        // Read cache file
-        std::ifstream cacheFile(cacheFilename.c_str());
-        std::string cache(
-            std::istreambuf_iterator<char>(cacheFile),
-            (std::istreambuf_iterator<char>()));
-        auto lines = split(cache, "\n");
-
-        bool outOfDate = true;
-        bool wrongDeviceID = true;
-        bool buildOptionsChanged = true;
-        if(lines.size() >= 2) {
-            // Get modification date of file
-            auto modifiedDate = getModifiedDate(filename);
-            outOfDate = modifiedDate != lines[0];
-            std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
-            wrongDeviceID = lines[1] != devices[0].getInfo<CL_DEVICE_NAME>();
-            if(lines.size() == 3)
-                buildOptionsChanged = lines[2] != buildOptions;
-        }
-
-        if(outOfDate || wrongDeviceID || buildOptionsChanged) {
-            Reporter::warning() << "Kernel binary " << filename.substr(kernelSourcePath.size()) << " is out of date. Compiling..." << Reporter::end();
+        if(outOfDate || buildOptionsChanged) {
+            Reporter::warning() << "Kernel binary " << filename << " is out of date. Compiling..." << Reporter::end();
             program = writeBinary(filename, buildOptions);
         } else {
-            //std::cout << "Binary is not out of date." << std::endl;
             program = readBinary(binaryFilename);
         }
     }

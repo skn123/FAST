@@ -40,7 +40,7 @@ cl::Program OpenCLProgram::build(std::shared_ptr<OpenCLDevice> device,
 
     std::string programName;
     if(m_sourceCode.empty()) {
-        programName = mSourceFilename + buildOptions;
+        programName = getAbsolutePath(mSourceFilename) + buildOptions;
         // Only create program if it doesn't exist for this device from before
         if(!device->hasProgram(programName))
             device->createProgramFromSourceWithName(programName, mSourceFilename, buildOptions);
