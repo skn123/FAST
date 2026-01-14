@@ -49,22 +49,14 @@ void ImageInverter::execute() {
                 cl::NullRange
         );
     } else {
-        cl::Program program = getOpenCLProgram(device, "2D");
-        cl::Kernel kernel(program, "invert2D");
+        auto kernel = getKernel("invert2D", "2D");
 
-        auto access = input->getOpenCLImageAccess(ACCESS_READ, device);
-        auto access2 = output->getOpenCLImageAccess(ACCESS_READ_WRITE, device);
-        kernel.setArg(0, *access->get2DImage());
-        kernel.setArg(1, *access2->get2DImage());
-        kernel.setArg(2, min);
-        kernel.setArg(3, max);
+        kernel.setArg("input", input);
+        kernel.setArg("output", output);
+        kernel.setArg("min", min);
+        kernel.setArg("max", max);
 
-        queue.enqueueNDRangeKernel(
-                kernel,
-                cl::NullRange,
-                cl::NDRange(size.x(), size.y()),
-                cl::NullRange
-        );
+        getQueue().add(kernel, size);
     }
     addOutputData(0, output);
 }
