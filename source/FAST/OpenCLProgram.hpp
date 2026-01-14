@@ -46,8 +46,12 @@ class FAST_EXPORT  OpenCLProgram : public Object {
         std::unordered_map<std::shared_ptr<OpenCLDevice>, std::map<std::string, cl::Program> > mOpenCLPrograms;
 };
 
+/**
+ * @brief Access qualifier of a kernel argument
+ * @ingroup opencl
+ */
 enum class KernelArgumentAccess {
-    NONE,
+    UNSPECIFIED,
     READ_ONLY,
     WRITE_ONLY,
     READ_WRITE,
@@ -221,21 +225,64 @@ FAST_EXPORT void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLB
 class FAST_EXPORT Queue {
     public:
         Queue(cl::CommandQueue clQueue);
+        /**
+         * @brief Enqueue a Kernel to this command queue
+         * @param kernel
+         * @param globalSize total number of work-items for each dimension
+         * @param offset work-item offset, if none is given, it is zero for all dimensions
+         * @param groupSize How many work-items should be each work-group for each dimension.
+         *      If not provided, platform will decide automatically
+         */
         void add(const Kernel& kernel, std::vector<int> globalSize, std::vector<int> offset = std::vector<int>(), std::vector<int> groupSize = std::vector<int>());
+        /**
+         * @brief Block until entire command queue is finished
+         */
         void finish();
+        /**
+         * @brief Copy data from buffer on device to pointer on host
+         * @param buffer OpenCL buffer to read from
+         * @param block Whether this call should block and wait until the data operation is finished.
+         * @param offset Byte offset in OpenCL buffer
+         * @param size nr of bytes to read (e.g. elements*sizeof(datatype))
+         * @param pointerToData Pointer to host memory to read data into. Must be allocated with big enough size
+         */
         void addReadBuffer(OpenCLBuffer buffer, bool block, std::size_t offset, std::size_t size, void* pointerToData);
+        /**
+         * @brief Write data from host pointer to OpenCL buffer
+         * @param buffer OpenCL buffer to write data to
+         * @param block Whether this call should block and wait until the data operation is finished.
+         * @param offset Byte offset in OpenCL buffer to write data to
+         * @param size nr of bytes to write (e.g. elements*sizeof(datatype))
+         * @param pointerToData Pointer to host memory to read data from. Must be bigger than size.
+         */
         void addWriteBuffer(OpenCLBuffer buffer, bool block, std::size_t offset, std::size_t size, void* pointerToData);
+        /**
+         * @brief Copy data from one OpenCL buffer (source) to another (destination)
+         * @param srcBuffer source OpenCL buffer
+         * @param dstBuffer destination OpenCL buffer
+         * @param srcOffset offset in bytes in source buffer
+         * @param destOffset  offset in bytes in destination buffer
+         * @param size size in bytes (e.g. elements*sizeof(datatype))
+         */
         void addCopyBuffer(OpenCLBuffer srcBuffer, OpenCLBuffer dstBuffer, std::size_t srcOffset, std::size_t destOffset, std::size_t size);
         cl::CommandQueue getHandle() const;
     private:
         cl::CommandQueue m_queue;
 };
 
+/**
+ * @brief Access to OpenCL memory granted to kernel
+ * @ingroup opencl
+ */
 enum class KernelMemoryAccess {
     READ_WRITE = 0,
     READ_ONLY,
     WRITE_ONLY
 };
+/**
+ * @brief Access to OpenCL memory granted to host
+ * @ingroup opencl
+ */
 enum class HostMemoryAccess {
     UNSPECIFIED = 0,
     READ_ONLY,
@@ -243,12 +290,21 @@ enum class HostMemoryAccess {
     //READ_WRITE,
     NONE
 };
+
 /**
  * @brief OpenCL Buffer
  * @ingroup opencl
  */
 class FAST_EXPORT OpenCLBuffer {
     public:
+        /**
+         * @brief Create OpenCL buffer
+         * @param size in bytes (e.g. elements*sizeof(datatype))
+         * @param device device
+         * @param kernelAccess Access to memory to grant to kernel (default READ+WRITE)
+         * @param hostAccess Access to memory to grant to host (default UNSPECIFIED)
+         * @param data Pointer to data on host which is copied to the device (default nullptr/none)
+         */
         OpenCLBuffer(
                 std::size_t size,
                 OpenCLDevice::pointer device,
@@ -257,6 +313,10 @@ class FAST_EXPORT OpenCLBuffer {
                 const void* data = nullptr
         );
         cl::Buffer getHandle() const;
+        /**
+         * @brief Get size of OpenCL buffer in bytes
+         * @return  number of bytes
+         */
         std::size_t getSize() const;
     private:
         cl::Buffer m_buffer;

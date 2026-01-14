@@ -161,7 +161,7 @@ Kernel::Kernel(cl::Kernel clKernel, OpenCLDevice::pointer device) {
     m_device = device;
 
     std::map<cl_kernel_arg_access_qualifier, KernelArgumentAccess> accessMap = {
-            {CL_KERNEL_ARG_ACCESS_NONE, KernelArgumentAccess::NONE},
+            {CL_KERNEL_ARG_ACCESS_NONE, KernelArgumentAccess::UNSPECIFIED},
             {CL_KERNEL_ARG_ACCESS_READ_ONLY, KernelArgumentAccess::READ_ONLY},
             {CL_KERNEL_ARG_ACCESS_WRITE_ONLY, KernelArgumentAccess::WRITE_ONLY},
             {CL_KERNEL_ARG_ACCESS_READ_WRITE, KernelArgumentAccess::READ_WRITE}
@@ -325,10 +325,10 @@ void Kernel::setArg(const std::string& name, OpenCLBuffer buffer) {
 template <>
 void Kernel::setArg(int index, Image::pointer image) {
     checkIndex(index);
-    accessType access = ACCESS_READ;
+    accessType access = ACCESS_READ_WRITE;
     auto kernelAccess = m_argInfoByIndex.at(index).access;
-    if(kernelAccess == KernelArgumentAccess::WRITE_ONLY || kernelAccess == KernelArgumentAccess::READ_WRITE) {
-        access = ACCESS_READ_WRITE;
+    if(kernelAccess == KernelArgumentAccess::READ_ONLY) {
+        access = ACCESS_READ;
     }
     setImageArg(index, image, access);
 }
@@ -342,6 +342,7 @@ template <>
 void Kernel::setArg(int index, std::unique_ptr<OpenCLBufferAccess> access) {
     checkIndex(index);
     m_kernel.setArg(index, *access->get());
+    m_argGotValue.insert(index);
 }
 template <>
 void Kernel::setArg(const std::string& name, std::unique_ptr<OpenCLBufferAccess> access) {

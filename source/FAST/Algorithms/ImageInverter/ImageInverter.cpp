@@ -31,23 +31,15 @@ void ImageInverter::execute() {
 
     if(input->getDimensions() == 3) {
         std::string buildOptions = "-DDATA_TYPE=" + getCTypeAsString(output->getDataType());
-        cl::Program program = getOpenCLProgram(device, "3D", buildOptions);
-        cl::Kernel kernel(program, "invert3D");
+        auto kernel = getKernel("invert3D", "3D", buildOptions);
 
-        auto access = input->getOpenCLImageAccess(ACCESS_READ, device);
-        auto access2 = output->getOpenCLBufferAccess(ACCESS_READ_WRITE, device);
-        kernel.setArg(0, *access->get3DImage());
-        kernel.setArg(1, *access2->get());
-        kernel.setArg(2, min);
-        kernel.setArg(3, max);
-        kernel.setArg(4, output->getNrOfChannels());
+        kernel.setArg("input", input);
+        kernel.setArg("output", output);
+        kernel.setArg("minIntensity", min);
+        kernel.setArg("maxIntensity", max);
+        kernel.setArg("outputChannels", output->getNrOfChannels());
 
-        queue.enqueueNDRangeKernel(
-                kernel,
-                cl::NullRange,
-                cl::NDRange(size.x(), size.y(), size.z()),
-                cl::NullRange
-        );
+        getQueue().add(kernel, size);
     } else {
         auto kernel = getKernel("invert2D", "2D");
 

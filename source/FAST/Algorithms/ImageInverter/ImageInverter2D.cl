@@ -17,7 +17,7 @@ __kernel void invert2D(
     } else {
         value = convert_float4(read_imagei(input, sampler, pos));
     }
-    value = (maxIntensity - minIntensity) - value;
+    value = (maxIntensity + minIntensity) - value;
     if(dataType == CLK_FLOAT) {
         write_imagef(output, pos, value);
     } else if(dataType == CLK_UNSIGNED_INT8 || dataType == CLK_UNSIGNED_INT16 || dataType == CLK_UNSIGNED_INT32) {
