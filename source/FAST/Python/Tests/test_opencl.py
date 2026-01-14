@@ -22,11 +22,11 @@ class OpenCLProcessObject(fast.PythonProcessObject):
                 __kernel void invert(
                     __read_only image2d_t input, 
                     __write_only image2d_t output,
-                    __private int max
+                    __private int maxValue
                     ) {
                     int2 pos = {get_global_id(0), get_global_id(1)};
                     int value = read_imageui(input, sampler, pos).x;
-                    write_imageui(output, pos, max - value);
+                    write_imageui(output, pos, maxValue - value);
                 }
                 '''
             )
@@ -41,7 +41,7 @@ class OpenCLProcessObject(fast.PythonProcessObject):
         # Provide arguments to the kernel
         ID1 = 0 if self.useIndex else 'input'
         ID2 = 1 if self.useIndex else 'output'
-        ID3 = 2 if self.useIndex else 'max'
+        ID3 = 2 if self.useIndex else 'maxValue'
         kernel.setArg(ID1, image)
         kernel.setArg(ID2, output)
         if not self.missingArgument:
