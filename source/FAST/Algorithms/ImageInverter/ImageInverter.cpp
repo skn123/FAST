@@ -53,8 +53,8 @@ void ImageInverter::execute() {
 
         kernel.setArg("input", input);
         kernel.setArg("output", output);
-        kernel.setArg("min", min);
-        kernel.setArg("max", max);
+        kernel.setArg("minIntensity", min);
+        kernel.setArg("maxIntensity", max);
 
         getQueue().add(kernel, size);
     }
