@@ -26,9 +26,6 @@ void ImageInverter::execute() {
     auto output = Image::createFromImage(input);
     Vector3ui size = input->getSize();
 
-    OpenCLDevice::pointer device = std::dynamic_pointer_cast<OpenCLDevice>(getMainDevice());
-    cl::CommandQueue queue = device->getCommandQueue();
-
     if(input->getDimensions() == 3) {
         std::string buildOptions = "-DDATA_TYPE=" + getCTypeAsString(output->getDataType());
         auto kernel = getKernel("invert3D", "3D", buildOptions);

@@ -84,24 +84,15 @@ void TissueSegmentation::runColorThresholding(SpatialDataObject::pointer image) 
     auto output = Image::createSegmentationFromImage(input);
 
     {
-        auto device = std::dynamic_pointer_cast<OpenCLDevice>(getMainDevice());
-        auto program = getOpenCLProgram(device);
-        cl::Kernel kernel(program, "segment");
+        auto kernel = getKernel("segment");
 
-        auto inputAccess = input->getOpenCLImageAccess(ACCESS_READ, device);
-        auto outputAccess = output->getOpenCLImageAccess(ACCESS_READ_WRITE, device);
-        kernel.setArg(0, *inputAccess->get2DImage());
-        kernel.setArg(1, *outputAccess->get2DImage());
+        kernel.setArg(0, input);
+        kernel.setArg(1, output);
         kernel.setArg(2, m_thresh);
         kernel.setArg(3, (int) m_filterZeros);
 
-        device->getCommandQueue().enqueueNDRangeKernel(
-                kernel,
-                cl::NullRange,
-                 cl::NDRange(input->getWidth(), input->getHeight()),
-                cl::NullRange
-                );
-        device->getCommandQueue().finish();
+        getQueue().add(kernel, input->getSize());
+        getQueue().finish();
     }
 
     if ((m_dilate == 0) && (m_erode == 0)) {

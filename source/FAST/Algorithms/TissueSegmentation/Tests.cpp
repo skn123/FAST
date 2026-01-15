@@ -30,6 +30,26 @@ TEST_CASE("Tissue segmentation", "[fast][wsi][TissueSegmentation][visual]") {
     window->start();
 }
 
+TEST_CASE("Tissue segmentation color thresholding", "[fast][wsi][TissueSegmentation][visual]") {
+    auto importer = WholeSlideImageImporter::create(Config::getTestDataPath() + "/WSI/CMU-1.svs");
+
+    auto segmentation = TissueSegmentation::create(true)
+            ->connect(importer);
+
+    auto renderer = ImagePyramidRenderer::create()
+            ->connect(importer);
+
+    auto segRenderer = SegmentationRenderer::create()
+            ->connect(segmentation);
+    segRenderer->setOpacity(0.5);
+
+    auto window = SimpleWindow2D::create();
+    window->addRenderer(renderer);
+    window->addRenderer(segRenderer);
+    window->setTimeout(2000);
+    window->start();
+}
+
 TEST_CASE("Tissue segmentation on image", "[fast][wsi][TissueSegmentation][visual]") {
     auto importer = WholeSlideImageImporter::create(Config::getTestDataPath() + "/WSI/CMU-1.svs");
 

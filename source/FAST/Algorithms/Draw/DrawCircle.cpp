@@ -40,7 +40,6 @@ void DrawCircle::execute() {
             throw Exception("Color was specified in DrawCircle, but input image did not have 3 or 4 channels");
         }
         value = 0.0f; // Disable use of scalar value if color is set
-        std::cout << "using color" << std::endl;
     }
 
     // TODO choose whether to do per pixel, or per circle:
@@ -59,40 +58,19 @@ void DrawCircle::execute() {
     }
 
     // Draw circles
-    cl::Buffer coordinatesBuffer(
-            device->getContext(),
-            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            m_centroids.size()*sizeof(float),
-            m_centroids.data()
-    );
-    cl::Buffer radiiBuffer(
-            device->getContext(),
-            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            m_radii.size()*sizeof(float),
-            m_radii.data()
-    );
-    cl::Kernel kernel;
-    if(m_fill) {
-        kernel = cl::Kernel(getOpenCLProgram(device), "drawFilledCircles");
-    } else {
-        kernel = cl::Kernel(getOpenCLProgram(device), "drawCircles");
-    }
-    auto access = image->getOpenCLImageAccess(ACCESS_READ_WRITE, device);
+    auto coordinatesBuffer = createBuffer(m_centroids.size()*sizeof(float), m_centroids.data(), KernelMemoryAccess::READ_ONLY, HostMemoryAccess::NONE);
+    auto radiiBuffer = createBuffer(m_radii.size()*sizeof(float), m_radii.data(), KernelMemoryAccess::READ_ONLY, HostMemoryAccess::NONE);
+    auto kernel = getKernel(m_fill ? "drawFilledCircles" : "drawCircles");
     kernel.setArg(0, coordinatesBuffer);
     kernel.setArg(1, (int)m_centroids.size()/2);
-    kernel.setArg(2, *access->get2DImage());
+    kernel.setArg(2, image);
     kernel.setArg(3, radiiBuffer);
     kernel.setArg(4, (char)(m_radii.size() == 2 ? 1 : 0));
     kernel.setArg(5, value);
     kernel.setArg(6, sizeof(cl_float3), m_color.asVector().data());
-    device->getCommandQueue().enqueueNDRangeKernel(
-            kernel,
-            cl::NullRange,
-            //cl::NDRange(segmentation->getWidth(), segmentation->getHeight()),
-            cl::NDRange((int)m_centroids.size()/2),
-            cl::NullRange
-    );
-    device->getCommandQueue().finish();
+
+    getQueue().add(kernel, {(int)m_centroids.size()/2});
+    getQueue().finish();
 
     addOutputData(0, image);
 }
