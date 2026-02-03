@@ -26,3 +26,7 @@ img {
     }
 }
 
+.stats img {
+    width: 100%;
+}
+

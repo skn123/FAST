@@ -6,15 +6,9 @@ PyPi (pip) Downloads
 ![](https://raw.githubusercontent.com/FAST-Imaging/pip-download-statistics/refs/heads/main/badges/all_time.svg)
 
 @htmlonly
-<div class="m-container">
-    <div class="m-row ">
-        <div class="m-col-m-3">
-            <div class="m-button m-primary tab-link 2025"><a href="javascript:showYear(2025)">2025</a></div>
-        </div>
-        <div class="m-col-m-3">
-            <div class="m-button m-default tab-link 2026"><a href="javascript:showYear(2026)">2026</a></div>
-        </div>
-    </div>
+<div>
+<div class="m-button m-primary" style="display: inline;" ><a href="javascript:showYear(2025)">2025</a></div>
+<div class="m-button m-default" style="display: inline;" ><a href="javascript:showYear(2026)">2026</a></div>
 </div>
 
 <div class="stats 2026" style="display: block;">
@@ -36,15 +30,9 @@ GitHub Downloads
 ![](https://raw.githubusercontent.com/FAST-Imaging/github-statistics/refs/heads/main/badges/total.svg)
 
 @htmlonly
-<div class="m-container">
-    <div class="m-row ">
-        <div class="m-col-m-3">
-            <div class="m-button m-primary tab-link 2025"><a href="javascript:showYear(2025)">2025</a></div>
-        </div>
-        <div class="m-col-m-3">
-            <div class="m-button m-default tab-link 2026"><a href="javascript:showYear(2026)">2026</a></div>
-        </div>
-    </div>
+<div>
+<div class="m-button m-primary" style="display: inline;" ><a href="javascript:showYear(2025)">2025</a></div>
+<div class="m-button m-default" style="display: inline;" ><a href="javascript:showYear(2026)">2026</a></div>
 </div>
 
 <div class="stats 2026" style="display: block;">
@@ -58,6 +46,7 @@ GitHub Downloads
 <img src="https://raw.githubusercontent.com/FAST-Imaging/github-statistics/refs/heads/main/plots/2025-OS.svg">
 <img src="https://raw.githubusercontent.com/FAST-Imaging/github-statistics/refs/heads/main/plots/2025-file-type.svg">
 </div>
+
 @endhtmlonly
 
 @htmlonly
