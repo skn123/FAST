@@ -19,7 +19,7 @@ class FAST_EXPORT  VertexRenderer : public LabelColorRenderer {
          * @brief Create instance
          * @param size Vertex point size (can be in pixels or millimeters, see sizeIsInPixels parameter)
          * @param sizeIsInPixels Whether size is given in pixels or millimeters
-         * @param minSize Minimum size in pixels, used when sizeInPixels = false
+         * @param minSize Minimum size in pixels, used when sizeIsInPixels = false
          * @param color Override color stored for each vertex
          * @param labelColors Set color per label
          * @param opacity Opacity of vertices: 1 = no transparency, 0 = fully transparent

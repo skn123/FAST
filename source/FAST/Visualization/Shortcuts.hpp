@@ -39,7 +39,7 @@ struct Display2DArgs {
     Color lineColor = Color::Green();
     float vertexSize = 10.0;
     bool vertexSizeIsInPixels = true;
-    float vertexMinSize = 1.0f;
+    int vertexMinSize = 1;
     Color vertexColor = Color::Null();
     LabelColors vertexLabelColors;
     float vertexOpacity = 1.0f;

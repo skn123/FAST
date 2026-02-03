@@ -95,7 +95,6 @@ void VertexRenderer::draw(Matrix4f perspectiveMatrix, Matrix4f viewingMatrix, fl
             glUniformBlockBinding(getShaderProgram(), colorsIndex, 0);
             glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_colorsUBO);
         } else {
-            std::cout << "Using global color" << std::endl;
             useGlobalColor = true;
         }
         setShaderUniform("useGlobalColor", useGlobalColor);

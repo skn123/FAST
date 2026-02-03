@@ -47,6 +47,7 @@ class FAST_EXPORT Mesh : public SpatialDataObject {
         int getNrOfVertices();
         void setBoundingBox(DataBoundingBox box);
         ~Mesh();
+        void accessFinished() override;
     private:
         Mesh();
         void freeAll();

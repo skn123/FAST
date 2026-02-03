@@ -52,7 +52,7 @@ class FAST_EXPORT  DataObject : public Object {
         T getFrameData(std::string name);
         bool hasFrameData(std::string name) const;
         std::map<std::string, std::string> getFrameData();
-        void accessFinished();
+        virtual void accessFinished();
     protected:
         virtual void free(ExecutionDevice::pointer device) = 0;
         virtual void freeAll() = 0;

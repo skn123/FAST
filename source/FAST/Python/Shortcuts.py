@@ -23,8 +23,9 @@ def display2D(
             lineColor:Color=Color.Green(),
             vertexSize:float=10.0,
             vertexSizeIsInPixels:bool=True,
-            vertexMinSize:float=1.0,
+            vertexMinSize:int=1,
             vertexColor:Color=Color.Null(),
+            vertexLabelColors:Dict[int, Color]=None,
             vertexOpacity:float=1.0,
             bgcolor:Color=Color.White(),
             width:int=None,
@@ -54,6 +55,7 @@ def display2D(
     :param vertexSizeIsInPixels Whether size is given in pixels or millimeters
     :param vertexMinSize Minimum size in pixels, used when sizeInPixels = false
     :param vertexColor Override color stored for each vertex
+    :param vertexLabelColors Set vertex color per label
     :param vertexOpacity Opacity of vertices: 1 = no transparency, 0 = fully transparent
     :param bgcolor: Background color
     :param width: Width of window
@@ -113,6 +115,7 @@ def display2D(
             minSize=vertexMinSize,
             color=vertexColor,
             opacity=vertexOpacity,
+            labelColors=vertexLabelColors
         ).connect(vertices)
         renderers.append(renderer)
 

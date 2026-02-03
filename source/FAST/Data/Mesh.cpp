@@ -623,15 +623,10 @@ void Mesh::free(ExecutionDevice::pointer device) {
 }
 
 int Mesh::getNrOfTriangles() {
-    if(mHostHasData && mHostDataIsUpToDate)
-        mNrOfTriangles = mTriangles.size() / 3;
     return mNrOfTriangles;
 }
 
 int Mesh::getNrOfVertices() {
-    if(mHostHasData && mHostDataIsUpToDate)
-        mNrOfVertices = mCoordinates.size() / 3;
-
     return mNrOfVertices;
 }
 
@@ -640,9 +635,20 @@ void Mesh::setBoundingBox(DataBoundingBox box) {
 }
 
 int Mesh::getNrOfLines() {
-    if(mHostHasData && mHostDataIsUpToDate)
-        mNrOfLines = mLines.size() / 2;
 	return mNrOfLines;
+}
+
+void Mesh::accessFinished() {
+    if(mHostHasData && mHostDataIsUpToDate) {
+        // Make sure state is updated when mesh is modified on host
+        mUseColorVBO = !mColors.empty();
+        m_useLabelVBO = !m_labels.empty();
+        mUseNormalVBO = !mNormals.empty();
+        mNrOfVertices = mCoordinates.size() / 3;
+        mNrOfLines = mLines.size() / 2;
+        mNrOfTriangles = mTriangles.size() / 3;
+    }
+    DataObject::accessFinished();
 }
 
 } // end namespace fast
