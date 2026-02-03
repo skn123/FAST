@@ -293,7 +293,7 @@ std::shared_ptr<Image> ImagePyramidAccess::getPatchAsImage(int level, int offset
             1.0f
     ));
     // Set transformation
-    auto T = Transform::create(Vector3f(offsetX*scale, offsetY*scale, 0.0f));
+    auto T = Transform::create(Vector3f(offsetX*scale*spacing.x(), offsetY*scale*spacing.y(), 0.0f));
     image->setTransform(T);
     SceneGraph::setParentNode(image, std::dynamic_pointer_cast<SpatialDataObject>(m_image));
 
