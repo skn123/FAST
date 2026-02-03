@@ -2,7 +2,7 @@ __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | 
 
 __kernel void invert3D(
         __read_only image3d_t input,
-        __write_only __global DATA_TYPE* output,
+        __global DATA_TYPE* output,
         __private float minIntensity,
         __private float maxIntensity,
         __private uint outputChannels
