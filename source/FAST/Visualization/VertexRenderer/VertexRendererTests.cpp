@@ -38,4 +38,45 @@ TEST_CASE("VertexRenderer 2D", "[fast][VertexRenderer][visual]") {
     window->run();
 }
 
+TEST_CASE("VertexRenderer vertex coloring 2D", "[fast][VertexRenderer][visual]") {
+    auto importer = ImageFileImporter::create(Config::getTestDataPath()+"US/CarotidArtery/Right/US-2D_0.mhd");
+    auto imageRenderer = ImageRenderer::create()->connect(importer);
+
+    std::vector<MeshVertex> vertices = {
+            MeshVertex(Vector3f(1, 5, 0), Vector3f::Zero(), Color::Yellow()),
+            MeshVertex(Vector3f(10, 10, 0), Vector3f::Zero(), Color::Red()),
+            MeshVertex(Vector3f(20, 20, 0), Vector3f::Zero(), Color::Magenta()),
+    };
+    auto mesh = Mesh::create(vertices);
+
+    auto renderer = VertexRenderer::create(10, false, 1)
+            ->connect(mesh);
+    renderer->setOpacity(0.5);
+
+    auto window = SimpleWindow2D::create()->connect(imageRenderer)->connect(renderer);
+    window->setTimeout(500);
+    window->run();
+}
+
+TEST_CASE("VertexRenderer label coloring 2D", "[fast][VertexRenderer][visual]") {
+
+    auto importer = ImageFileImporter::create(Config::getTestDataPath()+"US/CarotidArtery/Right/US-2D_0.mhd");
+    auto imageRenderer = ImageRenderer::create()->connect(importer);
+
+    std::vector<MeshVertex> vertices = {
+            MeshVertex(Vector3f(1, 5, 0), Vector3f::Zero(), Color::Null(), 1),
+            MeshVertex(Vector3f(10, 10, 0), Vector3f::Zero(), Color::Null(), 2),
+            MeshVertex(Vector3f(20, 20, 0), Vector3f::Zero(), Color::Null(), 3),
+    };
+    auto mesh = Mesh::create(vertices);
+
+    auto renderer = VertexRenderer::create(10, false, 1, Color::Null(), {{1, Color::Red()}, {2, Color::Green()}, {3, Color::Blue()}})
+            ->connect(mesh);
+    renderer->setOpacity(0.5);
+
+    auto window = SimpleWindow2D::create()->connect(imageRenderer)->connect(renderer);
+    window->setTimeout(500);
+    window->run();
+}
+
 }

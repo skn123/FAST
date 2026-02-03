@@ -1,8 +1,7 @@
 #pragma once
 
-#include "FAST/Visualization/Renderer.hpp"
-#include "FAST/Data/Mesh.hpp"
-#include "FAST/Data/Color.hpp"
+#include <FAST/Visualization/LabelColorRenderer.hpp>
+#include <FAST/Data/Mesh.hpp>
 #include <mutex>
 
 namespace fast {
@@ -13,7 +12,7 @@ namespace fast {
  * @ingroup renderers
  * @sa Mesh
  */
-class FAST_EXPORT  VertexRenderer : public Renderer {
+class FAST_EXPORT  VertexRenderer : public LabelColorRenderer {
     FAST_PROCESS_OBJECT(VertexRenderer)
     public:
         /**
@@ -22,6 +21,7 @@ class FAST_EXPORT  VertexRenderer : public Renderer {
          * @param sizeIsInPixels Whether size is given in pixels or millimeters
          * @param minSize Minimum size in pixels, used when sizeInPixels = false
          * @param color Override color stored for each vertex
+         * @param labelColors Set color per label
          * @param opacity Opacity of vertices: 1 = no transparency, 0 = fully transparent
          * @param drawOnTop Disable depth testing and always draw vertices on top
          * @return instance
@@ -31,6 +31,7 @@ class FAST_EXPORT  VertexRenderer : public Renderer {
                          bool, sizeIsInPixels, = true,
                          int, minSize, = 1,
                          Color, color, = Color::Null(),
+                         LabelColors, labelColors, = LabelColors(),
                          float, opacity, = 1.0f,
                          bool, drawOnTop, = false
         );

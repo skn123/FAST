@@ -7,6 +7,7 @@ namespace fast {
 void VertexRenderer::draw(Matrix4f perspectiveMatrix, Matrix4f viewingMatrix, float zNear, float zFar, bool mode2D,
                           int viewWidth,
                           int viewHeight) {
+
     glEnable(GL_POINT_SPRITE); // Circles created in fragment shader will not work without this
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
@@ -51,7 +52,7 @@ void VertexRenderer::draw(Matrix4f perspectiveMatrix, Matrix4f viewingMatrix, fl
         } else if(!mDefaultColor.isNull()) {
             color = mDefaultColor;
             useGlobalColor = true;
-        } else if(!access->hasColorVBO()) {
+        } else if(!access->hasColorVBO() && !access->hasLabelVBO()) {
             color = Color::Green();
             useGlobalColor = true;
         }
@@ -76,15 +77,29 @@ void VertexRenderer::draw(Matrix4f perspectiveMatrix, Matrix4f viewingMatrix, fl
         glEnableVertexAttribArray(0);
 
         // Color buffer
+        bool useLabelColor = false;
         if(access->hasColorVBO() && !useGlobalColor) {
             GLuint *colorVBO = access->getColorVBO();
             glBindBuffer(GL_ARRAY_BUFFER, *colorVBO);
             glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
             glEnableVertexAttribArray(1);
+        } else if(access->hasLabelVBO() && !useGlobalColor) {
+            GLuint *labelVBO = access->getLabelVBO();
+            glBindBuffer(GL_ARRAY_BUFFER, *labelVBO);
+            glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, sizeof(uchar), (void*)0);
+            glEnableVertexAttribArray(2);
+            useLabelColor = true;
+
+            createColorUniformBufferObject();
+            auto colorsIndex = glGetUniformBlockIndex(getShaderProgram(), "Colors");
+            glUniformBlockBinding(getShaderProgram(), colorsIndex, 0);
+            glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_colorsUBO);
         } else {
+            std::cout << "Using global color" << std::endl;
             useGlobalColor = true;
         }
         setShaderUniform("useGlobalColor", useGlobalColor);
+        setShaderUniform("useLabelColor", useLabelColor);
         setShaderUniform("opacity", m_opacity);
         setShaderUniform("globalColor", color.asVector());
 
@@ -108,13 +123,14 @@ void VertexRenderer::draw(Matrix4f perspectiveMatrix, Matrix4f viewingMatrix, fl
     deactivateShader();
 }
 
-VertexRenderer::VertexRenderer(float size, bool sizeIsInPixels, int minSize, Color color, float opacity, bool drawOnTop) {
+VertexRenderer::VertexRenderer(float size, bool sizeIsInPixels, int minSize, Color color, LabelColors labelColors, float opacity, bool drawOnTop) {
     setDefaultSize(size);
     setDefaultColor(color);
     setDefaultDrawOnTop(drawOnTop);
     m_sizeIsInPixels = sizeIsInPixels;
     m_minSize = minSize;
     setOpacity(opacity);
+    setColors(labelColors);
 
     createInputPort(0, "Mesh");
 

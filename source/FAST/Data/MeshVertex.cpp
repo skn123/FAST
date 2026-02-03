@@ -3,11 +3,12 @@
 namespace fast {
 
 
-MeshVertex::MeshVertex(Vector3f position, Vector3f normal, Color color) {
+MeshVertex::MeshVertex(Vector3f position, Vector3f normal, Color color, uchar label) {
 	mPosition = position;
 	mNormal = normal;
-	mLabel = 0;
+	mLabel = label;
 	mColor = color;
+	mLabel = label;
 }
 
 void MeshVertex::setColor(Color color) {
@@ -18,11 +19,11 @@ Color MeshVertex::getColor() const {
 	return mColor;
 }
 
-void MeshVertex::setLabel(int label) {
+void MeshVertex::setLabel(uchar label) {
 	mLabel = label;
 }
 
-int MeshVertex::getLabel() const {
+uchar MeshVertex::getLabel() const {
 	return mLabel;
 }
 

@@ -27,10 +27,12 @@ VertexBufferObjectAccess::VertexBufferObjectAccess(
         GLuint coordinateVBO,
         GLuint normalVBO,
         GLuint colorVBO,
+        GLuint labelVBO,
         GLuint lineEBO,
         GLuint triangleEBO,
         bool useNormalVBO,
         bool useColorVBO,
+        bool useLabelVBO,
         bool useEBO,
         std::shared_ptr<Mesh> mesh
         ) {
@@ -40,6 +42,8 @@ VertexBufferObjectAccess::VertexBufferObjectAccess(
     *mNormalVBO = normalVBO;
     mColorVBO = new GLuint;
     *mColorVBO = colorVBO;
+    mLabelVBO = new GLuint;
+    *mLabelVBO = labelVBO;
     mLineEBO = new GLuint;
     *mLineEBO = lineEBO;
     mTriangleEBO = new GLuint;
@@ -47,6 +51,7 @@ VertexBufferObjectAccess::VertexBufferObjectAccess(
 
     mUseNormalVBO = useNormalVBO;
     mUseColorVBO = useColorVBO;
+    mUseLabelVBO = useLabelVBO;
     mUseEBO = useEBO;
 
     mIsDeleted = false;
@@ -59,6 +64,7 @@ void VertexBufferObjectAccess::release() {
         delete mCoordinateVBO;
         delete mNormalVBO;
         delete mColorVBO;
+        delete mLabelVBO;
         delete mLineEBO;
         delete mTriangleEBO;
         mIsDeleted = true;
@@ -79,6 +85,14 @@ bool VertexBufferObjectAccess::hasColorVBO() const {
 
 bool VertexBufferObjectAccess::hasEBO() const {
     return mUseEBO;
+}
+
+GLuint *VertexBufferObjectAccess::getLabelVBO() const {
+    return mLabelVBO;
+}
+
+bool VertexBufferObjectAccess::hasLabelVBO() const {
+    return mUseLabelVBO;
 }
 
 } // end namespacefast

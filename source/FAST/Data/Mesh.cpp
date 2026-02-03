@@ -12,9 +12,9 @@
 namespace fast {
 
 Mesh::Mesh(
-        std::vector<MeshVertex> vertices,
-        std::vector<MeshLine> lines,
-        std::vector<MeshTriangle> triangles
+        const std::vector<MeshVertex>& vertices,
+        const std::vector<MeshLine>& lines,
+        const std::vector<MeshTriangle>& triangles
     ) : Mesh() {
      if(mIsInitialized) {
         // Delete old data
@@ -26,6 +26,7 @@ Mesh::Mesh(
         mNrOfVertices = 0;
         mNrOfLines = 0;
         mUseColorVBO = false;
+        m_useLabelVBO = false;
         mUseNormalVBO = false;
         mUseEBO = false;
         mNrOfTriangles = 0;
@@ -44,13 +45,27 @@ Mesh::Mesh(
         mCoordinates.push_back(pos[1]);
         mCoordinates.push_back(pos[2]);
         Vector3f normal = vertices[i].getNormal();
-        mNormals.push_back(normal[0]);
-        mNormals.push_back(normal[1]);
-        mNormals.push_back(normal[2]);
+        if(normal != Vector3f::Zero() || !mNormals.empty()) {
+            if(mNormals.empty())
+                mNormals.resize(i*3, 0.0f);
+            mNormals.push_back(normal[0]);
+            mNormals.push_back(normal[1]);
+            mNormals.push_back(normal[2]);
+        }
         Color color = vertices[i].getColor();
-        mColors.push_back(color.getRedValue());
-        mColors.push_back(color.getGreenValue());
-        mColors.push_back(color.getBlueValue());
+        if(!color.isNull() || !mColors.empty()) {
+            if(mColors.empty())
+                mColors.resize(i*3, -1.0f);
+            mColors.push_back(color.getRedValue());
+            mColors.push_back(color.getGreenValue());
+            mColors.push_back(color.getBlueValue());
+        }
+        auto label = vertices[i].getLabel();
+        if(label > 0 || !m_labels.empty()) {
+            if(m_labels.empty())
+                m_labels.resize(i, 0);
+            m_labels.push_back(label);
+        }
     }
     for(auto line : lines) {
         mLines.push_back(line.getEndpoint1());
@@ -70,8 +85,9 @@ Mesh::Mesh(
     mNrOfVertices = vertices.size();
     mNrOfLines = lines.size();
     mNrOfTriangles = triangles.size();
-    mUseColorVBO = true;
-    mUseNormalVBO = true;
+    mUseColorVBO = !mColors.empty();
+    m_useLabelVBO = !m_labels.empty();
+    mUseNormalVBO = !mNormals.empty();
     mUseEBO = true;
     mHostHasData = true;
     mHostDataIsUpToDate = true;
@@ -128,10 +144,12 @@ VertexBufferObjectAccess::pointer Mesh::getVertexBufferObjectAccess(
         if(mHostHasData) {
             fun->glDeleteBuffers(1, &mNormalVBO);
             fun->glDeleteBuffers(1, &mColorVBO);
+            fun->glDeleteBuffers(1, &m_labelVBO);
             fun->glDeleteBuffers(1, &mLineEBO);
             fun->glDeleteBuffers(1, &mTriangleEBO);
             fun->glGenBuffers(1, &mNormalVBO);
             fun->glGenBuffers(1, &mColorVBO);
+            fun->glGenBuffers(1, &m_labelVBO);
             fun->glGenBuffers(1, &mLineEBO);
             fun->glGenBuffers(1, &mTriangleEBO);
             // If host has data, transfer it.
@@ -144,6 +162,9 @@ VertexBufferObjectAccess::pointer Mesh::getVertexBufferObjectAccess(
             // Color
             fun->glBindBuffer(GL_ARRAY_BUFFER, mColorVBO);
             fun->glBufferData(GL_ARRAY_BUFFER, mColors.size()*sizeof(float), mColors.data(), GL_STATIC_DRAW);
+            // Labels
+            fun->glBindBuffer(GL_ARRAY_BUFFER, m_labelVBO);
+            fun->glBufferData(GL_ARRAY_BUFFER, m_labels.size()*sizeof(uchar), m_labels.data(), GL_STATIC_DRAW);
             // Line EBO
             fun->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mLineEBO);
             fun->glBufferData(GL_ELEMENT_ARRAY_BUFFER, mLines.size()*sizeof(uint), mLines.data(), GL_STATIC_DRAW);
@@ -165,6 +186,12 @@ VertexBufferObjectAccess::pointer Mesh::getVertexBufferObjectAccess(
                 fun->glGenBuffers(1, &mColorVBO);
                 fun->glBindBuffer(GL_ARRAY_BUFFER, mColorVBO);
                 fun->glBufferData(GL_ARRAY_BUFFER, mNrOfVertices * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
+            }
+            if(m_useLabelVBO) {
+                fun->glDeleteBuffers(1, &m_labelVBO);
+                fun->glGenBuffers(1, &m_labelVBO);
+                fun->glBindBuffer(GL_ARRAY_BUFFER, m_labelVBO);
+                fun->glBufferData(GL_ARRAY_BUFFER, mNrOfVertices * sizeof(uchar), NULL, GL_STATIC_DRAW);
             }
             if(mUseEBO) {
                 // Line EBO
@@ -205,6 +232,9 @@ VertexBufferObjectAccess::pointer Mesh::getVertexBufferObjectAccess(
             // Color
             fun->glBindBuffer(GL_ARRAY_BUFFER, mColorVBO);
             fun->glBufferData(GL_ARRAY_BUFFER, mColors.size()*sizeof(float), mColors.data(), GL_STATIC_DRAW);
+            // Label
+            fun->glBindBuffer(GL_ARRAY_BUFFER, m_labelVBO);
+            fun->glBufferData(GL_ARRAY_BUFFER, m_labels.size()*sizeof(uchar), m_labels.data(), GL_STATIC_DRAW);
             // Line EBO
             fun->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mLineEBO);
             fun->glBufferData(GL_ELEMENT_ARRAY_BUFFER, mLines.size()*sizeof(uint), mLines.data(), GL_STATIC_DRAW);
@@ -236,10 +266,12 @@ VertexBufferObjectAccess::pointer Mesh::getVertexBufferObjectAccess(
                     mCoordinateVBO,
                     mNormalVBO,
                     mColorVBO,
+                    m_labelVBO,
                     mLineEBO,
                     mTriangleEBO,
                     mUseNormalVBO,
                     mUseColorVBO,
+                    m_useLabelVBO,
                     mUseEBO,
                     std::static_pointer_cast<Mesh>(mPtr.lock())
             )
@@ -316,6 +348,11 @@ MeshAccess::pointer Mesh::getMeshAccess(accessType type) {
             fun->glBindBuffer(GL_ARRAY_BUFFER, mColorVBO);
             fun->glGetBufferSubData(GL_ARRAY_BUFFER, 0, mNrOfVertices * 3 * sizeof(float), mColors.data());
         }
+        m_labels.resize(mNrOfVertices);
+        if(m_useLabelVBO) {
+            fun->glBindBuffer(GL_ARRAY_BUFFER, m_labelVBO);
+            fun->glGetBufferSubData(GL_ARRAY_BUFFER, 0, mNrOfVertices * sizeof(uchar), m_labels.data());
+        }
         fun->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         mLines.resize(mNrOfLines*2);
@@ -371,7 +408,7 @@ MeshAccess::pointer Mesh::getMeshAccess(accessType type) {
         mDataIsBeingAccessed = true;
     }
 
-    MeshAccess::pointer accessObject(new MeshAccess(&mCoordinates, &mNormals, &mColors, &mLines, &mTriangles, std::static_pointer_cast<Mesh>(mPtr.lock())));
+    MeshAccess::pointer accessObject(new MeshAccess(&mCoordinates, &mNormals, &mColors, &m_labels, &mLines, &mTriangles, std::static_pointer_cast<Mesh>(mPtr.lock())));
 	return std::move(accessObject);
 }
 
@@ -516,6 +553,9 @@ void Mesh::freeAll() {
             //fun->glBufferData(GL_ARRAY_BUFFER, 1, NULL, GL_STATIC_DRAW);
             fun->glDeleteBuffers(1, &mColorVBO);
         }
+        if(m_useLabelVBO) {
+            fun->glDeleteBuffers(1, &m_labelVBO);
+        }
         fun->glBindBuffer(GL_ARRAY_BUFFER, 0);
         if(mUseEBO) {
             /*
@@ -549,6 +589,7 @@ void Mesh::freeAll() {
 
     mCoordinates.clear();
     mNormals.clear();
+    m_labels.clear();
     mColors.clear();
     mLines.clear();
     mTriangles.clear();
@@ -562,6 +603,7 @@ void Mesh::free(ExecutionDevice::pointer device) {
         mNormals.clear();
         mColors.clear();
         mLines.clear();
+        m_labels.clear();
         mTriangles.clear();
         mHostHasData = false;
     } else {

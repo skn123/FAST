@@ -7,6 +7,7 @@ MeshAccess::MeshAccess(
         std::vector<float>* coordinates,
         std::vector<float>* normals,
         std::vector<float>* colors,
+        std::vector<uchar>* labels,
         std::vector<uint>* lines,
         std::vector<uint>* triangles,
         std::shared_ptr<Mesh> mesh) {
@@ -14,6 +15,7 @@ MeshAccess::MeshAccess(
     mCoordinates = coordinates;
     mNormals = normals;
     mColors = colors;
+    m_labels = labels;
     mLines = lines;
     mTriangles = triangles;
     mMesh = mesh;
@@ -33,13 +35,27 @@ void MeshAccess::setVertex(uint i, MeshVertex vertex, bool updateBoundingBox) {
     (*mCoordinates)[i*3+1] = pos[1];
     (*mCoordinates)[i*3+2] = pos[2];
     Vector3f normal = vertex.getNormal();
-    (*mNormals)[i*3] = normal[0];
-    (*mNormals)[i*3+1] = normal[1];
-    (*mNormals)[i*3+2] = normal[2];
+    if(normal != Vector3f::Zero() || !mNormals->empty()) {
+        if(mNormals->empty())
+            mNormals->resize(i*3, 0.0f);
+        (*mNormals)[i*3] = normal[0];
+        (*mNormals)[i*3+1] = normal[1];
+        (*mNormals)[i*3+2] = normal[2];
+    }
     Color color = vertex.getColor();
-    (*mColors)[i*3] = color.getRedValue();
-    (*mColors)[i*3+1] = color.getGreenValue();
-    (*mColors)[i*3+2] = color.getBlueValue();
+    if(!color.isNull() || !mColors->empty()) {
+        if(mColors->empty())
+            mColors->resize(i*3, -1.0f);
+        (*mColors)[i*3] = color.getRedValue();
+        (*mColors)[i*3+1] = color.getGreenValue();
+        (*mColors)[i*3+2] = color.getBlueValue();
+    }
+    auto label = vertex.getLabel();
+    if(label > 0 || !m_labels->empty()) {
+        if(m_labels->empty())
+            m_labels->resize(i, 0);
+        (*m_labels)[i] = label;
+    }
     if(updateBoundingBox) {
         auto box = mMesh->getBoundingBox();
         box.update({vertex.getPosition()});
@@ -48,10 +64,21 @@ void MeshAccess::setVertex(uint i, MeshVertex vertex, bool updateBoundingBox) {
 }
 
 MeshVertex MeshAccess::getVertex(uint i) {
-    Color color((*mColors)[i*3], (*mColors)[i*3+1], (*mColors)[i*3+2]);
     Vector3f coordinate((*mCoordinates)[i*3], (*mCoordinates)[i*3+1], (*mCoordinates)[i*3+2]);
-    Vector3f normal((*mNormals)[i*3], (*mNormals)[i*3+1], (*mNormals)[i*3+2]);
-    return MeshVertex(coordinate, normal, color);
+
+    Color color;
+    if(!mColors->empty())
+        color = Color((*mColors)[i*3], (*mColors)[i*3+1], (*mColors)[i*3+2]);
+
+    Vector3f normal = Vector3f::Zero();
+    if(!mNormals->empty())
+        normal = Vector3f((*mNormals)[i*3], (*mNormals)[i*3+1], (*mNormals)[i*3+2]);
+
+    auto label = 0;
+    if(!m_labels->empty())
+        label = (*m_labels)[i];
+
+    return MeshVertex(coordinate, normal, color, label);
 }
 
 MeshTriangle MeshAccess::getTriangle(uint i) {
@@ -104,12 +131,18 @@ void MeshAccess::addVertex(MeshVertex v) {
     mCoordinates->push_back(0);
     mCoordinates->push_back(0);
     mCoordinates->push_back(0);
-    mNormals->push_back(0);
-    mNormals->push_back(0);
-    mNormals->push_back(0);
-    mColors->push_back(0);
-    mColors->push_back(0);
-    mColors->push_back(0);
+    if(!mNormals->empty()) {
+        mNormals->push_back(0);
+        mNormals->push_back(0);
+        mNormals->push_back(0);
+    }
+    if(!mColors->empty()) {
+        mColors->push_back(0);
+        mColors->push_back(0);
+        mColors->push_back(0);
+    }
+    if(!m_labels->empty())
+        m_labels->push_back(0);
     setVertex(mCoordinates->size()/3 - 1, v);
 }
 
@@ -127,10 +160,23 @@ void MeshAccess::addLine(MeshLine l) {
 void MeshAccess::addVertices(const std::vector<MeshVertex>& vertices) {
     int startIndex = (int)(mCoordinates->size()/3);
     mCoordinates->resize(mCoordinates->size() + vertices.size()*3, 0);
-    mColors->resize(mColors->size() + vertices.size()*3, 0);
-    mNormals->resize(mNormals->size() + vertices.size()*3, 0);
     std::vector<Vector3f> coords;
+    bool resizedColors = false; // only do it once if needed
+    bool resizedLabels = false;
+    bool resizedNormals = false;
     for(int i = 0; i < vertices.size(); ++i) {
+        if(!resizedNormals && (!mNormals->empty() || vertices[i].getNormal() != Vector3f::Zero())) {
+            mNormals->resize(mNormals->size() + vertices.size()*3, 0);
+            resizedNormals = true;
+        }
+        if(!resizedColors && (!mColors->empty() || !vertices[i].getColor().isNull())) {
+            mColors->resize(mColors->size() + vertices.size()*3, -1);
+            resizedColors = true;
+        }
+        if(!resizedLabels && (!m_labels->empty() || vertices[i].getLabel() != 0)) {
+            m_labels->resize(m_labels->size() + vertices.size(), 0);
+            resizedLabels = true;
+        }
         setVertex(startIndex + i, vertices[i], false);
         coords.push_back(vertices[i].getPosition());
     }

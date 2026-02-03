@@ -32,9 +32,9 @@ class FAST_EXPORT Mesh : public SpatialDataObject {
          * @param triangles
          */
         FAST_CONSTRUCTOR(Mesh, 
-            std::vector<MeshVertex>, vertices, , 
-            std::vector<MeshLine>, lines, = std::vector<MeshLine>(), 
-            std::vector<MeshTriangle>, triangles, = std::vector<MeshTriangle>()
+            const std::vector<MeshVertex>&, vertices, ,
+            const std::vector<MeshLine>&, lines, = std::vector<MeshLine>(),
+            const std::vector<MeshTriangle>&, triangles, = std::vector<MeshTriangle>()
         )
 #ifndef SWIG
         FAST_CONSTRUCTOR(Mesh, uint, nrOfVertices,, uint, nrOfLInes,, uint, nrOfTriangles,, bool, useColors,, bool, useNormals,, bool, useEBO,);
@@ -62,6 +62,7 @@ class FAST_EXPORT Mesh : public SpatialDataObject {
         GLuint mCoordinateVBO = 0;
         GLuint mNormalVBO = 0;
         GLuint mColorVBO = 0;
+        GLuint m_labelVBO = 0;
         GLuint mLineEBO = 0;
         GLuint mTriangleEBO = 0;
         uint mNrOfVertices;
@@ -70,6 +71,7 @@ class FAST_EXPORT Mesh : public SpatialDataObject {
         bool mUseEBO;
         bool mUseColorVBO;
         bool mUseNormalVBO;
+        bool m_useLabelVBO;
 
         // Host data
         bool mHostHasData;
@@ -77,6 +79,7 @@ class FAST_EXPORT Mesh : public SpatialDataObject {
         std::vector<float> mCoordinates;
         std::vector<float> mNormals;
         std::vector<float> mColors;
+        std::vector<uchar> m_labels;
         std::vector<uint> mLines;
         std::vector<uint> mTriangles;
 

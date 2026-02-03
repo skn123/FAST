@@ -41,6 +41,7 @@ struct Display2DArgs {
     bool vertexSizeIsInPixels = true;
     float vertexMinSize = 1.0f;
     Color vertexColor = Color::Null();
+    LabelColors vertexLabelColors;
     float vertexOpacity = 1.0f;
     Color bgcolor = Color::White(); /**< Background color to use for the View. **/
     int width = 0; /**< Width of window, set to 0 to use default width. **/

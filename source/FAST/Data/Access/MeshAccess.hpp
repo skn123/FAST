@@ -20,6 +20,7 @@ class FAST_EXPORT  MeshAccess {
             std::vector<float>* mCoordinates,
             std::vector<float>* mNormals,
             std::vector<float>* mColors,
+            std::vector<uchar>* labels,
             std::vector<uint>* mLines,
             std::vector<uint>* mTriangles,
             std::shared_ptr<Mesh> mesh
@@ -54,6 +55,7 @@ class FAST_EXPORT  MeshAccess {
 		std::vector<float>* mCoordinates;
 		std::vector<float>* mNormals;
 		std::vector<float>* mColors;
+        std::vector<uchar>* m_labels;
 		std::vector<uint>* mLines;
 		std::vector<uint>* mTriangles;
         std::shared_ptr<Mesh> mMesh;

@@ -76,7 +76,7 @@ std::variant<std::monostate, Window::pointer, Image::pointer> display2D(Display2
     }
 
     if(hasValue(args.vertices)) {
-        auto renderer = VertexRenderer::create(args.vertexSize, args.vertexSizeIsInPixels, args.vertexMinSize, args.vertexColor, args.vertexOpacity);
+        auto renderer = VertexRenderer::create(args.vertexSize, args.vertexSizeIsInPixels, args.vertexMinSize, args.vertexColor, args.vertexLabelColors, args.vertexOpacity);
         if(std::holds_alternative<Mesh::pointer>(args.vertices)) {
             renderer->connect(std::get<Mesh::pointer>(args.vertices));
         } else {
