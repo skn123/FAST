@@ -92,14 +92,6 @@ def getQueue(self, device: "fast::OpenCLDevice::pointer"=None) -> "fast::Queue":
             using ProcessObject::createOpenCLProgram;
             using ProcessObject::getQueue;
 
-            OpenCLBuffer createBuffer(
-                    std::size_t size,
-                    KernelMemoryAccess kernelAccess = KernelMemoryAccess::READ_WRITE,
-                    HostMemoryAccess hostAccess = HostMemoryAccess::UNSPECIFIED,
-                    OpenCLDevice::pointer device = nullptr
-            ) const {
-                return ProcessObject::createBuffer(size, kernelAccess, hostAccess, device);
-            }
             template <class T>
             OpenCLBuffer createBuffer(
                     const std::vector<T>& data,
@@ -311,6 +303,45 @@ def getQueue(self, device: "fast::OpenCLDevice::pointer"=None) -> "fast::Queue":
     }
 }
 
+%extend fast::PythonProcessObject {
+%pythoncode %{
+    def createBuffer(self, data, kernelAccess=KernelMemoryAccess_READ_WRITE, hostAccess=HostMemoryAccess_UNSPECIFIED, device=None):
+        if not isinstance(data, fast.Image) and not isinstance(data, fast.Tensor) and hasattr(data, '__array_interface__'):
+            # NumPy array or similar
+            # Make sure it is C contiguous first
+            mem = memoryview(data)
+            import copy
+            array_interface = copy.copy(data.__array_interface__)
+            typestr = array_interface['typestr'][1:]
+            if typestr not in _str_to_data_type:
+                raise TypeError('Unsupported input type given to createBuffer(): ' + typestr)
+            type = _str_to_data_type[typestr]
+            shape = array_interface['shape']
+            if mem.c_contiguous:
+                data = mem.cast('b').cast(mem.format) # Trick for flattening the data array
+            else:
+                data = memoryview(mem.tobytes(order='C')).cast(mem.format) # Convert to C contiguous
+            if type == TYPE_UINT8:
+                return self.createUCharBuffer(data, kernelAccess, hostAccess, device)
+            elif type == TYPE_INT8:
+                return self.createCharBuffer(data, kernelAccess, hostAccess, device)
+            elif type == TYPE_UINT16:
+                return self.createUShortBuffer(data, kernelAccess, hostAccess, device)
+            elif type == TYPE_INT16:
+                return self.createShortBuffer(data, kernelAccess, hostAccess, device)
+            elif type == TYPE_UINT32:
+                return self.createUIntBuffer(data, kernelAccess, hostAccess, device)
+            elif type == TYPE_INT32:
+                return self.createIntBuffer(data, kernelAccess, hostAccess, device)
+            elif type == TYPE_FLOAT:
+                return self.createFloatBuffer(data, kernelAccess, hostAccess, device)
+            else:
+                raise ValueError('Unsupported data type in createBuffer')
+        else:
+            raise ValueError('ProcessObject::createBuffer() only supports data which has the array_interface (e.g. numpy ndarray). Use the typed functions createUCharBuffer, createFloatBuffer, .. etc instead.')
+%}
+}
+
 %extend fast::Kernel {
 %pythoncode %{
     def setArg(self, id:Union[str, int], data):
@@ -327,10 +358,9 @@ def getQueue(self, device: "fast::OpenCLDevice::pointer"=None) -> "fast::Queue":
             type = _str_to_data_type[typestr]
             shape = array_interface['shape']
             if mem.c_contiguous:
-                data = list(mem.cast('b').cast(mem.format)) # Trick for flattening the data array
+                data = mem.cast('b').cast(mem.format) # Trick for flattening the data array
             else:
-                mem = memoryview(mem.tobytes(order='C')).cast(mem.format) # Convert to C contiguous
-                data = list(mem)
+                data = memoryview(mem.tobytes(order='C')).cast(mem.format) # Convert to C contiguous
         if isinstance(data, fast.Tensor):
             self.setTensorArg(id, data, fast.ACCESS_READ_WRITE)
         elif isinstance(data, fast.OpenCLBuffer):

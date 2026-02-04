@@ -115,7 +115,9 @@ class OpenCLProcessObject2(fast.PythonProcessObject):
         kernel.setArg('input', image)
         kernel.setArg('output', output)
         if self.useNumpy:
-            kernel.setArg('data', np.array(self.data, dtype=np.uint8))
+            numpy_data = np.array(self.data, dtype=np.uint32)
+            buffer = self.createBuffer(numpy_data)
+            kernel.setArg('data', buffer)
         elif self.useCustomBuffer:
             buffer = self.createUIntBuffer(self.data)
             kernel.setArg('data', buffer)
