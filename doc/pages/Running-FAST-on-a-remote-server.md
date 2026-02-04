@@ -1,6 +1,8 @@
 Running FAST on a remote server {#fast-remote-server}
 ========================================
 
+@tableofcontents
+
 FAST can run on a remote Linux server using SSH. [Install FAST and its dependencies for Linux](@ref install-ubuntu-linux).
 
 **If you don't want to do any visualization, you don't have to do anything extra.** 
@@ -9,12 +11,11 @@ If you try to do anything that requires OpenGL (rendering etc.) FAST will throw 
 
 @m_class{m-note m-primary}
 
-If you want to do rendering and visualization with FAST on a remote, and potentially headless, server, you need to use Xvfb or VirtualGL depending on whether you want an interactive FAST window or not, see below for more information.
+@par Xvfb or VirtualGL required
+    If you want to do rendering and visualization with FAST on a remote, and potentially headless, server, you need to use Xvfb or VirtualGL depending on whether you want an interactive FAST window or not, see below for more information.
  
-@tableofcontents
-
 ## Remote FAST visualization WITHOUT interactive window
-**If you only want to render a visualization FAST, without an interactive window, you can use Xvfb**.
+**If you only want to render a FAST visualization, without an interactive window, you can use Xvfb**.
 Since X requires a display, which you don't necessarily have on a headless server, you
 can use Xvfb (X virtual framebuffer) to create a virtual screen.
 

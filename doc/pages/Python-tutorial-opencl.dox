@@ -94,6 +94,62 @@ However, there is a lot of OpenCL magic happening under the hood here which FAST
     even though the image is just a single channel image. We use .x to get first component.
 5. Finally, we use a similar specialization write_image function <b>write_imageui</b>, to write the inverted pixel '255 - value' to the output image at the same pixel position.
 
+Lookup table example
+----------------------------------
+In this example, we will use a lookup table to transform pixels from one value to another, on the GPU with OpenCL using
+an OpenCL Buffer to store the lookup table in read-only (i.e. constant) memory.
+
+@include Python/python_opencl_lookup_table.py
+
+### Code Explanation
+1. First, we create the lookup table in the constructor using a simple Python list of consecutive red, green, blue (RGB) color values for
+   each of the 256 possible pixel values (uint8 datatype with range [0, 255]). As the previous example, we also create the OpenCL program
+   inline using ProcessObject::createInlineOpenCLProgram and providing the OpenCL code as a string.
+2. We create a variable to contain the OpenCL buffer which will store the lookup table. We could have created the OpenCL buffer here in the constructor,
+   but we postpone this to the execute() function in case the user changes the OpenCL device to be used before it is executed.
+3. Then we create an OpenCL buffer using the ProcessObject::createBuffer method, there is one per data type createFloatBuffer, createUCharBuffer,
+   createCharBuffer, createUShortBuffer, createShortBuffer, createUIntBuffer and createIntBuffer. Since this lookup table will never change, we only
+   create it once, and set the kernel argument access to READ_ONLY. This method will upload the provided data to the OpenCL device (e.g. GPU) (which takes time)
+   and provides a handle which you can assign to a kernel argument using Kernel::setArg. **Note that you should always take into account that the process object
+   you are making can be executed multiple times for instance in a data streaming use case. Thus, you should implement it so that static operations like this will only be done once.**
+4. Next, we get the input image data, and create an output image of the same size but with 3 channels (color: RGB).
+5. Now, we get the kernel from the OpenCL program, and set the arguments using setArg.
+6. Finally, we add the kernel to the queue and set the output image as the output data for port 0 of this process object.
+
+
+Note that you can also set a numpy array as data for a kernel argument.
+The same example as above, using numpy to create the table would be like so:
+@code{.py}
+# In constructor __init__():
+import numpy as np
+self.table = np.zeros((256, 3), dtype=np.uint8)
+self.table[:128, 2] = np.arange(0, 128)
+self.table[128:, 0] = np.arange(128, 256)
+
+# In execute, just like before, we can give the numpy array directly to createBuffer
+# pyfast will figure out the type from dtype:
+self.tableBuffer = self.createBuffer(self.table, fast.KernelArgumentAccess_READ_ONLY)
+@endcode
+
+### OpenCL Code Explanation
+1. The first line of the OpenCL code on the constructor is used to create a **sampler** which is needed to read from the image object.
+    <b>CLK_NORMALIZED_COORDS_FALSE</b> means that we use integer pixel coordinates, <b>CLK_FILTER_NEAREST</b> specifies that no interpolation is to be used,
+    and <b>CLK_ADDRESS_NONE</b> means that no out-of-bounds handling is needed (because we know we are only reading within the image).
+2. Next, we declare the kernel, its name ('transform') and its arguments. Two arguments have the type **image2d_t** which means a 2D OpenCL image.
+    OpenCL image arguments also have to be declared with an access qualifier, e.g. <b>__read_only</b> or <b>__write_only</b>.
+    The third argument is a pointer to an array of uchar data, the lookup table. This argument have the memory space qualifier __constant,
+    which tells OpenCL that this memory will be read-only and can thus be put in an optimized memory space for read-only data if such exist on the
+    target device.
+3. In the first line of the kernel, we get the 2D global work-item ID using **get_global_id(dim)**. Since we queued the kernel with
+    an N-D range equal to the size (W=width, H=height) of the input image, the global ID will be from 0 to W, and 0 to H for dimensions 0 and 1.
+    We store the position in a int2 primitive which is a two component integer vector.
+4. Next, we read the value of the pixel of the input image using the global ID position, the sampler, and a specialized read_image function.
+    Since we know the input image data type to be 8 bit unsigned integer, we use the read_image<b>ui</b> function.
+    Note that there exist a read_image<b>f</b> and a read_image<b>i</b> function as well. The read_image functions always return a 4 component vector,
+    even though the image is just a single channel image. We use .x to get first component.
+5. Then, we read 3 uchar values (color, RGB) into a uchar3 vector data type from the lookup table using the vload3 function and the pixel value as index.
+6. Finally, we write the color value (uchar3) to the output image using write_imageui.
+
 Next steps
 ---------------------
 
