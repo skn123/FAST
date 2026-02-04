@@ -54,6 +54,8 @@ In this example we will create a process object which inverts an uint8 image in 
 We then use this process object in a pipeline were we stream and loop an ultrasound recording into the inverter
 and display it.
 
+@image html images/examples/python/python_process_object_opencl.jpg width=400px;
+
 @include Python/python_process_object_opencl.py
 
 ### Python Code Explanation
@@ -99,6 +101,8 @@ Lookup table example
 In this example, we will use a lookup table to transform pixels from one value to another, on the GPU with OpenCL using
 an OpenCL Buffer to store the lookup table in read-only (i.e. constant) memory.
 
+@image html images/examples/python/python_opencl_lookup_table.jpg width=400px;
+
 @include Python/python_opencl_lookup_table.py
 
 ### Code Explanation
@@ -110,12 +114,17 @@ an OpenCL Buffer to store the lookup table in read-only (i.e. constant) memory.
 3. Then we create an OpenCL buffer using the ProcessObject::createBuffer method, there is one per data type createFloatBuffer, createUCharBuffer,
    createCharBuffer, createUShortBuffer, createShortBuffer, createUIntBuffer and createIntBuffer. Since this lookup table will never change, we only
    create it once, and set the kernel argument access to READ_ONLY. This method will upload the provided data to the OpenCL device (e.g. GPU) (which takes time)
-   and provides a handle which you can assign to a kernel argument using Kernel::setArg. **Note that you should always take into account that the process object
-   you are making can be executed multiple times for instance in a data streaming use case. Thus, you should implement it so that static operations like this will only be done once.**
+   and provides a handle which you can assign to a kernel argument using Kernel::setArg.
 4. Next, we get the input image data, and create an output image of the same size but with 3 channels (color: RGB).
 5. Now, we get the kernel from the OpenCL program, and set the arguments using setArg.
 6. Finally, we add the kernel to the queue and set the output image as the output data for port 0 of this process object.
 
+@m_class{m-note m-primary}
+
+@par Best practice when making process objects
+   You should always take into account that the process object you're making can be executed multiple times, for instance
+   in a data streaming use case. Thus, you should implement it so that operations like creating a data buffer with
+   static data (data that will never change e.g. a lookup table) is only done once.
 
 Note that you can also set a numpy array as data for a kernel argument.
 The same example as above, using numpy to create the table would be like so:

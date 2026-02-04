@@ -1,3 +1,6 @@
+## @example python_opencl_lookup_table.py
+# An example showing how to make a FAST process object in python which uses OpenCL and buffers
+# @image html images/examples/python/python_opencl_lookup_table.jpg width=400px;
 import fast
 
 
@@ -69,4 +72,4 @@ importer = fast.ImageFileStreamer.create(
 converter = OpenCLLookupTable.create().connect(importer)
 
 # Run pipeline and display
-fast.display2D(converter)
+fast.display2D(converter, bgcolor=fast.Color.Black())

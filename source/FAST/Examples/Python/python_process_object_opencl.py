@@ -2,7 +2,7 @@
 # An example showing how to make a FAST process object in python which uses OpenCL to invert an image on the GPU.
 # A process object (PO) is a pipeline object which performs processing on zero or more input data
 # and generates zero or more output data.
-# @image html images/examples/python/python_process_object.jpg width=400px;
+# @image html images/examples/python/python_process_object_opencl.jpg width=400px;
 import fast
 
 
