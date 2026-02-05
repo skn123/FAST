@@ -109,12 +109,16 @@ void ImageResizer::execute() {
                 (input->getDepth() > 1 && mSize.z() < input->getDepth()))
                 ) {
             // Figure out what the standard deviation should be in all dimensions
-            Vector3f stddev = Vector3f::Zero();
+            std::vector<float> stddev;
             for(int i = 0; i < input->getDimensions(); ++i) {
                 float downsampleFactor = (float)input->getSize()[i]/(float)mSize[i];
-                stddev[i] = (downsampleFactor - 1.0f)/2.0f;
+                stddev.push_back((downsampleFactor - 1.0f)/2.0f);
             }
-            reportInfo() << "Pre smoothing image in ImageResizer with std dev " << stddev.transpose() << reportEnd();
+            if(input->getDimensions() == 2) {
+                reportInfo() << "Pre smoothing image in ImageResizer with std dev " << stddev[0] << " " << stddev[1] << reportEnd();
+            } else {
+                reportInfo() << "Pre smoothing image in ImageResizer with std dev " << stddev[0] << " " << stddev[1] << " " << stddev[2] << reportEnd();
+            }
             input = GaussianSmoothing::create(stddev)->connect(input)->runAndGetOutputData<Image>();
         }
 

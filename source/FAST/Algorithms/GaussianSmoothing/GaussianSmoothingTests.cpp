@@ -27,7 +27,7 @@ TEST_CASE("Even input as mask size throws exception in GaussianSmoothing", "[fas
 TEST_CASE("Anistropic 2D smoothing", "[fast][GaussianSmoothing][visual]") {
 
     auto importer = ImageFileImporter::create(Config::getTestDataPath() + "US/Heart/ApicalFourChamber/US-2D_10.mhd");
-    auto filter = GaussianSmoothing::create(Vector2f{5.0f, 0.0f})->connect(importer);
+    auto filter = GaussianSmoothing::create({5.0f, 0.0f})->connect(importer);
 
     Display2DArgs args;
     args.image = filter;

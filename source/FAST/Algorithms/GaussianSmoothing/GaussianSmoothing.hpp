@@ -10,6 +10,8 @@ namespace fast {
 /**
  * @brief Smoothing by convolution with a Gaussian mask
  *
+ * Supports 2D, 3D and anisotropic smoothing (e.g. different standard deviation for each dimension).
+ *
  * Inputs:
  * - 0: Image, 2D or 3D
  *
@@ -32,20 +34,21 @@ class FAST_EXPORT GaussianSmoothing : public ProcessObject {
                          float, stdDev, = 0.5f,
                          uchar, maskSize, = 0
         );
+        /**
+        * @brief Create instance
+        * @param stdDev Standard deviation of convolution kernel for each dimension
+        * @param maskSize Size of convolution filter/mask for each dimension. Must be odd.
+        *      If 0, or not given, mask size is determined automatically from standard deviation
+        * @return instance
+        */
         FAST_CONSTRUCTOR(GaussianSmoothing,
-                         Vector2f, stdDev,,
-                         Vector2i, maskSize, = Vector2i::Zero()
+                         std::vector<float>, stdDev,,
+                         std::vector<int>, maskSize, = std::vector<int>()
         );
-        FAST_CONSTRUCTOR(GaussianSmoothing,
-                         Vector3f, stdDev,,
-                         Vector3i, maskSize, = Vector3i::Zero()
-        );
-        void setMaskSize(uchar maskSize);
-        void setMaskSize(Vector2i maskSize);
-        void setMaskSize(Vector3i maskSize);
+        void setMaskSize(int maskSize);
+        void setMaskSize(std::vector<int> maskSize);
         void setStandardDeviation(float stdDev);
-        void setStandardDeviation(Vector2f stdDev);
-        void setStandardDeviation(Vector3f stdDev);
+        void setStandardDeviation(std::vector<float> stdDev);
         void setOutputType(DataType type);
         void loadAttributes() override;
         ~GaussianSmoothing();
