@@ -24,13 +24,23 @@ void ImageSharpening::execute() {
     if(input->getDimensions() != 2)
         throw Exception("ImageSharpening only supports 2D images");
 
+    if(mStdDev.x() != mStdDev.y() || mMaskSize.x() != mMaskSize.y())
+        throw Exception("Anistropic support not implemented in ImageSharpening");
 
-    char maskSize = mMaskSize;
-    if(maskSize <= 0) // If mask size is not set calculate it instead
-        maskSize = ceil(2*mStdDev)*2+1;
+    Vector3i maskSize = mMaskSize;
+    if(maskSize == Vector3i::Zero()) { // If mask size is not set calculate it instead
+        for(int i = 0; i < 3; ++i)
+            maskSize[i] = std::ceil(2*mStdDev[i])*2+1;
+    }
 
-    if(maskSize > 19)
-        maskSize = 19;
+    Vector3i halfSize;
+    for(int i = 0; i < 3; ++i)
+        halfSize[i] = (maskSize[i] - 1) / 2;
+
+    // Enforce max size
+    for(int i = 0; i < 3; ++i)
+        if(maskSize[i] > 19)
+            maskSize[i] = 19;
 
     // Initialize output image
     Image::pointer output;
@@ -45,12 +55,11 @@ void ImageSharpening::execute() {
 
 	auto clDevice = std::static_pointer_cast<OpenCLDevice>(getMainDevice());
 
-    const auto halfSize = (maskSize-1)/2;
-    cl::Kernel kernel(getOpenCLProgram(clDevice, "", "-DHALF_SIZE=" + std::to_string(halfSize)), "sharpen");
+    cl::Kernel kernel(getOpenCLProgram(clDevice, "", "-DHALF_SIZE=" + std::to_string(halfSize.x())), "sharpen");
 
 	auto inputAccess = input->getOpenCLImageAccess(ACCESS_READ, clDevice);
 	//createMask(input, maskSize, false);
-	kernel.setArg(2, mStdDev);
+	kernel.setArg(2, mStdDev.x());
     kernel.setArg(3, m_gain);
 	auto globalSize = cl::NDRange(input->getWidth(),input->getHeight());
 

@@ -4,15 +4,8 @@
 #include "FAST/Data/Image.hpp"
 using namespace fast;
 
-void GaussianSmoothing::setMaskSize(unsigned char maskSize) {
-    if(maskSize <= 0)
-        throw Exception("Mask size of GaussianSmoothing can't be less than 0.");
-    if(maskSize % 2 != 1)
-        throw Exception("Mask size of GaussianSmoothing must be odd.");
-
-    mMaskSize = maskSize;
-    mIsModified = true;
-    mRecreateMask = true;
+void GaussianSmoothing::setMaskSize(uchar maskSize) {
+    setMaskSize(Vector3i(maskSize, maskSize, maskSize));
 }
 
 void GaussianSmoothing::setOutputType(DataType type) {
@@ -22,78 +15,88 @@ void GaussianSmoothing::setOutputType(DataType type) {
 }
 
 void GaussianSmoothing::setStandardDeviation(float stdDev) {
-    if(stdDev <= 0)
-        throw Exception("Standard deviation of GaussianSmoothing can't be less than 0.");
+    setStandardDeviation(Vector3f(stdDev, stdDev, stdDev));
 
-    mStdDev = stdDev;
-    mIsModified = true;
-    mRecreateMask = true;
 }
 
-GaussianSmoothing::GaussianSmoothing(float stdDev, uchar maskSize) {
+GaussianSmoothing::GaussianSmoothing(Vector3f stdDev, Vector3i maskSize) {
     createInputPort(0, "Image");
     createOutputPort(0, "Image");
     createOpenCLProgram(Config::getKernelSourcePath() + "Algorithms/GaussianSmoothing/GaussianSmoothing2D.cl", "2D");
     createOpenCLProgram(Config::getKernelSourcePath() + "Algorithms/GaussianSmoothing/GaussianSmoothing3D.cl", "3D");
-    createFloatAttribute("stdev", "Standard deviation", "Standard deviation", stdDev);
+    createFloatAttribute("stdev", "Standard deviation", "Standard deviation", stdDev.x());
     mIsModified = true;
     mRecreateMask = true;
     mDimensionCLCodeCompiledFor = 0;
     mMask = NULL;
     mOutputTypeSet = false;
     setStandardDeviation(stdDev);
-    if(maskSize > 0)
-        setMaskSize(maskSize);
+    setMaskSize(maskSize);
+}
+
+
+GaussianSmoothing::GaussianSmoothing(float stdDev, uchar maskSize) : GaussianSmoothing(Vector3f(stdDev, stdDev, stdDev), Vector3i(maskSize, maskSize, maskSize)) {
+}
+GaussianSmoothing::GaussianSmoothing(Vector2f stdDev, Vector2i maskSize) : GaussianSmoothing(Vector3f(stdDev.x(), stdDev.y(), 1), Vector3i(maskSize.x(), maskSize.y(), 0)) {
 }
 
 GaussianSmoothing::~GaussianSmoothing() {
 }
 
 // TODO have to set mRecreateMask to true if input change dimension
-void GaussianSmoothing::createMask(Image::pointer input, uchar maskSize, bool useSeperableFilter) {
+void GaussianSmoothing::createMask(Image::pointer input, Vector3i maskSize, bool useSeperableFilter) {
     if(!mRecreateMask)
         return;
 
-    unsigned char halfSize = (maskSize-1)/2;
+    Vector3i halfSize;
+    for(int i = 0; i < 3; ++i)
+        halfSize[i] = (maskSize[i] - 1) / 2;
     float sum = 0.0f;
 
     if(input->getDimensions() == 2) {
-        mMask = std::make_unique<float[]>(maskSize*maskSize);
+        mMask = std::make_unique<float[]>(maskSize.x()*maskSize.y());
 
-        for(int x = -halfSize; x <= halfSize; x++) {
-        for(int y = -halfSize; y <= halfSize; y++) {
-            float value = exp(-(float)(x*x+y*y)/(2.0f*mStdDev*mStdDev));
-            mMask[x+halfSize+(y+halfSize)*maskSize] = value;
+        for(int x = -halfSize.x(); x <= halfSize.x(); ++x) {
+        for(int y = -halfSize.y(); y <= halfSize.y(); ++y) {
+            float value = std::exp(-(
+                    (mStdDev.x() == 0.0f ? 0.0f : (float)(x*x)/(2.0f*mStdDev.x()*mStdDev.x())) +
+                    (mStdDev.y() == 0.0f ? 0.0f : (float)(y*y)/(2.0f*mStdDev.y()*mStdDev.y()))
+            ));
+            mMask[x+halfSize.x()+(y+halfSize.y())*maskSize.x()] = value;
             sum += value;
         }}
 
-        for(int i = 0; i < maskSize*maskSize; ++i)
+        for(int i = 0; i < maskSize.x()*maskSize.y(); ++i)
             mMask[i] /= sum;
     } else if(input->getDimensions() == 3) {
         // Use separable filtering for 3D
-        if(useSeperableFilter) {
-            mMask = std::make_unique<float[]>(maskSize);
+        if(useSeperableFilter && mStdDev.x() == mStdDev.y() && mStdDev.y() == mStdDev.z()) {
+            mMask = std::make_unique<float[]>(maskSize.x());
 
-            for(int x = -halfSize; x <= halfSize; x++) {
-                float value = exp(-(float)(x*x)/(2.0f*mStdDev*mStdDev));
-                mMask[x+halfSize] = value;
+            for(int x = -halfSize.x(); x <= halfSize.x(); ++x) {
+                float value = std::exp(-(float)(x*x)/(2.0f*mStdDev.x())); // TODO Correct?
+                mMask[x+halfSize.x()] = value;
                 sum += value;
             }
 
-            for(int i = 0; i < maskSize; ++i)
+            for(int i = 0; i < maskSize.x(); ++i)
                 mMask[i] /= sum;
         } else {
-            mMask = std::make_unique<float[]>(maskSize*maskSize*maskSize);
+            mMask = std::make_unique<float[]>(maskSize.x()*maskSize.y()*maskSize.z());
 
-            for(int x = -halfSize; x <= halfSize; x++) {
-            for(int y = -halfSize; y <= halfSize; y++) {
-            for(int z = -halfSize; z <= halfSize; z++) {
-                float value = exp(-(float)(x*x+y*y+z*z)/(2.0f*mStdDev*mStdDev));
-                mMask[x+halfSize+(y+halfSize)*maskSize+(z+halfSize)*maskSize*maskSize] = value;
+            for(int x = -halfSize.x(); x <= halfSize.x(); ++x) {
+            for(int y = -halfSize.y(); y <= halfSize.y(); ++y) {
+            for(int z = -halfSize.z(); z <= halfSize.z(); ++z) {
+                float value = std::exp(-(
+                        (mStdDev.x() == 0.0f ? 0.0f : (float)(x*x)/(2.0f*mStdDev.x()*mStdDev.x())) +
+                        (mStdDev.y() == 0.0f ? 0.0f : (float)(y*y)/(2.0f*mStdDev.y()*mStdDev.y())) +
+                        (mStdDev.z() == 0.0f ? 0.0f : (float)(z*z)/(2.0f*mStdDev.z()*mStdDev.z()))
+                ));
+                mMask[x+halfSize.x()+(y+halfSize.y())*maskSize.x()+(z+halfSize.z())*maskSize.x()*maskSize.y()] = value;
                 sum += value;
             }}}
 
-            for(int i = 0; i < maskSize*maskSize*maskSize; ++i)
+            for(int i = 0; i < maskSize.x()*maskSize.y()*maskSize.z(); ++i)
                 mMask[i] /= sum;
         }
     }
@@ -103,9 +106,9 @@ void GaussianSmoothing::createMask(Image::pointer input, uchar maskSize, bool us
         OpenCLDevice::pointer clDevice = std::dynamic_pointer_cast<OpenCLDevice>(device);
         uint bufferSize;
         if(useSeperableFilter) {
-            bufferSize = maskSize;
+            bufferSize = maskSize.x();
         } else {
-            bufferSize = input->getDimensions() == 2 ? maskSize*maskSize : maskSize*maskSize*maskSize;
+            bufferSize = input->getDimensions() == 2 ? maskSize.x()*maskSize.y() : maskSize.x()*maskSize.y()*maskSize.z();
         }
         mCLMask = cl::Buffer(
                 clDevice->getContext(),
@@ -124,9 +127,9 @@ void GaussianSmoothing::recompileOpenCLCode(Image::pointer input) {
             input->getDataType() == mTypeCLCodeCompiledFor)
         return;
 
-    OpenCLDevice::pointer device = std::dynamic_pointer_cast<OpenCLDevice>(getMainDevice());
+    auto device = getMainOpenCLDevice();
     std::string buildOptions = "";
-    if(!device->isWritingTo3DTexturesSupported()) {
+    if(!(device->isWritingTo3DTexturesSupported() && mStdDev.x() == mStdDev.y() && mStdDev.x() == mStdDev.z() && input->getDimensions() == 3)) {
         buildOptions = "-DTYPE=" + getCTypeAsString(mOutputType);
     }
     cl::Program program;
@@ -135,62 +138,69 @@ void GaussianSmoothing::recompileOpenCLCode(Image::pointer input) {
     } else {
         program = getOpenCLProgram(device, "3D", buildOptions);
     }
-    mKernel = cl::Kernel(program, "gaussianSmoothing");
+    if(device->isWritingTo3DTexturesSupported() && mStdDev.x() == mStdDev.y() && mStdDev.x() == mStdDev.z() && input->getDimensions() == 3) {
+        mKernel = cl::Kernel(program, "gaussianSmoothingSeparable");
+    } else {
+        mKernel = cl::Kernel(program, "gaussianSmoothing");
+    }
     mDimensionCLCodeCompiledFor = input->getDimensions();
     mTypeCLCodeCompiledFor = input->getDataType();
 }
 
 template <class T>
-void executeAlgorithmOnHost(Image::pointer input, Image::pointer output, const float* const mask, unsigned char maskSize) {
+void executeAlgorithmOnHost(Image::pointer input, Image::pointer output, const float* const mask, Vector3i maskSize) {
     // TODO: this method currently only processes the first component
     unsigned int nrOfComponents = input->getNrOfChannels();
     ImageAccess::pointer inputAccess = input->getImageAccess(ACCESS_READ);
     ImageAccess::pointer outputAccess = output->getImageAccess(ACCESS_READ_WRITE);
 
+    Vector3i halfSize;
+    for(int i = 0; i < 3; ++i)
+        halfSize[i] = (maskSize[i] - 1) / 2;
+
     T * inputData = (T*)inputAccess->get();
     T * outputData = (T*)outputAccess->get();
 
-    const unsigned char halfSize = (maskSize-1)/2;
     unsigned int width = input->getWidth();
     unsigned int height = input->getHeight();
     if(input->getDimensions() == 3) {
         unsigned int depth = input->getDepth();
-        for(unsigned int z = 0; z < depth; z++) {
-        for(unsigned int y = 0; y < height; y++) {
-        for(unsigned int x = 0; x < width; x++) {
+        for(unsigned int z = 0; z < depth; ++z) {
+        for(unsigned int y = 0; y < height; ++y) {
+        for(unsigned int x = 0; x < width; ++x) {
 
-            if(x < halfSize || x >= width-halfSize ||
-            y < halfSize || y >= height-halfSize ||
-            z < halfSize || z >= depth-halfSize) {
+            if(x < halfSize.x() || x >= width-halfSize.x() ||
+            y < halfSize.y() || y >= height-halfSize.y() ||
+            z < halfSize.z() || z >= depth-halfSize.z()) {
                 // on border only copy values
                 outputData[x*nrOfComponents+y*nrOfComponents*width+z*nrOfComponents*width*height] = inputData[x*nrOfComponents+y*nrOfComponents*width+z*nrOfComponents*width*height];
                 continue;
             }
 
             double sum = 0.0;
-            for(int c = -halfSize; c <= halfSize; c++) {
-            for(int b = -halfSize; b <= halfSize; b++) {
-            for(int a = -halfSize; a <= halfSize; a++) {
-                sum += mask[a+halfSize+(b+halfSize)*maskSize+(c+halfSize)*maskSize*maskSize]*
+            for(int c = -halfSize.z(); c <= halfSize.z(); ++c) {
+            for(int b = -halfSize.y(); b <= halfSize.y(); ++b) {
+            for(int a = -halfSize.x(); a <= halfSize.x(); ++a) {
+                sum += mask[a+halfSize.x()+(b+halfSize.y())*maskSize.x()+(c+halfSize.z())*maskSize.x()*maskSize.y()]*
                         inputData[(x+a)*nrOfComponents+(y+b)*nrOfComponents*width+(z+c)*nrOfComponents*width*height];
             }}}
             outputData[x*nrOfComponents+y*nrOfComponents*width+z*nrOfComponents*width*height] = (T)sum;
         }}}
     } else {
-        for(unsigned int y = halfSize; y < height-halfSize; y++) {
-        for(unsigned int x = halfSize; x < width-halfSize; x++) {
+        for(int y = halfSize.y(); y < height-halfSize.y(); ++y) {
+        for(int x = halfSize.x(); x < width-halfSize.x(); ++x) {
 
-            if(x < halfSize || x >= width-halfSize ||
-            y < halfSize || y >= height-halfSize) {
+            if(x < halfSize.x() || x >= width-halfSize.x() ||
+            y < halfSize.y() || y >= height-halfSize.y()) {
                 // on border only copy values
                 outputData[x*nrOfComponents+y*nrOfComponents*width] = inputData[x*nrOfComponents+y*nrOfComponents*width];
                 continue;
             }
 
             double sum = 0.0;
-            for(int b = -halfSize; b <= halfSize; b++) {
-            for(int a = -halfSize; a <= halfSize; a++) {
-                sum += mask[a+halfSize+(b+halfSize)*maskSize]*
+            for(int b = -halfSize.y(); b <= halfSize.y(); ++b) {
+            for(int a = -halfSize.x(); a <= halfSize.x(); ++a) {
+                sum += mask[a+halfSize.x()+(b+halfSize.y())*maskSize.x()]*
                         inputData[(x+a)*nrOfComponents+(y+b)*nrOfComponents*width];
             }}
             outputData[x*nrOfComponents+y*nrOfComponents*width] = (T)sum;
@@ -201,12 +211,16 @@ void executeAlgorithmOnHost(Image::pointer input, Image::pointer output, const f
 void GaussianSmoothing::execute() {
     auto input = getInputData<Image>(0);
 
-    char maskSize = mMaskSize;
-    if(maskSize <= 0) // If mask size is not set calculate it instead
-        maskSize = ceil(2*mStdDev)*2+1;
+    Vector3i maskSize = mMaskSize;
+    if(maskSize == Vector3i::Zero()) { // If mask size is not set calculate it instead
+        for(int i = 0; i < 3; ++i)
+            maskSize[i] = std::max(3, (int)std::ceil(2*mStdDev[i])*2+1);
+    }
 
-    if(maskSize > 19)
-        maskSize = 19;
+    // Enforce max size
+    for(int i = 0; i < 3; ++i)
+        if(maskSize[i] > 19)
+            maskSize[i] = 19;
 
     // Initialize output image
     ExecutionDevice::pointer device = getMainDevice();
@@ -219,7 +233,6 @@ void GaussianSmoothing::execute() {
     }
     mOutputType = output->getDataType();
     SceneGraph::setParentNode(output, input);
-
 
     if(device->isHost()) {
         createMask(input, maskSize, false);
@@ -237,7 +250,8 @@ void GaussianSmoothing::execute() {
         if(input->getDimensions() == 2) {
             createMask(input, maskSize, false);
             mKernel.setArg(1, mCLMask);
-            mKernel.setArg(3, maskSize);
+            mKernel.setArg(3, maskSize.x());
+            mKernel.setArg(4, maskSize.y());
             globalSize = cl::NDRange(input->getWidth(),input->getHeight());
 
             OpenCLImageAccess::pointer outputAccess = output->getOpenCLImageAccess(ACCESS_READ_WRITE, clDevice);
@@ -255,10 +269,10 @@ void GaussianSmoothing::execute() {
 
             globalSize = cl::NDRange(input->getWidth(),input->getHeight(),input->getDepth());
 
-            if(clDevice->isWritingTo3DTexturesSupported()) {
+            if(clDevice->isWritingTo3DTexturesSupported() && mStdDev.x() == mStdDev.y() && mStdDev.x() == mStdDev.z()) {
                 createMask(input, maskSize, true);
                 mKernel.setArg(1, mCLMask);
-                mKernel.setArg(3, maskSize);
+                mKernel.setArg(3, maskSize.x());
                 OpenCLImageAccess::pointer outputAccess = output->getOpenCLImageAccess(ACCESS_READ_WRITE, clDevice);
                 OpenCLImageAccess::pointer outputAccess2 = output2->getOpenCLImageAccess(ACCESS_READ_WRITE, clDevice);
 
@@ -288,7 +302,9 @@ void GaussianSmoothing::execute() {
             } else {
                 createMask(input, maskSize, false);
                 mKernel.setArg(1, mCLMask);
-                mKernel.setArg(3, maskSize);
+                mKernel.setArg(3, maskSize.x());
+                mKernel.setArg(4, maskSize.y());
+                mKernel.setArg(5, maskSize.z());
                 OpenCLBufferAccess::pointer outputAccess = output->getOpenCLBufferAccess(ACCESS_READ_WRITE, clDevice);
                 mKernel.setArg(0, *inputAccess->get3DImage());
                 mKernel.setArg(2, *outputAccess->get());
@@ -315,4 +331,35 @@ void GaussianSmoothing::waitToFinish() {
 
 void GaussianSmoothing::loadAttributes() {
     setStandardDeviation(getFloatAttribute("stdev"));
+}
+
+void GaussianSmoothing::setStandardDeviation(Vector3f stdDev) {
+    for(int i = 0; i < 3; ++i) {
+        if(stdDev[i] < 0)
+            throw Exception("Standard deviation of GaussianSmoothing can't be less than 0.");
+    }
+
+    mStdDev = stdDev;
+    mIsModified = true;
+    mRecreateMask = true;
+}
+void GaussianSmoothing::setStandardDeviation(Vector2f stdDev) {
+    setStandardDeviation(Vector3f(stdDev.x(), stdDev.y(), stdDev.y()));
+}
+
+void GaussianSmoothing::setMaskSize(Vector3i maskSize) {
+    for(int i = 0; i < 3; ++i) {
+        if(maskSize[i] < 0)
+            throw Exception("Mask size of GaussianSmoothing can't be less than 0.");
+        if(maskSize[i] > 0 && maskSize[i] % 2 != 1)
+            throw Exception("Mask size of GaussianSmoothing must be odd.");
+    }
+
+    mIsModified = true;
+    mRecreateMask = true;
+    mMaskSize = maskSize;
+}
+
+void GaussianSmoothing::setMaskSize(Vector2i maskSize) {
+    setMaskSize(Vector3i(maskSize.x(), maskSize.y(), maskSize.y()));
 }

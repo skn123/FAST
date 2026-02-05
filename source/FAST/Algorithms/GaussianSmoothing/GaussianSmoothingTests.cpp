@@ -1,8 +1,10 @@
+#include <FAST/Importers/ImageFileImporter.hpp>
 #include "FAST/Testing.hpp"
 #include "FAST/Algorithms/GaussianSmoothing/GaussianSmoothing.hpp"
 #include "FAST/DeviceManager.hpp"
+#include <FAST/Visualization/Shortcuts.hpp>
 
-namespace fast {
+using namespace fast;
 
 TEST_CASE("No input given to GaussianSmoothing throws exception", "[fast][GaussianSmoothing]") {
     GaussianSmoothing::pointer filter = GaussianSmoothing::New();
@@ -13,15 +15,24 @@ TEST_CASE("Negative or zero sigma and mask size input throws exception in Gaussi
     GaussianSmoothing::pointer filter = GaussianSmoothing::New();
 
     CHECK_THROWS(filter->setMaskSize(-4));
-    CHECK_THROWS(filter->setMaskSize(0));
     CHECK_THROWS(filter->setStandardDeviation(-4));
-    CHECK_THROWS(filter->setStandardDeviation(0));
 }
 
 TEST_CASE("Even input as mask size throws exception in GaussianSmoothing", "[fast][GaussianSmoothing]") {
     GaussianSmoothing::pointer filter = GaussianSmoothing::New();
 
     CHECK_THROWS(filter->setMaskSize(2));
+}
+
+TEST_CASE("Anistropic 2D smoothing", "[fast][GaussianSmoothing][visual]") {
+
+    auto importer = ImageFileImporter::create(Config::getTestDataPath() + "US/Heart/ApicalFourChamber/US-2D_10.mhd");
+    auto filter = GaussianSmoothing::create(Vector2f{5.0f, 0.0f})->connect(importer);
+
+    Display2DArgs args;
+    args.image = filter;
+    args.timeout = 500;
+    display2D(args);
 }
 
 /*
@@ -201,5 +212,3 @@ TEST_CASE("Correct output with small 3x3x3 3D image as input to GaussianSmoothin
     CHECK(success == true);
 }
 */
-
-} // end namespace fast

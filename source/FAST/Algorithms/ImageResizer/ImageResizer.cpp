@@ -108,16 +108,15 @@ void ImageResizer::execute() {
                 mSize.y() < input->getHeight() ||
                 (input->getDepth() > 1 && mSize.z() < input->getDepth()))
                 ) {
-            // Figure out what the standard deviation should be
-            float stddev = std::max((float)input->getWidth()/(float)mSize.x(), (float)input->getHeight()/(float)mSize.y());
-            if(input->getDepth() > 1)
-                stddev = std::max(stddev, (float)input->getDepth()/(float)mSize.z());
-            stddev = (stddev - 1.0f)/2.0f;
-            reportInfo() << "Pre smoothing image in ImageResizer with std dev " << stddev << reportEnd();
-            // TODO need to support anisotropic Gaussian Smoothing
+            // Figure out what the standard deviation should be in all dimensions
+            Vector3f stddev = Vector3f::Zero();
+            for(int i = 0; i < input->getDimensions(); ++i) {
+                float downsampleFactor = (float)input->getSize()[i]/(float)mSize[i];
+                stddev[i] = (downsampleFactor - 1.0f)/2.0f;
+            }
+            reportInfo() << "Pre smoothing image in ImageResizer with std dev " << stddev.transpose() << reportEnd();
             input = GaussianSmoothing::create(stddev)->connect(input)->runAndGetOutputData<Image>();
         }
-
 
         uchar useInterpolation = 1;
         if(mInterpolationSet) {
