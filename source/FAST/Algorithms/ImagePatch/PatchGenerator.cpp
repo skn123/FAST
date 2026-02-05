@@ -1,6 +1,7 @@
 #include <FAST/Data/ImagePyramid.hpp>
 #include <FAST/Data/Image.hpp>
 #include <FAST/Algorithms/ImageResizer/ImageResizer.hpp>
+#include <FAST/Algorithms/ImageCaster/ImageCaster.hpp>
 #include "PatchGenerator.hpp"
 
 namespace fast {
@@ -122,6 +123,12 @@ void PatchGenerator::generateStream() {
                 reportInfo() << "PatchGenerator is using a tile cache with size limit of " << tileCacheSize << reportEnd();
             }
             auto access = m_inputImagePyramid->getAccess(ACCESS_READ, useTileCache, tileCacheSize);
+            ImageAccess::pointer maskAccess;
+            if(m_inputMask) {
+                auto cast = ImageCaster::create(TYPE_FLOAT)->connect(m_inputMask);
+                auto mask = ImageResizer::create(patchesX, patchesY)->connect(cast)->runAndGetOutputData<Image>();
+                maskAccess = mask->getImageAccess(ACCESS_READ);
+            }
             for(int patchY = 0; patchY < patchesY; ++patchY) {
                 for(int patchX = 0; patchX < patchesX; ++patchX) {
                     mRuntimeManager->startRegularTimer("create patch");
@@ -137,30 +144,9 @@ void PatchGenerator::generateStream() {
                     int patchOffsetY = (patchY * patchHeightWithoutOverlap - overlapInPixelsY)*resampleFactor;
 
                     if(m_inputMask) {
-                        // If a mask exist, check if this patch should be included or not
-                        // At least half of the patch should be clasified as foreground
-                        auto access = m_inputMask->getImageAccess(ACCESS_READ);
-                        // Calculate physical position and size
-                        float x = patchOffsetX * m_inputImagePyramid->getLevelScale(level) * m_inputImagePyramid->getSpacing().x();
-                        float y = patchOffsetY * m_inputImagePyramid->getLevelScale(level) * m_inputImagePyramid->getSpacing().y();
-                        float width = patchWidth * m_inputImagePyramid->getLevelScale(level) * m_inputImagePyramid->getSpacing().x();
-                        float height = patchHeight * m_inputImagePyramid->getLevelScale(level) * m_inputImagePyramid->getSpacing().y();
-                        try {
-                            int cropSizeX = std::max((int)std::floor(width/m_inputMask->getSpacing().x()), 1);
-                            int cropSizeY = std::max((int)std::floor(height/m_inputMask->getSpacing().y()), 1);
-                            int offsetX = std::floor(x/m_inputMask->getSpacing().x());
-                            int offsetY = std::floor(y/m_inputMask->getSpacing().x());
-                            auto croppedMask = m_inputMask->crop(
-                                    Vector2i(offsetX, offsetY),
-                                    Vector2i(cropSizeX, cropSizeY)
-                            );
-                            float average = croppedMask->calculateAverageIntensity();
-                            if(average < m_maskThreshold)  // A specific percentage of the mask has to be foreground to be assessed
-                                continue;
-                        } catch(Exception &e) {
-                            reportInfo() << "Skipped patch because mask cropping gave error: " << e.what() << reportEnd();
+                        float average = maskAccess->getScalarFast2D<float>(Vector2i(patchX, patchY));
+                        if(average < m_maskThreshold)  // A specific percentage of the mask has to be foreground to be assessed
                             continue;
-                        }
                     }
                     reportInfo() << "Generating patch " << patchX << " " << patchY << reportEnd();
                     if(patchWidth < overlapInPixelsX*2 || patchHeight < overlapInPixelsY*2)
@@ -172,7 +158,6 @@ void PatchGenerator::generateStream() {
                                                          patchWidth + (patchOffsetX < 0 ? patchOffsetX : 0), // We have to reduce width and height if negative offset
                                                          patchHeight + (patchOffsetY < 0 ? patchOffsetY : 0));
                     mRuntimeManager->stopRegularTimer("getPatchAsImage");
-                    //access->getAllRuntimes()->printAll();
 
                     // If patch does not have correct size, pad it
                     int paddingValue = m_paddingValue;
