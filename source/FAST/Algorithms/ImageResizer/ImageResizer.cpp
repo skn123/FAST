@@ -1,3 +1,4 @@
+#include <FAST/Algorithms/GaussianSmoothing/GaussianSmoothing.hpp>
 #include "ImageResizer.hpp"
 #include "FAST/Data/Image.hpp"
 
@@ -61,13 +62,14 @@ ImageResizer::ImageResizer() {
     createBooleanAttribute("interpolate", "Whether to interpolate", "", mInterpolation);
 }
 
-ImageResizer::ImageResizer(int width, int height, int depth, bool useInterpolation, bool preserveAspectRatio) : ImageResizer() {
+ImageResizer::ImageResizer(int width, int height, int depth, bool useInterpolation, bool preserveAspectRatio, bool blurOnDownsampling) : ImageResizer() {
     setWidth(width);
     setHeight(height);
     if(depth > 0)
         setDepth(depth);
     setInterpolation(useInterpolation);
     setPreserveAspectRatio(preserveAspectRatio);
+    m_blurOnDownsampling = blurOnDownsampling;
 }
 
 void ImageResizer::execute() {
@@ -99,6 +101,23 @@ void ImageResizer::execute() {
     if(getMainDevice()->isHost()) {
         throw Exception("Not implemented yet.");
     } else {
+
+        // Check if we are downsampling and smoothing is needed
+        if(m_blurOnDownsampling && (
+                mSize.x() < input->getWidth() ||
+                mSize.y() < input->getHeight() ||
+                (input->getDepth() > 1 && mSize.z() < input->getDepth()))
+                ) {
+            // Figure out what the standard deviation should be
+            float stddev = std::max((float)input->getWidth()/(float)mSize.x(), (float)input->getHeight()/(float)mSize.y());
+            if(input->getDepth() > 1)
+                stddev = std::max(stddev, (float)input->getDepth()/(float)mSize.z());
+            stddev = (stddev - 1.0f)/2.0f;
+            reportInfo() << "Pre smoothing image in ImageResizer with std dev " << stddev << reportEnd();
+            // TODO need to support anisotropic Gaussian Smoothing
+            input = GaussianSmoothing::create(stddev)->connect(input)->runAndGetOutputData<Image>();
+        }
+
 
         uchar useInterpolation = 1;
         if(mInterpolationSet) {

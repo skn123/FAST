@@ -12,11 +12,14 @@ class FAST_EXPORT  ImageResizer : public ProcessObject {
 	public:
         /**
          * @brief Create instnace
-         * @param width
-         * @param height
-         * @param depth
+         * @param width Width of new image
+         * @param height Height of new image
+         * @param depth Depth of new image, if 3D input
          * @param useInterpolation Whether to use linear interpolation or not
-         * @param preserveAspectRatio
+         * @param preserveAspectRatio Whether to preserve aspect ratio when resizing
+         * @param blurOnDownsampling Whether to apply GaussianSmoothing on the input image before downsampling.
+         *  This is crucial to avoid aliasing artifacts. The standard deviation of the smoothing is set to (d - 1) / 2
+         *  where d is the downsampling factor.
          * @return instance
          */
         FAST_CONSTRUCTOR(ImageResizer,
@@ -24,7 +27,8 @@ class FAST_EXPORT  ImageResizer : public ProcessObject {
                          int, height,,
                          int, depth, = 0,
                          bool, useInterpolation, = true,
-                         bool, preserveAspectRatio, = false
+                         bool, preserveAspectRatio, = false,
+                         bool, blurOnDownsampling, = true
         );
 
 		void setWidth(int width);
@@ -41,6 +45,7 @@ class FAST_EXPORT  ImageResizer : public ProcessObject {
 		Vector3i mSize;
 		bool mPreserveAspectRatio;
         bool mInterpolationSet, mInterpolation;
+        bool m_blurOnDownsampling = true;
 };
 
 }
