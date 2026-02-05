@@ -25,9 +25,9 @@ Mesh::Mesh(
         mIsInitialized = true;
         mNrOfVertices = 0;
         mNrOfLines = 0;
-        mUseColorVBO = false;
-        m_useLabelVBO = false;
-        mUseNormalVBO = false;
+        m_hasColors = false;
+        m_hasLabels = false;
+        m_hasNormals = false;
         mUseEBO = false;
         mNrOfTriangles = 0;
         mHostHasData = true;
@@ -85,9 +85,9 @@ Mesh::Mesh(
     mNrOfVertices = vertices.size();
     mNrOfLines = lines.size();
     mNrOfTriangles = triangles.size();
-    mUseColorVBO = !mColors.empty();
-    m_useLabelVBO = !m_labels.empty();
-    mUseNormalVBO = !mNormals.empty();
+    m_hasColors = !mColors.empty();
+    m_hasLabels = !m_labels.empty();
+    m_hasNormals = !mNormals.empty();
     mUseEBO = true;
     mHostHasData = true;
     mHostDataIsUpToDate = true;
@@ -110,8 +110,8 @@ Mesh::Mesh(
     mIsInitialized = true;
     mNrOfVertices = nrOfVertices;
     mNrOfLines = nrOfLines;
-    mUseColorVBO = useColors;
-    mUseNormalVBO = useNormals;
+    m_hasColors = useColors;
+    m_hasNormals = useNormals;
     mUseEBO = useEBO;
     mNrOfTriangles = nrOfTriangles;
     updateModifiedTimestamp();
@@ -175,19 +175,19 @@ VertexBufferObjectAccess::pointer Mesh::getVertexBufferObjectAccess(
             // Only allocate space
             fun->glBindBuffer(GL_ARRAY_BUFFER, mCoordinateVBO);
             fun->glBufferData(GL_ARRAY_BUFFER, mNrOfVertices*3*sizeof(float), NULL, GL_STATIC_DRAW);
-            if(mUseNormalVBO) {
+            if(m_hasNormals) {
                 fun->glDeleteBuffers(1, &mNormalVBO);
                 fun->glGenBuffers(1, &mNormalVBO);
                 fun->glBindBuffer(GL_ARRAY_BUFFER, mNormalVBO);
                 fun->glBufferData(GL_ARRAY_BUFFER, mNrOfVertices * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
             }
-            if(mUseColorVBO) {
+            if(m_hasColors) {
                 fun->glDeleteBuffers(1, &mColorVBO);
                 fun->glGenBuffers(1, &mColorVBO);
                 fun->glBindBuffer(GL_ARRAY_BUFFER, mColorVBO);
                 fun->glBufferData(GL_ARRAY_BUFFER, mNrOfVertices * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
             }
-            if(m_useLabelVBO) {
+            if(m_hasLabels) {
                 fun->glDeleteBuffers(1, &m_labelVBO);
                 fun->glGenBuffers(1, &m_labelVBO);
                 fun->glBindBuffer(GL_ARRAY_BUFFER, m_labelVBO);
@@ -269,9 +269,9 @@ VertexBufferObjectAccess::pointer Mesh::getVertexBufferObjectAccess(
                     m_labelVBO,
                     mLineEBO,
                     mTriangleEBO,
-                    mUseNormalVBO,
-                    mUseColorVBO,
-                    m_useLabelVBO,
+                    m_hasNormals,
+                    m_hasColors,
+                    m_hasLabels,
                     mUseEBO,
                     std::static_pointer_cast<Mesh>(mPtr.lock())
             )
@@ -339,17 +339,17 @@ MeshAccess::pointer Mesh::getMeshAccess(accessType type) {
         fun->glBindBuffer(GL_ARRAY_BUFFER, mCoordinateVBO);
         fun->glGetBufferSubData(GL_ARRAY_BUFFER, 0, mNrOfVertices*3*sizeof(float), mCoordinates.data());
         mNormals.resize(mNrOfVertices*3);
-        if(mUseNormalVBO) {
+        if(m_hasNormals) {
             fun->glBindBuffer(GL_ARRAY_BUFFER, mNormalVBO);
             fun->glGetBufferSubData(GL_ARRAY_BUFFER, 0, mNrOfVertices * 3 * sizeof(float), mNormals.data());
         }
         mColors.resize(mNrOfVertices*3);
-        if(mUseColorVBO) {
+        if(m_hasColors) {
             fun->glBindBuffer(GL_ARRAY_BUFFER, mColorVBO);
             fun->glGetBufferSubData(GL_ARRAY_BUFFER, 0, mNrOfVertices * 3 * sizeof(float), mColors.data());
         }
         m_labels.resize(mNrOfVertices);
-        if(m_useLabelVBO) {
+        if(m_hasLabels) {
             fun->glBindBuffer(GL_ARRAY_BUFFER, m_labelVBO);
             fun->glGetBufferSubData(GL_ARRAY_BUFFER, 0, mNrOfVertices * sizeof(uchar), m_labels.data());
         }
@@ -518,8 +518,8 @@ Mesh::Mesh() {
     mIsInitialized = false;
     mVBOHasData = false;
     mVBODataIsUpToDate = false;
-    mUseColorVBO = false;
-    mUseNormalVBO = false;
+    m_hasColors = false;
+    m_hasNormals = false;
     mUseEBO = false;
     mHostHasData = false;
     mHostDataIsUpToDate = false;
@@ -543,17 +543,17 @@ void Mesh::freeAll() {
         //fun->glBindBuffer(GL_ARRAY_BUFFER, mCoordinateVBO);
         //fun->glBufferData(GL_ARRAY_BUFFER, 1, NULL, GL_STATIC_DRAW);
         fun->glDeleteBuffers(1, &mCoordinateVBO);
-        if(mUseNormalVBO) {
+        if(m_hasNormals) {
             //fun->glBindBuffer(GL_ARRAY_BUFFER, mNormalVBO);
             //fun->glBufferData(GL_ARRAY_BUFFER, 1, NULL, GL_STATIC_DRAW);
             fun->glDeleteBuffers(1, &mNormalVBO);
         }
-        if(mUseColorVBO) {
+        if(m_hasColors) {
             //fun->glBindBuffer(GL_ARRAY_BUFFER, mColorVBO);
             //fun->glBufferData(GL_ARRAY_BUFFER, 1, NULL, GL_STATIC_DRAW);
             fun->glDeleteBuffers(1, &mColorVBO);
         }
-        if(m_useLabelVBO) {
+        if(m_hasLabels) {
             fun->glDeleteBuffers(1, &m_labelVBO);
         }
         fun->glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -641,14 +641,26 @@ int Mesh::getNrOfLines() {
 void Mesh::accessFinished() {
     if(mHostHasData && mHostDataIsUpToDate) {
         // Make sure state is updated when mesh is modified on host
-        mUseColorVBO = !mColors.empty();
-        m_useLabelVBO = !m_labels.empty();
-        mUseNormalVBO = !mNormals.empty();
+        m_hasColors = !mColors.empty();
+        m_hasLabels = !m_labels.empty();
+        m_hasNormals = !mNormals.empty();
         mNrOfVertices = mCoordinates.size() / 3;
         mNrOfLines = mLines.size() / 2;
         mNrOfTriangles = mTriangles.size() / 3;
     }
     DataObject::accessFinished();
+}
+
+bool Mesh::hasNormals() const {
+    return m_hasNormals;
+}
+
+bool Mesh::hasColors() const {
+    return m_hasNormals;
+}
+
+bool Mesh::hasLabels() const {
+    return m_hasLabels;
 }
 
 } // end namespace fast

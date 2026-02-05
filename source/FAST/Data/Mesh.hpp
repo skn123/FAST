@@ -45,6 +45,9 @@ class FAST_EXPORT Mesh : public SpatialDataObject {
         int getNrOfTriangles();
         int getNrOfLines();
         int getNrOfVertices();
+        bool hasNormals() const;
+        bool hasColors() const;
+        bool hasLabels() const;
         void setBoundingBox(DataBoundingBox box);
         ~Mesh();
         void accessFinished() override;
@@ -70,9 +73,9 @@ class FAST_EXPORT Mesh : public SpatialDataObject {
         uint mNrOfLines;
         uint mNrOfTriangles;
         bool mUseEBO;
-        bool mUseColorVBO;
-        bool mUseNormalVBO;
-        bool m_useLabelVBO;
+        bool m_hasColors;
+        bool m_hasNormals;
+        bool m_hasLabels;
 
         // Host data
         bool mHostHasData;

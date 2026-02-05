@@ -8,23 +8,30 @@ namespace fast {
 
 VTKMeshFileExporter::VTKMeshFileExporter() {
     createInputPort<Mesh>(0);
-    mWriteNormals = false;
-    mWriteColors = false;
+    m_writeNormals = false;
+    m_writeColors = false;
+    m_writeLabels = false;
 }
 
-VTKMeshFileExporter::VTKMeshFileExporter(std::string filename, bool writeNormals, bool writeColors) : FileExporter(filename) {
+VTKMeshFileExporter::VTKMeshFileExporter(std::string filename, bool writeNormals, bool writeColors, bool writeLabels) : FileExporter(filename) {
     createInputPort<Mesh>(0);
     setWriteNormals(writeNormals);
     setWriteColors(writeColors);
+    setWriteLabels(writeLabels);
 }
 
 void VTKMeshFileExporter::setWriteNormals(bool writeNormals) {
-    mWriteNormals = writeNormals;
+    m_writeNormals = writeNormals;
     setModified(true);
 }
 
 void VTKMeshFileExporter::setWriteColors(bool writeColors)  {
-    mWriteColors = writeColors;
+    m_writeColors = writeColors;
+    setModified(true);
+}
+
+void VTKMeshFileExporter::setWriteLabels(bool writeLabels) {
+    m_writeLabels = writeLabels;
     setModified(true);
 }
 
@@ -76,7 +83,7 @@ void VTKMeshFileExporter::execute() {
         }
     }
 
-    if(mWriteNormals) {
+    if(m_writeNormals && mesh->hasNormals()) {
         file << "POINT_DATA " << vertices.size() << "\n";
         file << "NORMALS Normals float\n";
         for(int i = 0; i < vertices.size(); i++) {
@@ -96,13 +103,23 @@ void VTKMeshFileExporter::execute() {
         }
     }
 
-    if(mWriteColors) {
+    if(m_writeColors && mesh->hasColors()) {
         file << "POINT_DATA " << vertices.size() << "\n";
         file << "VECTORS vertex_colors float\n";
         for(int i = 0; i < vertices.size(); i++) {
             MeshVertex vertex = vertices[i];
             Color color = vertex.getColor();
             file << color.getRedValue() << " " << color.getGreenValue() << " " << color.getBlueValue() << "\n";
+        }
+    }
+
+    if(m_writeLabels && mesh->hasLabels()) {
+        file << "POINT_DATA " << vertices.size() << "\n";
+        file << "SCALARS vertex_labels unsigned_char 1\n";
+        for(int i = 0; i < vertices.size(); i++) {
+            MeshVertex vertex = vertices[i];
+            uchar label = vertex.getLabel();
+            file << (int)label << "\n";
         }
     }
 

@@ -13,6 +13,7 @@ VTKMeshFileImporter::VTKMeshFileImporter() {
     mFunctions["LINES"] = std::bind(&VTKMeshFileImporter::processLines, this, std::placeholders::_1, std::placeholders::_2);
     mFunctions["POLYGONS"] = std::bind(&VTKMeshFileImporter::processTriangles, this, std::placeholders::_1, std::placeholders::_2);
     mFunctions["VECTORS"] = std::bind(&VTKMeshFileImporter::processVectors, this, std::placeholders::_1, std::placeholders::_2);
+    mFunctions["SCALARS"] = std::bind(&VTKMeshFileImporter::processLabels, this, std::placeholders::_1, std::placeholders::_2);
 }
 
 VTKMeshFileImporter::VTKMeshFileImporter(std::string filename) : FileImporter(filename){
@@ -22,6 +23,7 @@ VTKMeshFileImporter::VTKMeshFileImporter(std::string filename) : FileImporter(fi
     mFunctions["LINES"] = std::bind(&VTKMeshFileImporter::processLines, this, std::placeholders::_1, std::placeholders::_2);
     mFunctions["POLYGONS"] = std::bind(&VTKMeshFileImporter::processTriangles, this, std::placeholders::_1, std::placeholders::_2);
     mFunctions["VECTORS"] = std::bind(&VTKMeshFileImporter::processVectors, this, std::placeholders::_1, std::placeholders::_2);
+    mFunctions["SCALARS"] = std::bind(&VTKMeshFileImporter::processLabels, this, std::placeholders::_1, std::placeholders::_2);
 }
 
 void VTKMeshFileImporter::processLines(std::ifstream& file, std::string& line) {
@@ -102,6 +104,32 @@ void VTKMeshFileImporter::processNormals(std::ifstream& file, std::string& line)
             v(2) = std::stof(tokens[i+2]);
             mVertices.at(counter).setNormal(v);
             ++counter;
+        }
+    }
+}
+
+void VTKMeshFileImporter::processLabels(std::ifstream& file, std::string& line) {
+    std::vector<std::string> tokens = split(line);
+    const std::string name = tokens[1];
+    uint counter = 0;
+    while(getline(file, line)) {
+        trim(line);
+        if(line.size() == 0)
+            break;
+
+        if(!(isdigit(line[0]) || line[0] == '-')) {
+            // Has reached end
+            break;
+        }
+
+        std::vector<std::string> tokens = split(line);
+
+        if(name == "vertex_labels") {
+            for(int i = 0; i < tokens.size(); ++i) {
+                uchar label = std::stoi(tokens[i]);
+                mVertices.at(counter).setLabel(label);
+                ++counter;
+            }
         }
     }
 }
