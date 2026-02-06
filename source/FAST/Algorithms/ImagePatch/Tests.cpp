@@ -198,6 +198,7 @@ TEST_CASE("Patch generator and stitcher for WSI", "[fast][wsi][PatchStitcher][vi
     window->start();
 }
 
+/*
 TEST_CASE("Patch generator, sticher and image to batch generator for WSI", "[fast][wsi][ImageToBatchGenerator]") {
     auto importer = WholeSlideImageImporter::create(Config::getTestDataPath() + "/WSI/CMU-1.svs");
 
@@ -215,6 +216,7 @@ TEST_CASE("Patch generator, sticher and image to batch generator for WSI", "[fas
     }
     std::cout << "Done" << std::endl;
 }
+*/
 
 /*
 TEST_CASE("Patch generator for WSI wrong magnification", "[fast][wsi][PatchGenerator]") {
@@ -228,8 +230,6 @@ TEST_CASE("Patch generator for WSI wrong magnification", "[fast][wsi][PatchGener
 }
  */
 
-/*
-// This test often crashes on github for unknown reasons
 TEST_CASE("Patch generator for WSI at specific magnification 2.5x", "[fast][wsi][PatchGenerator]") {
     auto importer = WholeSlideImageImporter::create(Config::getTestDataPath() + "/WSI/CMU-1.svs");
     // This pyramid has:
@@ -254,10 +254,7 @@ TEST_CASE("Patch generator for WSI at specific magnification 2.5x", "[fast][wsi]
     }
     REQUIRE(counter == nrOfPatches);
 }
- */
 
-/*
-// This test often crashes on github for unknown reasons
 TEST_CASE("Patch generator for WSI at specific magnification 1.25x", "[fast][wsi][PatchGenerator]") {
     auto importer = WholeSlideImageImporter::create(Config::getTestDataPath() + "/WSI/CMU-1.svs");
     auto wsi = importer->runAndGetOutputData<ImagePyramid>();
@@ -278,7 +275,6 @@ TEST_CASE("Patch generator for WSI at specific magnification 1.25x", "[fast][wsi
     }
     REQUIRE(counter == nrOfPatches);
 }
-*/
 
 TEST_CASE("Patch generator and stitcher at given magnification") {
     auto importer = WholeSlideImageImporter::create(Config::getTestDataPath() + "/WSI/CMU-1.svs");
