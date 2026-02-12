@@ -46,10 +46,11 @@ struct Display2DArgs {
     Color bgcolor = Color::White(); /**< Background color to use for the View. **/
     int width = 0; /**< Width of window, set to 0 to use default width. **/
     int height = 0; /**< Height of window, set to 0 to use default height. **/
-    std::optional<int> timeout; /**< Milliseconds until closing window automatically. If not setm the window will not automatically close. **/
+    std::optional<int> timeout; /**< Milliseconds until closing window automatically. If not set, the window will not automatically close. **/
     bool renderToImage = false; /**< If set to true, the data is rendered to an Image and returned, instead of displaying it using a window. **/
     bool returnWindow = false; /**< If set to true, the window is returned by the function, else display2D will call run on the window and return nothing. **/
     std::variant<std::monostate, std::vector<QWidget*>, std::map<WidgetPosition, std::vector<QWidget*>>> widgets;  /**< Widgets to attach to window. **/
+    std::string title = ""; /**< Title to set to window, if renderToImage is false. **/
 };
 
 /**
@@ -99,6 +100,7 @@ struct Display3DArgs {
     std::optional<int> timeout;  /**< Milliseconds until closing window automatically. If not setm the window will not automatically close. **/
     bool returnWindow = false; /**< If set to true, the window is returned by the function, else display2D will call run on the window and return nothing. **/
     std::variant<std::monostate, std::vector<QWidget*>, std::map<WidgetPosition, std::vector<QWidget*>>> widgets; /**< Widgets to attach to window. **/
+    std::string title = ""; /**< Title to set to window, if renderToImage is false. **/
 };
 
 /**

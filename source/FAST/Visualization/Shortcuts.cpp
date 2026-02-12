@@ -108,6 +108,8 @@ std::variant<std::monostate, Window::pointer, Image::pointer> display2D(Display2
     } else {
         auto window = SimpleWindow2D::create(args.bgcolor, args.width, args.height)
                 ->connect(renderers);
+        if(!args.title.empty())
+            window->setTitle(args.title);
         if(hasValue(args.widgets)) {
             if(std::holds_alternative<std::vector<QWidget*>>(args.widgets)) {
                 window->connect(std::get<std::vector<QWidget*>>(args.widgets));
@@ -138,6 +140,8 @@ std::variant<std::monostate, Window::pointer> display3D(Display3DArgs args) {
     std::shared_ptr<Window> window;
     if(args.displayType == DisplayType::SLICER) {
         auto slicerWindow = SlicerWindow::create(args.bgcolor, args.width, args.height);
+        if(!args.title.empty())
+            slicerWindow->setTitle(args.title);
         if(hasValue(args.image)) {
             if(std::holds_alternative<Image::pointer>(args.image)) {
                 slicerWindow->connectImage(std::get<Image::pointer>(args.image), getValueOrDefault(args.intensityLevel, -1.0f),
@@ -159,6 +163,8 @@ std::variant<std::monostate, Window::pointer> display3D(Display3DArgs args) {
         if(!hasValue(args.image))
             throw Exception("display3D must have image for volume rendering");
         auto simpleWindow = SimpleWindow3D::create(args.bgcolor, args.width, args.height);
+        if(!args.title.empty())
+            simpleWindow->setTitle(args.title);
         if(args.displayType == DisplayType::ALPHA_BLENDING) {
             auto renderer = AlphaBlendingVolumeRenderer::create(args.transferFunction);
             if(std::holds_alternative<Image::pointer>(args.image)) {
