@@ -34,6 +34,7 @@ def display2D(
             renderToImage:bool=False,
             returnWindow:bool=False,
             widgets:Union[List, Dict[int, List]]=None,
+            title:str='',
         ):
     """
     Shortcut for displaying image, segmentation and meshes using SimpleWindow2D
@@ -64,6 +65,7 @@ def display2D(
     :param renderToImage: Use RenderToImage instead of SimpleWindow and return the resulting image
     :param returnWindow: Whether to return the window object, or to run it
     :param widgets: Widgets to connect to the window
+    :param title: Title to set to window, if renderToImage is false.
     :return: window if returnWindow is set to True, else None
     """
 
@@ -132,6 +134,7 @@ def display2D(
             width=width,
             height=height
         ).connect(renderers)
+        if title: window.setTitle(title)
         if widgets:
             if isinstance(widgets, dict):
                 for pos, widget_list in widgets.items():
@@ -169,7 +172,8 @@ def display3D(
         timeout:int=None,
         returnWindow:bool=False,
         widgets:Union[List, Dict[int, List]]=None,
-        ):
+        title:str='',
+):
     """
     Shortcut for displaying image, segmentation and meshes using SimpleWindow2D
 
@@ -185,6 +189,7 @@ def display3D(
     :param timeout: If set to a number, the window will auto close after this many milliseconds
     :param returnWindow: Whether to return the window object, or to run it
     :param widgets: Widgets to connect to the window
+    :param title: Title to set to window, if renderToImage is false.
     :return: window if returnWindow is set to True, else None
     """
 
@@ -219,8 +224,8 @@ def display3D(
             renderer = fast.AlphaBlendingVolumeRenderer.create(transferFunction).connect(image)
             window.connect(renderer)
 
-    if timeout is not None:
-        window.setTimeout(timeout)
+    if title: window.setTitle(title)
+    if timeout is not None: window.setTimeout(timeout)
     if widgets:
         if isinstance(widgets, dict):
             for pos, widget_list in widgets.items():
