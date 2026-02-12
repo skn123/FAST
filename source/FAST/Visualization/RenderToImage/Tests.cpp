@@ -3,7 +3,7 @@
 #include <FAST/Visualization/ImageRenderer/ImageRenderer.hpp>
 #include <FAST/Importers/ImageFileImporter.hpp>
 #include <FAST/Visualization/SimpleWindow.hpp>
-#include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
+#include <FAST/Algorithms/Thresholding/BinaryThresholding.hpp>
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Exporters/ImageExporter.hpp>
 #include <FAST/Streamers/ImageFileStreamer.hpp>

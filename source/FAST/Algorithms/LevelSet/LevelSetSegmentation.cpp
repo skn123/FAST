@@ -1,6 +1,6 @@
 #include "LevelSetSegmentation.hpp"
 #include "FAST/Data/Image.hpp"
-#include "FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp"
+#include "FAST/Algorithms/Thresholding/BinaryThresholding.hpp"
 
 namespace fast {
 

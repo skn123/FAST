@@ -1,7 +1,7 @@
 #include <FAST/Testing.hpp>
 #include <FAST/Visualization/SlicerWindow.hpp>
 #include <FAST/Importers/ImageFileImporter.hpp>
-#include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
+#include <FAST/Algorithms/Thresholding/BinaryThresholding.hpp>
 
 using namespace fast;
 

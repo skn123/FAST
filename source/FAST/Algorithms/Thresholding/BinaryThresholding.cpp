@@ -29,8 +29,8 @@ BinaryThresholding::BinaryThresholding() {
     mUpperThresholdSet = false;
     createInputPort<Image>(0);
     createOutputPort<Image>(0);
-    createOpenCLProgram(Config::getKernelSourcePath() + "Algorithms/BinaryThresholding/BinaryThresholding3D.cl", "3D");
-    createOpenCLProgram(Config::getKernelSourcePath() + "Algorithms/BinaryThresholding/BinaryThresholding2D.cl", "2D");
+    createOpenCLProgram(Config::getKernelSourcePath() + "Algorithms/Thresholding/BinaryThresholding3D.cl", "3D");
+    createOpenCLProgram(Config::getKernelSourcePath() + "Algorithms/Thresholding/BinaryThresholding2D.cl", "2D");
 
     createFloatAttribute("lower-threshold", "Lower threshold", "Lower intensity threshold", std::nanf(""));
     createFloatAttribute("upper-threshold", "Upper threshold", "Upper intensity threshold", std::nanf(""));

@@ -12,7 +12,7 @@
 #include "FAST/Algorithms/Skeletonization/Skeletonization.hpp"
 #include "FAST/Importers/ImageImporter.hpp"
 #include "FAST/Visualization/ImageRenderer/ImageRenderer.hpp"
-#include "FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp"
+#include "FAST/Algorithms/Thresholding/BinaryThresholding.hpp"
 //#include "FAST/Algorithms/IterativeClosestPoint/IterativeClosestPoint.hpp"
 #include "FAST/Visualization/VertexRenderer/VertexRenderer.hpp"
 #include "FAST/SceneGraph.hpp"

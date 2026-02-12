@@ -7,7 +7,7 @@
 #include <FAST/Importers/ImagePyramidPatchImporter.hpp>
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Algorithms/ImagePatch/PatchGenerator.hpp>
-#include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
+#include <FAST/Algorithms/Thresholding/BinaryThresholding.hpp>
 #include <FAST/Algorithms/ImagePatch/PatchStitcher.hpp>
 #include <FAST/Importers/TIFFImagePyramidImporter.hpp>
 #include <FAST/Algorithms/TissueSegmentation/TissueSegmentation.hpp>

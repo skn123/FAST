@@ -3,7 +3,7 @@
 #include "FAST/Importers/ImageImporter.hpp"
 #include "FAST/Visualization/ImageRenderer/ImageRenderer.hpp"
 #include "FAST/Visualization/SimpleWindow.hpp"
-#include "FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp"
+#include "FAST/Algorithms/Thresholding/BinaryThresholding.hpp"
 
 using namespace fast;
 

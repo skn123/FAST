@@ -21,7 +21,7 @@ void ZeroMeanUnitVariance::execute() {
 	if(m_perChannel && input->getNrOfChannels() > 1) {
 	    for(int c = 0; c < input->getNrOfChannels(); ++c) {
             // TODO this can be improved by not using ImageChannelConverter, and instead upgrade to
-            //  calculateAverageIntensity functions to support per channel
+            //  calculateAverageIntensity functions to support per channel. Or implement a ChannelSplitter?
 	        std::vector<int> channelsToRemove;
 	        for(int i = 0; i < input->getNrOfChannels(); ++i) {
 	            if(i != c)
@@ -32,7 +32,6 @@ void ZeroMeanUnitVariance::execute() {
 	                ->runAndGetOutputData<Image>();
 	        average[c] = channelImage->calculateAverageIntensity();
 	        standardDeviation[c] = channelImage->calculateStandardDeviationIntensity();
-	        std::cout << "normalizing: " << average[c] << " " << standardDeviation[c] << std::endl;
 	    }
 	} else {
 	    float avg = input->calculateAverageIntensity();

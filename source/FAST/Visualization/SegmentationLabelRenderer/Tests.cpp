@@ -1,7 +1,7 @@
 #include "SegmentationLabelRenderer.hpp"
 #include <FAST/Testing.hpp>
 #include <FAST/Streamers/ImageFileStreamer.hpp>
-#include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
+#include <FAST/Algorithms/Thresholding/BinaryThresholding.hpp>
 #include <FAST/Visualization/ImageRenderer/ImageRenderer.hpp>
 #include <FAST/Visualization/SimpleWindow.hpp>
 

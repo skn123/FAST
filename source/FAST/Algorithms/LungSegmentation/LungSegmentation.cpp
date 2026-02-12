@@ -1,10 +1,9 @@
 #include <unordered_set>
 #include <stack>
-#include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
+#include <FAST/Algorithms/Thresholding/BinaryThresholding.hpp>
 #include "LungSegmentation.hpp"
 #include "FAST/Data/Image.hpp"
 #include "FAST/Algorithms/SeededRegionGrowing/SeededRegionGrowing.hpp"
-#include "FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp"
 #include "FAST/Algorithms/AirwaySegmentation/AirwaySegmentation.hpp"
 #include "FAST/Algorithms/ImageInverter/ImageInverter.hpp"
 #include "FAST/Algorithms/ImageMultiply/ImageMultiply.hpp"

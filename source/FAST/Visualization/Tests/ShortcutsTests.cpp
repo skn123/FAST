@@ -2,7 +2,7 @@
 #include <FAST/Visualization/Shortcuts.hpp>
 #include <FAST/Importers/ImageFileImporter.hpp>
 #include <FAST/Importers/WholeSlideImageImporter.hpp>
-#include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
+#include <FAST/Algorithms/Thresholding/BinaryThresholding.hpp>
 #include <FAST/Visualization/Widgets/TextWidget/TextWidget.hpp>
 
 using namespace fast;
