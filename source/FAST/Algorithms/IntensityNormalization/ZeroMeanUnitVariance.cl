@@ -3,8 +3,8 @@ __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | 
 __kernel void normalize2D(
         __read_only image2d_t input,
         __write_only image2d_t output,
-        __private float average,
-        __private float std
+        __private float4 average,
+        __private float4 std
         ) {
     const int2 pos = {get_global_id(0), get_global_id(1)};
     int dataType = get_image_channel_data_type(input);
@@ -26,8 +26,8 @@ __kernel void normalize2D(
 __kernel void normalize3D(
         __read_only image3d_t input,
         __write_only image3d_t output,
-        __private float average,
-        __private float std
+        __private float4 average,
+        __private float4 std
         ) {
     const int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
     int dataType = get_image_channel_data_type(input);
@@ -48,8 +48,8 @@ __kernel void normalize3D(
 __kernel void normalize3D(
         __read_only image3d_t input,
         __global float* output,
-        __private float average,
-        __private float std,
+        __private float4 average,
+        __private float4 std,
         __private uint outputChannels
         ) {
     const int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};

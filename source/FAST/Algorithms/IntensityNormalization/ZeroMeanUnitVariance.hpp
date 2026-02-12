@@ -24,11 +24,14 @@ class FAST_EXPORT ZeroMeanUnitVariance : public ProcessObject {
 	public:
         /**
          * @brief Create instance
+         * @param perChannel Whether to apply per channel, e.g. calculating the average and standard deviation per channel
+         *      and apply this per channel, or use the average and standard deviation of all channels.
          * @return instance
          */
-		FAST_CONSTRUCTOR(ZeroMeanUnitVariance)
+		FAST_CONSTRUCTOR(ZeroMeanUnitVariance, bool, perChannel, = true)
 	private:
 		void execute() override;
+		bool m_perChannel = true;
 };
   
 }

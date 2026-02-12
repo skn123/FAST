@@ -1,19 +1,45 @@
 #include "ZeroMeanUnitVariance.hpp"
+#include <FAST/Algorithms/ImageChannelConverter/ImageChannelConverter.hpp>
 #include <FAST/Data/Image.hpp>
 
 namespace fast {
 
-ZeroMeanUnitVariance::ZeroMeanUnitVariance() {
+ZeroMeanUnitVariance::ZeroMeanUnitVariance(bool perChannel) {
 	createInputPort(0);
 	createOutputPort(0);
 
 	createOpenCLProgram(Config::getKernelSourcePath() + "Algorithms/IntensityNormalization/ZeroMeanUnitVariance.cl");
+	m_perChannel = perChannel;
 }
 
 void ZeroMeanUnitVariance::execute() {
 	auto input = getInputData<Image>();
-	float average = input->calculateAverageIntensity();
-	float standardDeviation = input->calculateStandardDeviationIntensity();
+
+	// Per channel
+	std::array<float, 4> average;
+	std::array<float, 4> standardDeviation;
+	if(m_perChannel && input->getNrOfChannels() > 1) {
+	    for(int c = 0; c < input->getNrOfChannels(); ++c) {
+            // TODO this can be improved by not using ImageChannelConverter, and instead upgrade to
+            //  calculateAverageIntensity functions to support per channel
+	        std::vector<int> channelsToRemove;
+	        for(int i = 0; i < input->getNrOfChannels(); ++i) {
+	            if(i != c)
+	                channelsToRemove.push_back(i);
+	        }
+	        auto channelImage = ImageChannelConverter::create(channelsToRemove)
+	                ->connect(input)
+	                ->runAndGetOutputData<Image>();
+	        average[c] = channelImage->calculateAverageIntensity();
+	        standardDeviation[c] = channelImage->calculateStandardDeviationIntensity();
+	        std::cout << "normalizing: " << average[c] << " " << standardDeviation[c] << std::endl;
+	    }
+	} else {
+	    float avg = input->calculateAverageIntensity();
+	    float stdDev = input->calculateStandardDeviationIntensity();
+        average = {avg, avg, avg, avg};
+        standardDeviation = {stdDev, stdDev, stdDev, stdDev};
+	}
 
 	auto output = Image::create(input->getSize(), TYPE_FLOAT, input->getNrOfChannels());
 	output->setSpacing(input->getSpacing());
@@ -45,8 +71,8 @@ void ZeroMeanUnitVariance::execute() {
             kernel.setArg(4, output->getNrOfChannels());
         }
 	}
-	kernel.setArg(2, average);
-	kernel.setArg(3, standardDeviation);
+	kernel.setArg(2, sizeof(cl_float4), average.data());
+	kernel.setArg(3, sizeof(cl_float4), standardDeviation.data());
 	
     cl::CommandQueue queue = device->getCommandQueue();
 
