@@ -4,7 +4,7 @@
 #include <QApplication>
 #include <FAST/Data/Image.hpp>
 #include <QScreen>
-#include <FAST/Algorithms/RegionProperties/RegionProperties.hpp>
+#include <FAST/Algorithms/Region/RegionProperties.hpp>
 
 namespace fast {
 

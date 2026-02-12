@@ -1,7 +1,7 @@
 #include <FAST/Data/ImagePyramid.hpp>
 #include <FAST/Data/Image.hpp>
 #include <FAST/Algorithms/TissueSegmentation/TissueSegmentation.hpp>
-#include <FAST/Algorithms/RegionProperties/RegionProperties.hpp>
+#include <FAST/Algorithms/Region/RegionProperties.hpp>
 #include "TissueMicroArrayExtractor.hpp"
 #include <FAST/Data/Mesh.hpp>
 #include <FAST/Data/BoundingBox.hpp>
@@ -57,9 +57,9 @@ void TissueMicroArrayExtractor::generateStream() {
         //std::cout << region.centroid.transpose() << std::endl;
         //std::cout << region.perimiterLength << std::endl;
         //std::cout << region.area << std::endl;
-        float compactness = 4.0f * M_PI * region.area / (region.perimiterLength * region.perimiterLength); // TODO perimeter length is incorrect
+        float compactness = 4.0f * M_PI * region.area / (region.perimeterLength * region.perimeterLength); // TODO perimeter length is incorrect
         //std::cout << "Compactness: " << compactness << std::endl;
-        if(region.perimiterLength > 0 && region.pixelCount > 100/* && compactness > 0.1*/) {
+        if(region.perimeterLength > 0 && region.pixelCount > 100/* && compactness > 0.1*/) {
             averageArea += region.area;
             maxArea = std::max(maxArea, region.area);
             areas.push_back(region.area);
@@ -74,7 +74,7 @@ void TissueMicroArrayExtractor::generateStream() {
     // Remove all regions which have an area which differs too much from the average
     std::vector<Region> filteredRegions;
     for(auto& region : m_regions->get()) {
-        if(region.perimiterLength > 0 && region.pixelCount > 100/* && compactness > 0.1*/) {
+        if(region.perimeterLength > 0 && region.pixelCount > 100/* && compactness > 0.1*/) {
             //std::cout << region.area << " " << averageArea << " " << maxArea << std::endl;
             auto radius = std::max(region.maxPixelPosition.x() - region.minPixelPosition.x(), region.maxPixelPosition.y() - region.minPixelPosition.y());
             if(std::fabs(medianArea - region.area) < m_areaThreshold*medianArea &&
