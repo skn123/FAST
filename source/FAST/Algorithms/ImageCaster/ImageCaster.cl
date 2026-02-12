@@ -25,8 +25,17 @@ void writeImageAsFloat2D(__write_only image2d_t image, int2 position, float4 val
 __kernel void cast2D(
         __read_only image2d_t input,
         __write_only image2d_t output,
-        __private float scaleFactor
+        __private float scaleFactor,
+        __private char normalize,
+        __private float minimum,
+        __private float maximum
     ) {
     const int2 pos = {get_global_id(0), get_global_id(1)};
-    writeImageAsFloat2D(output, pos, readImageAsFloat2D(input, sampler, pos)*scaleFactor);
+    if(normalize == 1) {
+        float4 value = readImageAsFloat2D(input, sampler, pos);
+        value = (value - minimum) / (maximum - minimum);
+        writeImageAsFloat2D(output, pos, value*scaleFactor);
+    } else {
+        writeImageAsFloat2D(output, pos, readImageAsFloat2D(input, sampler, pos)*scaleFactor);
+    }
 }
