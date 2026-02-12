@@ -6,10 +6,12 @@
 
 namespace fast {
 
-RegionProperties::RegionProperties(bool extractContours) {
-    createInputPort<Image>(0);
-    createOutputPort<RegionList>(0);
+RegionProperties::RegionProperties(bool extractContours, bool outputInstanceSegmentation) {
+    createInputPort(0);
+    createOutputPort(0);
+    createOutputPort(1);
     m_extractContours = extractContours;
+    m_outputInstanceSegmentation = outputInstanceSegmentation;
 }
 
 void RegionProperties::execute() {
@@ -30,8 +32,19 @@ void RegionProperties::execute() {
     auto access = input->getImageAccess(ACCESS_READ);
     auto pixels = (uchar*)access->get();
 
+    Image::pointer instanceSegmentation;
+    ImageAccess::pointer instanceSegmentationAccess;
+    if(m_outputInstanceSegmentation) {
+        instanceSegmentation = Image::create(input->getSize(), TYPE_UINT32, 1);
+        instanceSegmentation->setSpacing(input->getSpacing());
+        SceneGraph::setParentNode(instanceSegmentation, input);
+        instanceSegmentation->fill(0);
+        instanceSegmentationAccess = instanceSegmentation->getImageAccess(ACCESS_READ_WRITE);
+    }
+
     // Get regions by flood fill first
     std::queue<Vector2i> queue;
+    uint instanceNumber = 0;
     for(int y = 0; y < height; ++y) {
         for(int x = 0; x < width; ++x) {
             uchar currentLabel = pixels[x + y*width];
@@ -39,10 +52,12 @@ void RegionProperties::execute() {
                 continue;
 
             // Start flood fill
+            instanceNumber += 1;
 
             // Create region
             Region region;
             region.label = currentLabel;
+            region.instance = instanceNumber;
             region.pixelCount = 0;
             region.area = 0.0f;
             region.centroid = Vector2f::Zero();
@@ -60,6 +75,9 @@ void RegionProperties::execute() {
 
                 region.centroid += current.cast<float>();
                 region.pixels.push_back(current);
+                if(m_outputInstanceSegmentation) {
+                    instanceSegmentationAccess->setScalarFast2D(current, instanceNumber);
+                }
                 minX = std::min(minX, current.x());
                 maxX = std::max(maxX, current.x());
                 minY = std::min(minY, current.y());
@@ -180,13 +198,16 @@ void RegionProperties::execute() {
 
             region.contourMesh = Mesh::create(vertices);
             region.contourPixels = contourPixels;
-            region.perimiterLength = perimiter;
+            region.perimeterLength = perimiter;
             region.averageRadius = avgRadius / vertices.size();
         }
     }
 
     auto regionList = RegionList::create(regions);
     addOutputData(0, regionList);
+    if(m_outputInstanceSegmentation) {
+        addOutputData(1, instanceSegmentation);
+    }
 }
 
 }
