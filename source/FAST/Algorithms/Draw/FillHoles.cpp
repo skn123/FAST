@@ -24,15 +24,15 @@ void FillHoles::execute() {
     std::vector<Vector3i> seedPoints;
     for(int x = 0; x < input->getWidth(); ++x) {
         if(access->getScalar(Vector2i(x, 0)) == 0)
-            seedPoints.push_back(Vector3i(x,0, 0));
+            seedPoints.emplace_back(x,0, 0);
         if(access->getScalar(Vector2i(x, input->getHeight()-1)) == 0)
-            seedPoints.push_back(Vector3i(x,input->getHeight()-1, 0));
+            seedPoints.emplace_back(x,input->getHeight()-1, 0);
     }
     for(int y = 0; y < input->getHeight(); ++y) {
         if(access->getScalar(Vector2i(0, y)) == 0)
-            seedPoints.push_back(Vector3i(0, y, 0));
+            seedPoints.emplace_back(0, y, 0);
         if(access->getScalar(Vector2i(input->getWidth()-1, y)) == 0)
-            seedPoints.push_back(Vector3i(input->getWidth()-1, y, 0));
+            seedPoints.emplace_back(input->getWidth()-1, y, 0);
     }
     if(seedPoints.empty())
         throw Exception("No seed points found for FillHoles");
