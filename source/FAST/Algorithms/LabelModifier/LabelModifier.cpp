@@ -14,12 +14,9 @@ LabelModifier::LabelModifier() {
 }
 
 
-LabelModifier::LabelModifier(std::vector<uchar> oldLabels, std::vector<uchar> newLabels) : LabelModifier() {
-    if(oldLabels.size() != newLabels.size())
-        throw Exception("Old label and new label vectors given to LabelModified must have the same size");
-
-    for(int i = 0; i < oldLabels.size(); ++i) {
-        setLabelChange(oldLabels[i], newLabels[i]);
+LabelModifier::LabelModifier(std::map<uint, uint> labelMap) : LabelModifier() {
+    for(const auto& item : labelMap) {
+        setLabelChange(item.first, item.second);
     }
 }
 
@@ -30,15 +27,17 @@ void LabelModifier::execute() {
     cl::Buffer changesBuffer(
             device->getContext(),
             CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-            sizeof(uchar)*m_labelChanges.size(),
+            sizeof(uint)*m_labelChanges.size(),
             m_labelChanges.data()
     );
 
     auto input = getInputData<Image>();
-    if(input->getDimensions() != 2 || input->getDataType() != TYPE_UINT8)
-        throw Exception("Input to LabelModifier must be 2D image of type uint8");
+    if(input->getDimensions() != 2 || (input->getDataType() != TYPE_UINT8 && input->getDataType() != TYPE_UINT16 && input->getDataType() != TYPE_UINT32))
+        throw Exception("Input to LabelModifier must be 2D image of type uint8, uint16 or uint32");
 
-    auto output = Image::createFromImage(input);
+    auto output = Image::create(input->getSize(), TYPE_UINT8, 1); // TODO support uint16 and uint32 as well
+    output->setSpacing(input->getSpacing());
+    SceneGraph::setParentNode(output, input);
 
     auto inputAccess = input->getOpenCLImageAccess(ACCESS_READ, device);
     auto outputAccess = output->getOpenCLImageAccess(ACCESS_READ_WRITE, device);
@@ -60,7 +59,7 @@ void LabelModifier::execute() {
     addOutputData(0, output);
 }
 
-void LabelModifier::setLabelChange(uchar oldLabel, uchar newLabel) {
+void LabelModifier::setLabelChange(uint oldLabel, uint newLabel) {
     m_labelChanges.push_back(oldLabel);
     m_labelChanges.push_back(newLabel);
     setModified(true);

@@ -8,29 +8,26 @@ namespace fast {
  *
  * Used to converting all pixels with label/intensity X to label/intensity Y
  *
- * @todo Use std::map/dict in constructor instead of two vectors?
- *
  * @ingroup segmentation
  */
+using LabelMap = std::map<uint, uint>;
 class FAST_EXPORT LabelModifier : public ProcessObject {
     FAST_PROCESS_OBJECT(LabelModifier)
     public:
         /**
          * @brief Create instance
-         * @param oldLabels A list of labels to change
-         * @param newLabels A list of new labels for the labels specified in oldLabels
-         * @return
+         * @param labelMap map of label changes. Set new label to 0 to remove the label.
+         * @return instance
          */
         FAST_CONSTRUCTOR(LabelModifier,
-                         std::vector<uchar>, oldLabels,,
-                         std::vector<uchar>, newLabels,
+                         LabelMap, labelMap,
         );
-        void setLabelChange(uchar oldLabel, uchar newLabel);
+        void setLabelChange(uint oldLabel, uint newLabel);
         void loadAttributes() override;
     protected:
         LabelModifier();
         void execute() override;
-        std::vector<uchar> m_labelChanges;
+        std::vector<uint> m_labelChanges;
 };
 
 }
