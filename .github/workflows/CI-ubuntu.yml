@@ -13,6 +13,7 @@ on:
 env:
   BUILD_TYPE: Release
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+  DOCKER_API_VERSION: 1.41
 
 jobs:
   build:
@@ -33,11 +34,6 @@ jobs:
         
     - name: Checkout
       uses: actions/checkout@v4
-
-    - name: Update docker
-      run: |
-        sudo apt-get update
-        sudo apt-get install docker-ce-cli
 
       # Use docker-run-action instead of container to get around githubs node20 requirement which doesn't work with ubuntu 18
     - uses: addnab/docker-run-action@v3
