@@ -82,6 +82,7 @@ class OpenCLBuffer;
 class FAST_EXPORT Kernel {
     public:
         explicit Kernel(cl::Kernel clKernel, OpenCLDevice::pointer device);
+        Kernel();
         cl::Kernel getHandle() const;
 
 #ifndef SWIG
@@ -165,6 +166,7 @@ class FAST_EXPORT Kernel {
         std::map<int, KernelArgument> m_argInfoByIndex;
         std::set<int> m_argGotValue;
         std::vector<OpenCLBuffer> m_buffers;
+        bool m_initialized = false;
 };
 
 template <class T>

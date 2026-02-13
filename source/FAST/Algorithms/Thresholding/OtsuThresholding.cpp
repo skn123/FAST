@@ -4,9 +4,9 @@
 
 namespace fast {
 
-std::array<int, 256> calculateGlobalHistogram(ImageAccess::pointer& access, const int width, const int height) {
+std::array<int, 256> calculateGlobalHistogram(ImageAccess::pointer& access, const int size) {
     std::array<int, 256> hist{};
-    for(int i = 0; i < width*height; ++i) {
+    for(int i = 0; i < size; ++i) {
         auto pixelValue = access->getScalarFast<uchar>(i);
         hist[pixelValue]++;
     }
@@ -47,9 +47,6 @@ void OtsuThresholding::execute() {
         reportWarning() << "Otsu thresholding implementation only supports 1 channel images. " <<
                            "Since your input image has more than 1 channels, only the first channel (red) is used." << reportEnd();
     }
-    if(input->getDimensions() == 3) {
-        throw Exception("Otsu thresholding is currently only implemented for 2D images");
-    }
 
     if(input->getDataType() != TYPE_UINT8) {
         input = ImageCaster::create(TYPE_UINT8, 255, true)
@@ -60,7 +57,7 @@ void OtsuThresholding::execute() {
 
     auto access = input->getImageAccess(ACCESS_READ);
     // TODO Move histogram operation somewhere else?
-    auto histogram = calculateGlobalHistogram(access, input->getWidth(), input->getHeight());
+    auto histogram = calculateGlobalHistogram(access, input->getNrOfVoxels());
     access->release();
     auto cumulativeProbs = calculateCumulativePixelProbabilities(histogram, input->getNrOfVoxels());
     auto probs = calculatePixelProbabilities(histogram, input->getNrOfVoxels());
@@ -115,8 +112,9 @@ void OtsuThresholding::execute() {
             }
         }
         // Segment using multiple threshold
-        auto segmentation = Image::create(input->getWidth(), input->getHeight(), TYPE_UINT8, 1);
+        auto segmentation = Image::create(input->getSize(), TYPE_UINT8, 1);
         segmentation->setSpacing(input->getSpacing());
+        SceneGraph::setParentNode(segmentation, input);
         auto segmentationAccess = segmentation->getImageAccess(ACCESS_READ_WRITE);
         auto inputAccess = input->getImageAccess(ACCESS_READ);
         for(int i = 0; i < input->getNrOfVoxels(); ++i) {
@@ -161,11 +159,13 @@ void OtsuThresholding::execute() {
             }
         }
         // Segment using multiple threshold
-        auto segmentation = Image::create(input->getWidth(), input->getHeight(), TYPE_UINT8, 1);
+        auto segmentation = Image::create(input->getSize(), TYPE_UINT8, 1);
+        segmentation->setSpacing(input->getSpacing());
+        SceneGraph::setParentNode(segmentation, input);
         auto segmentationAccess = segmentation->getImageAccess(ACCESS_READ_WRITE);
         auto inputAccess = input->getImageAccess(ACCESS_READ);
         for(int i = 0; i < input->getNrOfVoxels(); ++i) {
-            uchar value = inputAccess->getScalarFast<uchar>(i);
+            auto value = inputAccess->getScalarFast<uchar>(i);
             uchar segmentationClass;
             if(value < bestThreshold1) {
                 segmentationClass = 0;

@@ -185,9 +185,12 @@ Kernel::Kernel(cl::Kernel clKernel, OpenCLDevice::pointer device) {
         // TODO Handle possible need for recompiling cached kernels
         throw Exception("OpenCL exception caught when trying to get kernel argument information: " + std::string(e.what()) + "("  + getCLErrorString(e.err()) + "). You might need to recompile your OpenCL code, delete the cache.");
     }
+    m_initialized = true;
 }
 
 cl::Kernel Kernel::getHandle() const {
+    if(!m_initialized)
+        throw Exception("Kernel object has not been initialized. Did you forgot = getKernel()?");
     return m_kernel;
 }
 
@@ -240,10 +243,14 @@ KernelArgument Kernel::getArg(std::string name) const {
 }
 
 bool Kernel::allArgumentsGotValue() const {
+    if(!m_initialized)
+        throw Exception("Kernel object has not been initialized. Did you forgot = getKernel()?");
     return m_argGotValue.size() == getNumberOfArgs();
 }
 
 std::vector<std::string> Kernel::getArgumentsWithoutValue() const {
+    if(!m_initialized)
+        throw Exception("Kernel object has not been initialized. Did you forgot = getKernel()?");
     std::vector<std::string> list;
     for(int i = 0; i < getNumberOfArgs(); ++i) {
         if(m_argGotValue.count(i) == 0)
@@ -274,8 +281,14 @@ void Kernel::setTensorArg(std::string name, std::shared_ptr<fast::Tensor> tensor
 }
 
 void Kernel::checkIndex(int index) const {
+    if(!m_initialized)
+        throw Exception("Kernel object has not been initialized. Did you forgot = getKernel()?");
     if(index >= getNumberOfArgs() || index < 0)
         throw Exception("Kernel does not have an argument with index " + std::to_string(index) + ", number of arguments is: " + std::to_string(getNumberOfArgs()));
+}
+
+Kernel::Kernel() {
+    m_initialized = false;
 }
 
 OpenCLBuffer::OpenCLBuffer(std::size_t size, OpenCLDevice::pointer device, KernelMemoryAccess kernelAccess,

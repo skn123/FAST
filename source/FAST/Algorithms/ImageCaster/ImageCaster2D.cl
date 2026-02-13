@@ -1,6 +1,6 @@
 __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
 
-float4 readImageAsFloat2D(__read_only image2d_t image, sampler_t sampler, int2 position) {
+inline float4 readImageAsFloat2D(__read_only image2d_t image, sampler_t sampler, int2 position) {
     int dataType = get_image_channel_data_type(image);
     if(dataType == CLK_FLOAT || dataType == CLK_SNORM_INT16 || dataType == CLK_UNORM_INT16) {
         return read_imagef(image, sampler, position);
@@ -11,7 +11,7 @@ float4 readImageAsFloat2D(__read_only image2d_t image, sampler_t sampler, int2 p
     }
 }
 
-void writeImageAsFloat2D(__write_only image2d_t image, int2 position, float4 value) {
+inline void writeImageAsFloat2D(__write_only image2d_t image, int2 position, float4 value) {
     int dataType = get_image_channel_data_type(image);
     if(dataType == CLK_FLOAT || dataType == CLK_SNORM_INT16 || dataType == CLK_UNORM_INT16) {
         write_imagef(image, position, value);
@@ -31,11 +31,9 @@ __kernel void cast2D(
         __private float maximum
     ) {
     const int2 pos = {get_global_id(0), get_global_id(1)};
+    float4 value = readImageAsFloat2D(input, sampler, pos);
     if(normalize == 1) {
-        float4 value = readImageAsFloat2D(input, sampler, pos);
         value = (value - minimum) / (maximum - minimum);
-        writeImageAsFloat2D(output, pos, value*scaleFactor);
-    } else {
-        writeImageAsFloat2D(output, pos, readImageAsFloat2D(input, sampler, pos)*scaleFactor);
     }
+    writeImageAsFloat2D(output, pos, value*scaleFactor);
 }

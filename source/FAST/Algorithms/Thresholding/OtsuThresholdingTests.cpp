@@ -7,23 +7,39 @@
 using namespace fast;
 
 TEST_CASE("Otsu thresholding 2D uint8 image", "[fast][OtsuThresholding][visual]") {
-    auto importer = ImageFileImporter::create(Config::getTestDataPath() + "US/US-2D.jpg");
-    auto segment = OtsuThresholding::create()->connect(importer);
-    Display2DArgs args;
-    args.image = importer;
-    args.segmentation = segment;
-    args.timeout = 1000;
-    display2D(args);
+    for(int c = 2; c < 5; ++c) {
+        auto importer = ImageFileImporter::create(Config::getTestDataPath() + "US/US-2D.jpg");
+        auto segment = OtsuThresholding::create(c)->connect(importer);
+        Display2DArgs args;
+        args.image = importer;
+        args.segmentation = segment;
+        args.timeout = 1000;
+        display2D(args);
+    }
 }
-
 
 TEST_CASE("Otsu thresholding 2D float image", "[fast][OtsuThresholding][visual]") {
-    auto importer = ImageFileImporter::create(Config::getTestDataPath() + "US/US-2D.jpg");
-    auto caster = ImageCaster::create(TYPE_FLOAT, 2.0f)->connect(importer);
-    auto segment = OtsuThresholding::create()->connect(caster);
-    Display2DArgs args;
-    args.image = importer;
-    args.segmentation = segment;
-    args.timeout = 1000;
-    display2D(args);
+    for(int c = 2; c < 5; ++c) {
+        auto importer = ImageFileImporter::create(Config::getTestDataPath() + "US/US-2D.jpg");
+        auto caster = ImageCaster::create(TYPE_FLOAT, 2.0f)->connect(importer);
+        auto segment = OtsuThresholding::create(c)->connect(caster);
+        Display2DArgs args;
+        args.image = importer;
+        args.segmentation = segment;
+        args.timeout = 1000;
+        display2D(args);
+    }
 }
+
+TEST_CASE("Otsu thresholding 3D integer image", "[fast][OtsuThresholding][visual]") {
+    for(int c = 2; c < 5; ++c) {
+        auto importer = ImageFileImporter::create(Config::getTestDataPath() + "CT/CT-Thorax.mhd");
+        auto segment = OtsuThresholding::create(c)->connect(importer);
+        Display3DArgs args;
+        args.image = importer;
+        args.segmentation = segment;
+        args.timeout = 1000;
+        display3D(args);
+    }
+}
+
