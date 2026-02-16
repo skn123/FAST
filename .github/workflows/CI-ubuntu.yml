@@ -35,7 +35,7 @@ jobs:
       uses: actions/checkout@v4
 
       # Use docker-run-action instead of container to get around githubs node20 requirement which doesn't work with ubuntu 18
-    - uses: maus007/docker-run-action-fork@v1
+    - uses: FAST-Imaging/docker-run-action@dd69bcf7133cc95bc22c0fecffd2ab4c8c7a168f
       with:
         image: ubuntu:18.04
         options: -v ${{ github.workspace }}:${{ github.workspace }}
