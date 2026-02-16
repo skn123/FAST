@@ -90,7 +90,7 @@ jobs:
               -DFAST_MODULE_RealSense=ON \
               -DFAST_BUILD_EXAMPLES=ON
           echo "===========> Build"
-          cmake --build build --config ${{env.BUILD_TYPE}} -j 4
+          cmake --build build --config ${{env.BUILD_TYPE}} -j 1
           echo "===========> Free some space"
           df -h
           rm -Rf build/external/tensorflow/src/tensorflow/
@@ -99,14 +99,14 @@ jobs:
           rm -Rf build/external/clarius/src/clarius/
           df -h
           echo "===========> Build Python Wheel"
-          cmake --build build --config ${{env.BUILD_TYPE}} --target python-wheel -j 4
+          cmake --build build --config ${{env.BUILD_TYPE}} --target python-wheel -j 1
           cp build/python/dist/pyfast-*.whl build/
           echo "===========> Free some space"
           df -h
           rm -Rf build/python/
           df -h
           echo "===========> Package"
-          cmake --build build --config ${{env.BUILD_TYPE}} --target package -j 4
+          cmake --build build --config ${{env.BUILD_TYPE}} --target package -j 1
     - name: Check C/C++ standard library version dependency
       run: |
         # Throw error if GLIBCXX dependency above 3.4.25
