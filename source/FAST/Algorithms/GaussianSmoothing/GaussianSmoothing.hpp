@@ -11,6 +11,7 @@ namespace fast {
  * @brief Smoothing by convolution with a Gaussian mask
  *
  * Supports 2D, 3D and anisotropic smoothing (e.g. different standard deviation for each dimension).
+ * Also supports multi-channel (e.g. RGB) smoothing, in this case smoothing is applied per channel.
  *
  * Inputs:
  * - 0: Image, 2D or 3D

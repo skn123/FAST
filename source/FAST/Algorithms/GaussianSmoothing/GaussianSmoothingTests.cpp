@@ -3,23 +3,25 @@
 #include "FAST/Algorithms/GaussianSmoothing/GaussianSmoothing.hpp"
 #include "FAST/DeviceManager.hpp"
 #include <FAST/Visualization/Shortcuts.hpp>
+#include <FAST/Importers/WholeSlideImageImporter.hpp>
+#include <FAST/Algorithms/ImagePyramidLevelExtractor/ImagePyramidLevelExtractor.hpp>
 
 using namespace fast;
 
 TEST_CASE("No input given to GaussianSmoothing throws exception", "[fast][GaussianSmoothing]") {
-    GaussianSmoothing::pointer filter = GaussianSmoothing::New();
+    auto filter = GaussianSmoothing::create();
     CHECK_THROWS(filter->update());
 }
 
 TEST_CASE("Negative or zero sigma and mask size input throws exception in GaussianSmoothing" , "[fast][GaussianSmoothing]") {
-    GaussianSmoothing::pointer filter = GaussianSmoothing::New();
+    auto filter = GaussianSmoothing::create();
 
     CHECK_THROWS(filter->setMaskSize(-4));
     CHECK_THROWS(filter->setStandardDeviation(-4));
 }
 
 TEST_CASE("Even input as mask size throws exception in GaussianSmoothing", "[fast][GaussianSmoothing]") {
-    GaussianSmoothing::pointer filter = GaussianSmoothing::New();
+    auto filter = GaussianSmoothing::create();
 
     CHECK_THROWS(filter->setMaskSize(2));
 }
@@ -28,6 +30,29 @@ TEST_CASE("Anistropic 2D smoothing", "[fast][GaussianSmoothing][visual]") {
 
     auto importer = ImageFileImporter::create(Config::getTestDataPath() + "US/Heart/ApicalFourChamber/US-2D_10.mhd");
     auto filter = GaussianSmoothing::create({5.0f, 0.0f})->connect(importer);
+
+    Display2DArgs args;
+    args.image = filter;
+    args.timeout = 500;
+    display2D(args);
+}
+
+TEST_CASE("Anisotropic 3D smoothing", "[fast][GaussianSmoothing][visual]") {
+
+    auto importer = ImageFileImporter::create(Config::getTestDataPath() + "US/Ball/US-3Dt_0.mhd");
+    auto filter = GaussianSmoothing::create({0.0f, 5.0f, 0.0f})->connect(importer);
+
+    Display3DArgs args;
+    args.image = filter;
+    args.timeout = 1000;
+    display3D(args);
+}
+
+TEST_CASE("Multi-channel (RGB) 2D smoothing", "[fast][GaussianSmoothing][visual]") {
+
+    auto importer = WholeSlideImageImporter::create(Config::getTestDataPath() + "WSI/CMU-1.svs");
+    auto level = ImagePyramidLevelExtractor::create(-1)->connect(importer);
+    auto filter = GaussianSmoothing::create(5.0f)->connect(level);
 
     Display2DArgs args;
     args.image = filter;

@@ -311,6 +311,7 @@ void GaussianSmoothing::execute() {
                 mKernel.setArg(3, maskSize.x());
                 mKernel.setArg(4, maskSize.y());
                 mKernel.setArg(5, maskSize.z());
+                mKernel.setArg(6, input->getNrOfChannels());
                 OpenCLBufferAccess::pointer outputAccess = output->getOpenCLBufferAccess(ACCESS_READ_WRITE, clDevice);
                 mKernel.setArg(0, *inputAccess->get3DImage());
                 mKernel.setArg(2, *outputAccess->get());
