@@ -391,8 +391,9 @@ int ProcessObject::getNrOfInputPorts() const {
     return mInputPorts.size();
 }
 
-void ProcessObject::run(int64_t executeToken) {
+std::shared_ptr<ProcessObject> ProcessObject::run(int64_t executeToken) {
     update(executeToken);
+    return std::static_pointer_cast<ProcessObject>(mPtr.lock());
 }
 
 std::shared_ptr<ProcessObject> ProcessObject::connect(std::shared_ptr<ProcessObject> parentProcessObject, uint outputPortID) {
@@ -491,6 +492,16 @@ OpenCLBuffer ProcessObject::createBuffer(std::size_t size, void* data, KernelMem
     if(!device)
         device = getMainOpenCLDevice();
     return OpenCLBuffer(size, device, kernelAccess, hostAccess, data);
+}
+
+DataObject::pointer ProcessObject::getOutput(uint portID) {
+    validateOutputPortExists(portID);
+
+    auto data = mOutputPorts[portID].currentData;
+    if(!data)
+        throw Exception("Error in getOutputData: Process object has not produced any output data. Did you forget to call run()?");
+
+    return data;
 }
 
 } // namespace fast

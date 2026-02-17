@@ -64,7 +64,7 @@ namespace fast {
 /**
  * @brief Abstract base class for all process objects
  */
-class FAST_EXPORT  ProcessObject : public AttributeObject {
+class FAST_EXPORT ProcessObject : public AttributeObject {
     public:
         /**
          * @brief Update/Run the pipeline up to this process object.
@@ -78,6 +78,9 @@ class FAST_EXPORT  ProcessObject : public AttributeObject {
          *
          * @param executeToken Negative value means that the execute token is disabled.
          */
+#ifndef SWIG
+        [[deprecated("Use ProcessObject::run() instead of ProcessObject::update().")]]
+#endif
         void update(int executeToken = -1);
         typedef std::shared_ptr<ProcessObject> pointer;
 
@@ -109,6 +112,20 @@ class FAST_EXPORT  ProcessObject : public AttributeObject {
          */
         template <class DataType>
         std::shared_ptr<DataType> getOutputData(uint portID = 0);
+        /**
+          * Get current output data for a given port
+          * @param portID
+          * @return
+          */
+        DataObject::pointer getOutput(uint portID = 0);
+        /**
+         * Get current output data for a given port
+         * @tparam DataType data type to convert to
+         * @param portID
+         * @return
+         */
+        template <class DataType>
+        std::shared_ptr<DataType> getOutput(uint portID = 0);
         int getNrOfInputConnections() const;
         int getNrOfOutputPorts() const;
         int getNrOfInputPorts() const;
@@ -138,7 +155,7 @@ class FAST_EXPORT  ProcessObject : public AttributeObject {
         std::shared_ptr<DataObject> runAndGetOutputData(uint portID = 0, int64_t executeToken = -1);
 
         //// NEW V4 PO SEMANTICS
-        void run(int64_t executeToken = -1);
+        std::shared_ptr<ProcessObject> run(int64_t executeToken = -1);
         std::shared_ptr<ProcessObject> connect(std::shared_ptr<ProcessObject> parentProcessObject, uint outputPortID = 0);
         std::shared_ptr<ProcessObject> connect(uint inputPortID, std::shared_ptr<ProcessObject> parentProcessObject, uint outputPortID = 0);
         std::shared_ptr<ProcessObject> connect(std::shared_ptr<DataObject> inputDataObject);
@@ -352,7 +369,12 @@ std::shared_ptr<DataType> ProcessObject::getInputData(uint portID, bool readFram
 
 template<class DataType>
 std::shared_ptr<DataType> ProcessObject::getOutputData(uint portID) {
-    auto data = getOutputData(portID);
+    return getOutput<DataType>(portID);
+}
+
+template<class DataType>
+std::shared_ptr<DataType> ProcessObject::getOutput(uint portID) {
+    auto data = getOutput(portID);
     auto convertedData = std::dynamic_pointer_cast<DataType>(data);
     // Check if the conversion went ok
     if(!convertedData)

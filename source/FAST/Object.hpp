@@ -52,7 +52,10 @@
     FAST_OBJECT(className)             \
     private:                           \
         std::shared_ptr<className> getSharedPtr() { return std::dynamic_pointer_cast<className>(mPtr.lock()); }                                 \
-    public:                                   \
+    public:                            \
+        std::shared_ptr<className> run(int64_t executeToken = -1) {                                                                             \
+            return std::dynamic_pointer_cast<className>(ProcessObject::run(executeToken));                               \
+        }                               \
         std::shared_ptr<className> connect(uint inputPortID, std::shared_ptr<ProcessObject> parentProcessObject, uint outputPortID = 0) { \
             return std::dynamic_pointer_cast<className>(ProcessObject::connect(inputPortID, parentProcessObject, outputPortID));                                                        \
         };                                                        \
