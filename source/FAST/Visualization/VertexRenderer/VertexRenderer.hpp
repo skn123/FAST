@@ -9,6 +9,9 @@ namespace fast {
 /**
  * @brief Renders vertices as a circular points
  *
+ * Inputs:
+ * - 0: Mesh
+ *
  * @ingroup renderers
  * @sa Mesh
  */

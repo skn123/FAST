@@ -26,7 +26,7 @@ class ImagePyramid;
 struct Display2DArgs {
     std::variant<std::monostate, std::shared_ptr<Image>, std::shared_ptr<ProcessObject>> image; /**< Source of Image data to display (optional) **/
     std::variant<std::monostate, std::shared_ptr<ImagePyramid>, std::shared_ptr<ProcessObject>> imagePyramid;  /**< Source of ImagePyramid data to display (optional) **/
-    std::variant<std::monostate, std::shared_ptr<Image>, std::shared_ptr<ProcessObject>> segmentation; /**< Source of segmentation Image data to display (optional) **/
+    std::variant<std::monostate, std::shared_ptr<Image>, std::shared_ptr<ImagePyramid>, std::shared_ptr<ProcessObject>> segmentation; /**< Source of segmentation Image data to display (optional) **/
     std::variant<std::monostate, std::shared_ptr<Mesh>, std::shared_ptr<ProcessObject>> vertices; /**< Source of vertices Mesh data to display (optional) **/
     std::variant<std::monostate, std::shared_ptr<Mesh>, std::shared_ptr<ProcessObject>> lines; /**< Source of lines Mesh data to display (optional) **/
     std::optional<float> intensityLevel; /**< Intensity level used by ImageRenderer **/
@@ -51,6 +51,8 @@ struct Display2DArgs {
     bool returnWindow = false; /**< If set to true, the window is returned by the function, else display2D will call run on the window and return nothing. **/
     std::variant<std::monostate, std::vector<QWidget*>, std::map<WidgetPosition, std::vector<QWidget*>>> widgets;  /**< Widgets to attach to window. **/
     std::string title = ""; /**< Title to set to window, if renderToImage is false. **/
+    bool fullscreen = false; /**< Enable fullscreen window, if renderToImage is false. **/
+    bool maximize = false; /**< Maximize window, if renderToImage is false. **/
 };
 
 /**
@@ -101,6 +103,8 @@ struct Display3DArgs {
     bool returnWindow = false; /**< If set to true, the window is returned by the function, else display2D will call run on the window and return nothing. **/
     std::variant<std::monostate, std::vector<QWidget*>, std::map<WidgetPosition, std::vector<QWidget*>>> widgets; /**< Widgets to attach to window. **/
     std::string title = ""; /**< Title to set to window, if renderToImage is false. **/
+    bool fullscreen = false; /**< Enable fullscreen window, if renderToImage is false. **/
+    bool maximize = false; /**< Maximize window, if renderToImage is false. **/
 };
 
 /**

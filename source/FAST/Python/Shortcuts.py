@@ -9,7 +9,7 @@ def _set_default_shorcut_value(x, default):
 
 def display2D(
             image:Union[Image, ProcessObject]=None,
-            segmentation:Union[Image, ProcessObject]=None,
+            segmentation:Union[Image, ImagePyramid, ProcessObject]=None,
             imagePyramid:Union[ImagePyramid, ProcessObject]=None,
             lines:Union[Mesh, ProcessObject]=None,
             vertices: Union[Mesh, ProcessObject]=None,
@@ -35,6 +35,8 @@ def display2D(
             returnWindow:bool=False,
             widgets:Union[List, Dict[int, List]]=None,
             title:str='',
+            fullscreen:bool=False,
+            maximize:bool=False,
         ):
     """
     Shortcut for displaying image, segmentation and meshes using SimpleWindow2D
@@ -66,12 +68,13 @@ def display2D(
     :param returnWindow: Whether to return the window object, or to run it
     :param widgets: Widgets to connect to the window
     :param title: Title to set to window, if renderToImage is false.
+    :param fullscreen: Enable fullscreen window, if renderToImage is false.
+    :param maximize: Maximize window, if renderToImage is false.
     :return: window if returnWindow is set to True, else None
     """
 
     if image is None and imagePyramid is None and segmentation is None and lines is None and vertices is None:
         raise ValueError('No data was given to display2D')
-
 
     width = _set_default_shorcut_value(width, 0)
     height = _set_default_shorcut_value(height, 0)
@@ -135,6 +138,8 @@ def display2D(
             height=height
         ).connect(renderers)
         if title: window.setTitle(title)
+        if fullscreen: window.enableFullscreen()
+        if maximize: window.enableMaximized()
         if widgets:
             if isinstance(widgets, dict):
                 for pos, widget_list in widgets.items():
@@ -173,6 +178,8 @@ def display3D(
         returnWindow:bool=False,
         widgets:Union[List, Dict[int, List]]=None,
         title:str='',
+        fullscreen:bool=False,
+        maximize:bool=False,
 ):
     """
     Shortcut for displaying image, segmentation and meshes using SimpleWindow2D
@@ -190,6 +197,8 @@ def display3D(
     :param returnWindow: Whether to return the window object, or to run it
     :param widgets: Widgets to connect to the window
     :param title: Title to set to window, if renderToImage is false.
+    :param fullscreen: Enable fullscreen window, if renderToImage is false.
+    :param maximize: Maximize window, if renderToImage is false.
     :return: window if returnWindow is set to True, else None
     """
 
@@ -225,6 +234,8 @@ def display3D(
             window.connect(renderer)
 
     if title: window.setTitle(title)
+    if fullscreen: window.enableFullscreen()
+    if maximize: window.enableMaximized()
     if timeout is not None: window.setTimeout(timeout)
     if widgets:
         if isinstance(widgets, dict):

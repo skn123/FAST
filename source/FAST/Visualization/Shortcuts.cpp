@@ -69,6 +69,8 @@ std::variant<std::monostate, Window::pointer, Image::pointer> display2D(Display2
         );
         if(std::holds_alternative<Image::pointer>(args.segmentation)) {
             renderer->connect(std::get<Image::pointer>(args.segmentation));
+        } else if(std::holds_alternative<ImagePyramid::pointer>(args.segmentation)) {
+            renderer->connect(std::get<ImagePyramid::pointer>(args.segmentation));
         } else {
             renderer->connect(std::get<ProcessObject::pointer>(args.segmentation));
         }
@@ -108,6 +110,10 @@ std::variant<std::monostate, Window::pointer, Image::pointer> display2D(Display2
     } else {
         auto window = SimpleWindow2D::create(args.bgcolor, args.width, args.height)
                 ->connect(renderers);
+        if(args.fullscreen)
+            window->enableFullscreen();
+        if(args.maximize)
+            window->enableMaximized();
         if(!args.title.empty())
             window->setTitle(args.title);
         if(hasValue(args.widgets)) {
@@ -140,6 +146,10 @@ std::variant<std::monostate, Window::pointer> display3D(Display3DArgs args) {
     std::shared_ptr<Window> window;
     if(args.displayType == DisplayType::SLICER) {
         auto slicerWindow = SlicerWindow::create(args.bgcolor, args.width, args.height);
+        if(args.fullscreen)
+            slicerWindow->enableFullscreen();
+        if(args.maximize)
+            slicerWindow->enableMaximized();
         if(!args.title.empty())
             slicerWindow->setTitle(args.title);
         if(hasValue(args.image)) {
@@ -163,6 +173,10 @@ std::variant<std::monostate, Window::pointer> display3D(Display3DArgs args) {
         if(!hasValue(args.image))
             throw Exception("display3D must have image for volume rendering");
         auto simpleWindow = SimpleWindow3D::create(args.bgcolor, args.width, args.height);
+        if(args.fullscreen)
+            simpleWindow->enableFullscreen();
+        if(args.maximize)
+            simpleWindow->enableMaximized();
         if(!args.title.empty())
             simpleWindow->setTitle(args.title);
         if(args.displayType == DisplayType::ALPHA_BLENDING) {
