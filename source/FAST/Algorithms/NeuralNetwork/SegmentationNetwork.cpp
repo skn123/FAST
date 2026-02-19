@@ -20,8 +20,8 @@ void SegmentationNetwork::loadAttributes() {
 SegmentationNetwork::SegmentationNetwork(std::string modelFilename, float scaleFactor, bool heatmapOutput,
                                          float threshold, bool hasBackgroundClass, float meanIntensity,
                                          float stanardDeviationIntensity, bool resizeBackToOrigianlSize, std::vector<NeuralNetworkNode> inputNodes,
-                                         std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine,
-                                         std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, scaleFactor, meanIntensity, stanardDeviationIntensity, inputNodes, outputNodes,inferenceEngine,customPlugins) {
+                                         std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine, int maxBatchSize,
+                                         std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, scaleFactor, meanIntensity, stanardDeviationIntensity, inputNodes, outputNodes,inferenceEngine, maxBatchSize, customPlugins) {
     createInputPort(0, "Image");
     createOutputPort(0, "Segmentation");
     m_tensorToSegmentation = TensorToSegmentation::New();
@@ -37,20 +37,20 @@ SegmentationNetwork::SegmentationNetwork(std::string modelFilename, float scaleF
 }
 
 SegmentationNetwork::SegmentationNetwork(std::string modelFilename, std::vector<NeuralNetworkNode> inputNodes,
-                                         std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine,
-                                         std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, inputNodes, outputNodes, inferenceEngine, customPlugins) {
-    createInputPort<Image>(0);
-    createOutputPort<Image>(0);
+                                         std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine, int maxBatchSize,
+                                         std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, inputNodes, outputNodes, inferenceEngine, maxBatchSize, customPlugins) {
+    createInputPort(0);
+    createOutputPort(0);
 
-    m_tensorToSegmentation = TensorToSegmentation::New();
+    m_tensorToSegmentation = TensorToSegmentation::create();
     mHeatmapOutput = false;
 }
 
 SegmentationNetwork::SegmentationNetwork() {
-    createInputPort<Image>(0);
-    createOutputPort<Image>(0);
+    createInputPort(0);
+    createOutputPort(0);
 
-    m_tensorToSegmentation = TensorToSegmentation::New();
+    m_tensorToSegmentation = TensorToSegmentation::create();
     mHeatmapOutput = false;
     createBooleanAttribute("heatmap-output", "Output heatmap", "Enable heatmap output instead of segmentation", false);
     createBooleanAttribute("resize-to-original-size", "Resize to original size", "Resize output segmentation to original input size", false);
@@ -60,12 +60,12 @@ SegmentationNetwork::SegmentationNetwork() {
 
 void SegmentationNetwork::setHeatmapOutput() {
     mHeatmapOutput = true;
-    createOutputPort<Tensor>(0);
+    createOutputPort(0);
 }
 
 void SegmentationNetwork::setSegmentationOutput() {
     mHeatmapOutput = false;
-    createOutputPort<Image>(0);
+    createOutputPort(0);
 }
 
 void SegmentationNetwork::setResizeBackToOriginalSize(bool resize) {
@@ -76,19 +76,38 @@ void SegmentationNetwork::execute() {
     runNeuralNetwork();
 
     auto data = m_processedOutputData[0];
+    auto batch = std::dynamic_pointer_cast<Batch>(data);
+    const bool outputIsBatch = batch != nullptr;
     if(mHeatmapOutput) {
-        addOutputData(0, data);
+        addOutputData(0, outputIsBatch ? batch : data);
     } else {
-        m_tensorToSegmentation->setInputData(data);
-        auto image = m_tensorToSegmentation->updateAndGetOutputData<Image>();
-        if(m_resizeBackToOriginalSize) {
-            auto resizer = ImageResizer::New();
-            resizer->setInputData(image);
-            resizer->setSize(mInputImages.begin()->second[0]->getSize().cast<int>());
-            resizer->setInterpolation(false);
-            image = resizer->updateAndGetOutputData<Image>();
+        std::vector<Tensor::pointer> outputTensors;
+        if(outputIsBatch) {
+            outputTensors = batch->get().getTensors();
+        } else {
+            outputTensors = {std::dynamic_pointer_cast<Tensor>(data)};
         }
-        addOutputData(0, image);
+        std::vector<Image::pointer> outputImages;
+
+        for(const auto& tensor : outputTensors) {
+            auto image = m_tensorToSegmentation
+                    ->connect(tensor)
+                    ->run()
+                    ->getOutput<Image>();
+            if(m_resizeBackToOriginalSize) {
+                auto originalSize = mInputImages.begin()->second[0]->getSize().cast<int>();
+                image = ImageResizer::create(originalSize.x(), originalSize.y(), originalSize.z(), false)
+                        ->connect(image)
+                        ->run()
+                        ->getOutput<Image>();
+            }
+            outputImages.push_back(image);
+        }
+        if(outputIsBatch) {
+            addOutputData(0, Batch::create(outputImages));
+        } else {
+            addOutputData(0, outputImages[0]);
+        }
     }
     mRuntimeManager->stopRegularTimer("output_processing");
 }

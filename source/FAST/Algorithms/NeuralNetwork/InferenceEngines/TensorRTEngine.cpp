@@ -92,10 +92,9 @@ void TensorRTEngine::run() {
 
     // Get batch size
     const int batchSize = mInputNodes.begin()->second.data->getShape()[0];
-    /*
     if(batchSize > m_maxBatchSize) {
-        reportWarning() << "Batch is larger than the max batch size" << reportEnd();
-    }*/
+        reportWarning() << "Batch size was larger than the max batch size given to TensorRT. Set max batch size correctly when creating your neural network. " << reportEnd();
+    }
 
     bool reshapeNeeded = false;
     if(m_dynamicInputShapes) {
@@ -204,8 +203,9 @@ void TensorRTEngine::load() {
 
     const auto filename = getFilename();
     std::size_t hash = std::hash<std::string>{}(filename + std::to_string(m_maxBatchSize)); // Hash the full filename any other parameters
-    std::string serializedBinaryFilename = join(Config::getKernelBinaryPath(), getFileName(filename) + "_" + std::to_string(hash) + ".bin");
-    std::string serializedCacheFilename = join(Config::getKernelBinaryPath(), getFileName(filename) + "_" + std::to_string(hash) + ".cache");
+    std::string folder = Config::getKernelBinaryPath();//join(Config::getKernelBinaryPath(), "NeuralNetworks");
+    std::string serializedBinaryFilename = join(folder, getFileName(filename) + "_" + std::to_string(hash) + ".bin");
+    std::string serializedCacheFilename = join(folder, getFileName(filename) + "_" + std::to_string(hash) + ".cache");
     bool loadSerializedFile = false;
     if(fileExists(serializedCacheFilename) && fileExists(serializedBinaryFilename)) {
         // Check if date is modified or not
@@ -390,7 +390,7 @@ void TensorRTEngine::load() {
         reportInfo() << "Finished building CUDA engine for TensorRT" << reportEnd();
 
         // Make sure serialization folder exists
-        createDirectories(Config::getKernelBinaryPath());
+        createDirectories(folder);
         // Serialize the model
         std::unique_ptr<nvinfer1::IHostMemory, decltype(Destroy())> serializedModel(m_engine->serialize(), Destroy());
         // Store model to disk
@@ -529,13 +529,12 @@ std::string TensorRTEngine::getName() const {
 }
 
 void TensorRTEngine::setMaxBatchSize(int maxBatchSize) {
-    if(maxBatchSize <= 0)
-        throw Exception("Max batch size must be > 0");
-    m_maxBatchSize = maxBatchSize;
-}
-
-int TensorRTEngine::getMaxBatchSize() const {
-    return m_maxBatchSize;
+    if(maxBatchSize <= 0) {
+        m_maxBatchSize = 1;
+        reportInfo() << "Maximum batch size given to TensorRT was unspecified, thus a max batch size of 1 is used." << reportEnd();
+    } else {
+        m_maxBatchSize = maxBatchSize;
+    }
 }
 
 }

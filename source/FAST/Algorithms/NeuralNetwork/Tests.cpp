@@ -515,3 +515,46 @@ TEST_CASE("VertexTensorToSegmentation", "[fast][VertexTensorToSegmentation]") {
     tensorToSeg->getRuntime()->print();
 }
  */
+
+TEST_CASE("Segmentation network with batch input", "[fast][SegmentationNetwork][Batch]") {
+    auto image1 = ImageFileImporter::create(Config::getTestDataPath() + "US/JugularVein/US-2D_0.mhd")->run()->getOutput<Image>();
+    auto image2 = ImageFileImporter::create(Config::getTestDataPath() + "US/JugularVein/US-2D_50.mhd")->run()->getOutput<Image>();
+    auto image3 = ImageFileImporter::create(Config::getTestDataPath() + "US/JugularVein/US-2D_100.mhd")->run()->getOutput<Image>();
+    auto image4 = ImageFileImporter::create(Config::getTestDataPath() + "US/JugularVein/US-2D_150.mhd")->run()->getOutput<Image>();
+
+    std::vector<Image::pointer> images = {image1, image2, image3, image4};
+    auto batch = Batch::create(images);
+
+    for(const auto& outputHeatmap : {false, true}) {
+        auto segmentation = SegmentationNetwork::create(
+                join(Config::getTestDataPath(), "NeuralNetworkModels/jugular_vein_segmentation.onnx"),
+                {}, {},
+                "",
+                4 // Set max batch size to 4, needed for TensorRT
+                )->connect(batch);
+        if(outputHeatmap) {
+            segmentation->setHeatmapOutput();
+        } else {
+            segmentation->setSegmentationOutput();
+        }
+        segmentation->setScaleFactor(1.0f/255.0f);
+
+        Batch::pointer outputBatch;
+        REQUIRE_NOTHROW(outputBatch = segmentation->run()->getOutput<Batch>());
+        REQUIRE(outputBatch->get().getSize() == 4);
+        if(outputHeatmap) {
+            auto heatmaps = outputBatch->get().getTensors();
+            for(int i = 0; i < 3; ++i) {
+                CHECK(heatmaps[i]->getShape() == heatmaps[i+1]->getShape());
+            }
+        } else {
+            auto segmentations = outputBatch->get().getImages();
+            for(int i = 0; i < 4; ++i) {
+                CHECK(segmentations[i]->calculateSumIntensity() != 0.0f);
+            }
+            for(int i = 0; i < 3; ++i) {
+                CHECK(segmentations[i]->calculateSumIntensity() != segmentations[i+1]->calculateSumIntensity());
+            }
+        }
+    }
+}

@@ -44,8 +44,8 @@ ImageToImageNetwork::ImageToImageNetwork(std::string modelFilename,
                                          Normalization normalization,
                                          float meanIntensity,
                                          float stanardDeviationIntensity, std::vector<NeuralNetworkNode> inputNodes,
-                                         std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine,
-                                         std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, scaleFactor, meanIntensity, stanardDeviationIntensity, inputNodes, outputNodes,inferenceEngine,customPlugins) {
+                                         std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine, int maxBatchSize,
+                                         std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, scaleFactor, meanIntensity, stanardDeviationIntensity, inputNodes, outputNodes,inferenceEngine, maxBatchSize, customPlugins) {
     init();
 
     setIterations(iterations);
@@ -59,8 +59,8 @@ ImageToImageNetwork::ImageToImageNetwork(std::string modelFilename,
 }
 
 ImageToImageNetwork::ImageToImageNetwork(std::string modelFilename, std::vector<NeuralNetworkNode> inputNodes,
-                                         std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine,
-                                         std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, inputNodes, outputNodes, inferenceEngine, customPlugins) {
+                                         std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine, int maxBatchSize,
+                                         std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, inputNodes, outputNodes, inferenceEngine, maxBatchSize, customPlugins) {
     init();
     m_tensorToImage = TensorToImage::New();
 }

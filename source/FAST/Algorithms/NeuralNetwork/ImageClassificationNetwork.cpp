@@ -16,7 +16,8 @@ ImageClassificationNetwork::ImageClassificationNetwork(std::string modelFilename
                                                        std::vector<NeuralNetworkNode> inputNodes,
                                                        std::vector<NeuralNetworkNode> outputNodes,
                                                        std::string inferenceEngine,
-                                                       std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename,scaleFactor,meanIntensity,stanardDeviationIntensity,inputNodes,outputNodes,inferenceEngine,customPlugins) {
+                                                       int maxBatchSize,
+                                                       std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename,scaleFactor,meanIntensity,stanardDeviationIntensity,inputNodes,outputNodes,inferenceEngine,maxBatchSize,customPlugins) {
     createOutputPort<ImageClassification>(0);
     setLabels(labels);
     setTemporalWindow(temporalWindow);
@@ -26,7 +27,8 @@ ImageClassificationNetwork::ImageClassificationNetwork(std::string modelFilename
                                                        std::vector<NeuralNetworkNode> inputNodes,
                                                        std::vector<NeuralNetworkNode> outputNodes,
                                                        std::string inferenceEngine,
-                                                       std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, inputNodes, outputNodes, inferenceEngine, customPlugins) {
+                                                       int maxBatchSize,
+                                                       std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, inputNodes, outputNodes, inferenceEngine, maxBatchSize, customPlugins) {
     createOutputPort<ImageClassification>(0);
 }
 

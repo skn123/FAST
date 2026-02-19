@@ -69,6 +69,7 @@ class FAST_EXPORT ImageClassificationNetwork : public NeuralNetwork {
          *      Not necessary unless you only want to use certain outputs or specify the output shape manually.
          * @param inferenceEngine Specify which inference engine to use (TensorFlow, TensorRT, OpenVINO).
          *      By default, FAST will select the best inference engine available on your system.
+         * @param maxBatchSize Specify the maximum batch size. Negative value means unspecified.
          * @param customPlugins Specify path to any custom plugins/operators to load
          * @return instance
          */
@@ -82,6 +83,7 @@ class FAST_EXPORT ImageClassificationNetwork : public NeuralNetwork {
                          std::vector<NeuralNetworkNode>, inputNodes, = std::vector<NeuralNetworkNode>(),
                          std::vector<NeuralNetworkNode>, outputNodes, = std::vector<NeuralNetworkNode>(),
                          std::string, inferenceEngine, = "",
+                         int, maxBatchSize, = -1,
                          std::vector<std::string>, customPlugins, = std::vector<std::string>()
          );
 #ifndef SWIG
@@ -96,6 +98,7 @@ class FAST_EXPORT ImageClassificationNetwork : public NeuralNetwork {
          *      Not necessary unless you only want to use certain outputs or specify the output shape manually.
          * @param inferenceEngine Specify which inference engine to use (TensorFlow, TensorRT, OpenVINO).
          *      By default, FAST will select the best inference engine available on your system.
+         * @param maxBatchSize Specify the maximum batch size. Negative value means unspecified.
          * @param customPlugins Specify path to any custom plugins/operators to load
          * @return instance
          */
@@ -104,6 +107,7 @@ class FAST_EXPORT ImageClassificationNetwork : public NeuralNetwork {
                          std::vector<NeuralNetworkNode>, inputNodes, = std::vector<NeuralNetworkNode>(),
                          std::vector<NeuralNetworkNode>, outputNodes, = std::vector<NeuralNetworkNode>(),
                          std::string, inferenceEngine, = "",
+                         int, maxBatchSize, = -1,
                          std::vector<std::string>, customPlugins, = std::vector<std::string>()
         );
 #endif

@@ -24,8 +24,7 @@ class INFERENCEENGINETENSORRT_EXPORT TensorRTEngine : public InferenceEngine {
             return ModelFormat::ONNX;
         };
         ~TensorRTEngine() override;
-        void setMaxBatchSize(int maxBathSize);
-        int getMaxBatchSize() const;
+        void setMaxBatchSize(int maxBathSize) override;
         TensorRTEngine();
     private:
         nvinfer1::ICudaEngine* m_engine = nullptr;

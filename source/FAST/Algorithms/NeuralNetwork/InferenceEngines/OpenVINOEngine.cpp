@@ -250,6 +250,15 @@ std::string OpenVINOEngine::getName() const {
     return "OpenVINO";
 }
 
+void OpenVINOEngine::setMaxBatchSize(int maxBatchSize) {
+    if(maxBatchSize <= 0) {
+        m_maxBatchSize = 1;
+        reportInfo() << "Maximum batch size given to OpenVINO was unspecified, thus a max batch size of 1 is used." << reportEnd();
+    } else {
+        m_maxBatchSize = maxBatchSize;
+    }
+}
+
 OpenVINOEngine::~OpenVINOEngine() {
     //if(m_inferState != nullptr)
     //    delete m_inferState;

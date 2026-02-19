@@ -41,8 +41,8 @@ BoundingBoxNetwork::BoundingBoxNetwork(std::string modelFilename, float scaleFac
                                        std::vector<std::vector<Vector2f>> anchors, BoundingBoxNetworkType type,
                                        float meanIntensity, float stanardDeviationIntensity,
                                        std::vector<NeuralNetworkNode> inputNodes,
-                                       std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine,
-                                       std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, scaleFactor, meanIntensity, stanardDeviationIntensity, inputNodes, outputNodes, inferenceEngine, customPlugins) {
+                                       std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine, int maxBatchSize,
+                                       std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, scaleFactor, meanIntensity, stanardDeviationIntensity, inputNodes, outputNodes, inferenceEngine, maxBatchSize, customPlugins) {
     createInputPort<Image>(0);
     createOutputPort<BoundingBoxSet>(0);
     m_tensorToBoundingBoxSet = TensorToBoundingBoxSet::New();

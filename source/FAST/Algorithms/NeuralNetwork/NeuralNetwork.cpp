@@ -73,7 +73,7 @@ void NeuralNetwork::setInputSize(std::string name, std::vector<int> size) {
 }
 
 NeuralNetwork::NeuralNetwork(std::string modelFilename, std::vector<NeuralNetworkNode> inputNodes,
-                             std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine,
+                             std::vector<NeuralNetworkNode> outputNodes, std::string inferenceEngine, int maxBatchSize,
                              std::vector<std::string> customPlugins) : NeuralNetwork() {
     mPreserveAspectRatio = false;
     createOpenCLProgram(Config::getKernelSourcePath() + "Algorithms/NeuralNetwork/NeuralNetwork.cl");
@@ -97,6 +97,7 @@ NeuralNetwork::NeuralNetwork(std::string modelFilename, std::vector<NeuralNetwor
         auto node = outputNodes[i];
         setOutputNode(node);
     }
+    m_engine->setMaxBatchSize(maxBatchSize);
     load(modelFilename, customPlugins);
     auto dimOrder = getStringAttribute("dimension-ordering");
     if(!dimOrder.empty()) {
@@ -115,7 +116,8 @@ NeuralNetwork::NeuralNetwork(std::string modelFilename, float scaleFactor, float
                              std::vector<NeuralNetworkNode> inputNodes,
                              std::vector<NeuralNetworkNode> outputNodes,
                              std::string inferenceEngine,
-                             std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, inputNodes, outputNodes, inferenceEngine, customPlugins) {
+                             int maxBatchSize,
+                             std::vector<std::string> customPlugins) : NeuralNetwork(modelFilename, inputNodes, outputNodes, inferenceEngine, maxBatchSize, customPlugins) {
     setScaleFactor(scaleFactor);
     setMeanAndStandardDeviation(meanIntensity, stanardDeviationIntensity);
 }

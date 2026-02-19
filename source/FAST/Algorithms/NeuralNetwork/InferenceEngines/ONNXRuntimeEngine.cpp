@@ -240,14 +240,4 @@ std::string ONNXRuntimeEngine::getName() const {
     return "ONNXRuntime";
 }
 
-void ONNXRuntimeEngine::setMaxBatchSize(int maxBatchSize) {
-    if(maxBatchSize <= 0)
-        throw Exception("Max batch size must be > 0");
-    m_maxBatchSize = maxBatchSize;
-}
-
-int ONNXRuntimeEngine::getMaxBatchSize() const {
-    return m_maxBatchSize;
-}
-
 }

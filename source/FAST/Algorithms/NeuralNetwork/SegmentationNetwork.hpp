@@ -13,7 +13,13 @@ class TensorToSegmentation;
  * by having 1 input image, and outputs 1 segmentation image. Internally it uses TensorToSegmentation.
  * If you need multi-input or multi-output support, use NeuralNetwork with TensorToSegmentation instead.
  *
- * @ingroup neural-network
+ * Inputs:
+ * - 0: Image or Batch of images
+ *
+ * Outputs:
+ * - 0: Tensor or Image, or Batch of tensor or images. Depending on input, and whether heatmapOutput is true or false.
+ *
+ * @ingroup neural-network segmentation
  */
 class FAST_EXPORT SegmentationNetwork : public NeuralNetwork {
     FAST_PROCESS_OBJECT(SegmentationNetwork)
@@ -35,6 +41,7 @@ class FAST_EXPORT SegmentationNetwork : public NeuralNetwork {
          *      Not necessary unless you only want to use certain outputs or specify the output shape manually.
          * @param inferenceEngine Specify which inference engine to use (TensorFlow, TensorRT, OpenVINO).
          *      By default, FAST will select the best inference engine available on your system.
+         * @param maxBatchSize Specify the maximum batch size. Negative value means unspecified.
          * @param customPlugins Specify path to any custom plugins/operators to load
          *
          * @return instance
@@ -51,6 +58,7 @@ class FAST_EXPORT SegmentationNetwork : public NeuralNetwork {
                          std::vector<NeuralNetworkNode>, inputNodes, = std::vector<NeuralNetworkNode>(),
                          std::vector<NeuralNetworkNode>, outputNodes, = std::vector<NeuralNetworkNode>(),
                          std::string, inferenceEngine, = "",
+                         int, maxBatchSize, = -1,
                          std::vector<std::string>, customPlugins, = std::vector<std::string>()
         );
 #ifndef SWIG
@@ -65,6 +73,7 @@ class FAST_EXPORT SegmentationNetwork : public NeuralNetwork {
         *      Not necessary unless you only want to use certain outputs or specify the output shape manually.
         * @param inferenceEngine Specify which inference engine to use (TensorFlow, TensorRT, OpenVINO).
         *      By default, FAST will select the best inference engine available on your system.
+        * @param maxBatchSize Specify the maximum batch size. Negative value means unspecified.
         * @param customPlugins Specify path to any custom plugins/operators to load
         * @return instance
         */
@@ -73,6 +82,7 @@ class FAST_EXPORT SegmentationNetwork : public NeuralNetwork {
                          std::vector<NeuralNetworkNode>, inputNodes, = std::vector<NeuralNetworkNode>(),
                          std::vector<NeuralNetworkNode>, outputNodes, = std::vector<NeuralNetworkNode>(),
                          std::string, inferenceEngine, = "",
+                         int, maxBatchSize, = -1,
                          std::vector<std::string>, customPlugins, = std::vector<std::string>()
         );
 #endif

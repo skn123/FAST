@@ -48,6 +48,8 @@ class INFERENCEENGINEOPENVINO_EXPORT OpenVINOEngine : public InferenceEngine {
          */
         void loadCustomPlugins(std::vector<std::string> filename) override;
 
+        void setMaxBatchSize(int size) override;
+
         ~OpenVINOEngine();
     private:
         std::shared_ptr<OpenVINOInfer> m_infer;

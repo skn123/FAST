@@ -34,8 +34,6 @@ public:
 		return ModelFormat::ONNX;
 	};
 	~ONNXRuntimeEngine() override;
-	void setMaxBatchSize(int maxBathSize);
-	int getMaxBatchSize() const;
 	ONNXRuntimeEngine();
 	/**
 	 * Get a list of devices available for this inference engine.
