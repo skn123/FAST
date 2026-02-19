@@ -361,6 +361,10 @@ void _freePointer(std::size_t pointer, fast::DataType type) {
     className = val.getNameOfClass()
     val = eval(className + '.fromDataObject')(val)
 %}
+%pythonappend fast::ProcessObject::getOutput(uint) %{
+    className = val.getNameOfClass()
+    val = eval(className + '.fromDataObject')(val)
+%}
 %pythonappend fast::DataChannel::getNextFrame() %{
     className = val.getNameOfClass()
     val = eval(className + '.fromDataObject')(val)
