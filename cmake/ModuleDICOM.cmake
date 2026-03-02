@@ -24,9 +24,9 @@ if(FAST_MODULE_DICOM)
 	endif()
     else()
         fast_download_dependency(dcmtk
-                3.6.7
-                e681ed35c487f24de9fe2845b261bda8d0024a95a714f311f128c78ee164dd4b
-                libdcmimage.so libdcmjpeg.so libdcmdata.so libdcmimgle.so libofstd.so liboflog.so
+                3.7.0
+                466bc1f89a50fed3dcdf939e4b8699001651316c892ee16878bb214f4cae02c6
+                libdcmimage.so libdcmjpeg.so
         )
     endif()
 endif()
