@@ -649,10 +649,55 @@ static float* _intToFloatPointer(std::size_t intPointer) {
 
 %extend fast::ProcessObject {
     %pythoncode %{
-       def getDataStream(self):
-           return DataStream(self)
-    %}
+        def getDataStream(self):
+            return DataStream(self)
 
+        def __call__(self, *args: Tuple[Union[DataObject, 'ProcessObject', Tuple[Union[DataObject, 'ProcessObject', int], ...]], ...]) -> Union[DataObject, List[DataObject]]:
+            """
+            Connect input data to this process object, run, and return all output data.
+            Input data must be a list of data or process objects. Input and output ports can be provided using a tuple.
+            For example
+            PO = SomeProcessObject()
+            output = PO(inputData1, inputPO2) # Only provide data sources, input ports are assumed to be 0, 1, ...
+            output = PO((inputPO, 1), (inputPO, 0)) # Specify output ports to connect
+            output = PO((1, inputPO, 1), (0, inputPO, 0)) # Specify both output ports and input ports
+            output = PO((1, inputPO), (0, inputPO)) # Specify input ports
+            """
+            for index, arg in enumerate(args):
+                if isinstance(arg, tuple):
+                    if len(arg) == 2:
+                        if isinstance(arg[0], int):
+                            inputPort = arg[0]
+                            source = arg[1]
+                            outputPort = 0
+                        else:
+                            inputPort = 0
+                            source = arg[0]
+                            outputPort = arg[1]
+                    elif len(arg) == 3:
+                        inputPort, source, outputPort = arg
+                    else:
+                        raise ValueError('Input data tuple given to __call__() must have 2 or 3 items.')
+                else:
+                    inputPort = index
+                    outputPort = 0
+                    source = arg
+                # Type check
+                if isinstance(source, ProcessObject):
+                    self.connect(inputPort, source, outputPort)
+                elif isinstance(source, DataObject):
+                    self.connect(inputPort, source)
+                else:
+                    raise ValueError('Data source given to __call__() must be a ProcessObject or a DataObject')
+            self.run()
+            outputData = []
+            for i in range(self.getNrOfOutputPorts()):
+                outputData.append(self.getOutput(i))
+            if len(outputData) == 1:
+                return outputData[0]
+            else:
+                return outputData
+    %}
 }
 
 /*
