@@ -90,6 +90,8 @@ OpenCLPlatformVendor OpenCLDevice::getPlatformVendor() {
         retval = PLATFORM_VENDOR_NVIDIA;
     } else if(platformVendor.find("Portable Computing Language") != std::string::npos) {
         retval = PLATFORM_VENDOR_POCL;
+    } else if(platformVendor.find("Mesa") != std::string::npos) {
+        retval = PLATFORM_VENDOR_MESA;
 	} else {
         retval = PLATFORM_VENDOR_UNKNOWN;
 	}

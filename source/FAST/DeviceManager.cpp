@@ -435,6 +435,8 @@ DevicePlatform DeviceManager::getDevicePlatform(std::string platformVendor) {
         retval = DEVICE_PLATFORM_NVIDIA;
     } else if(platformVendor.find("Portable Computing Language") != std::string::npos) {
         retval = DEVICE_PLATFORM_POCL;
+    } else if(platformVendor.find("Mesa") != std::string::npos) {
+        retval = DEVICE_PLATFORM_MESA;
 	} else {
         retval = DEVICE_PLATFORM_UNKNOWN;
 	}
@@ -458,6 +460,9 @@ std::string DeviceManager::getDevicePlatform(DevicePlatform devicePlatform) {
         break;
     case DEVICE_PLATFORM_POCL:
         retval = "pocl";
+        break;
+    case DEVICE_PLATFORM_MESA:
+        retval = "mesa";
         break;
     case DEVICE_PLATFORM_ANY:
         break;
