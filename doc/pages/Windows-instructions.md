@@ -19,7 +19,7 @@ Install requirements
    - OpenCL: To install OpenCL on Windows, download an implementation depending on the CPU/GPU you have and want to use:
       - **NVIDIA** - Install [CUDA](https://developer.nvidia.com/cuda-downloads)
       - **Intel** - Install the [Intel OpenCL SDK](https://software.intel.com/content/www/us/en/develop/tools/opencl-sdk/choose-download.html)
-      - If none of the above fits, you might want to check out the open source OpenCL implementation [Portable Computing Lanauge (PCOL)](http://portablecl.org).
+      - If none of the above fits, you might want to check out the open source OpenCL implementation [Portable Computing Language (PoCL)](http://portablecl.org).
 
 3. FAST will download all other dependencies (Qt5, eigen, zlib, DCMTK, OpenVINO, tensorflow, +++) automatically. Note that some [optional requirements](@ref requirements) are needed for video streaming and GPU neural network inference, this can be installed later.
 

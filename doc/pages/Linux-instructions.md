@@ -22,7 +22,7 @@ sudo apt install pkgconf libusb-1.0-0-dev # Needed for realsense
           - **NVIDIA** - Install [CUDA](https://developer.nvidia.com/cuda-downloads)
           - **Intel** - Install the [OpenCL NEO driver](https://github.com/intel/compute-runtime/releases)
           - **AMD** - Install the [ROCm stack](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
-          - If none of the above fits, you might want to check out the open source OpenCL implementation [Portable Computing Lanauge (PCOL)](http://portablecl.org), although reduced performance is likely.
+          - If none of the above fits, you might want to check out the open source OpenCL implementation [Portable Computing Language (PoCL)](http://portablecl.org), although reduced performance is likely.
 
 3. FAST will download all other dependencies (Qt5, eigen, zlib, DCMTK, OpenVINO, tensorflow, +++) automatically. Note that some [optional requirements](@ref requirements) are needed for video streaming and GPU neural network inference, this can be installed later.
 

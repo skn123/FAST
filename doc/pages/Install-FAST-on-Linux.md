@@ -11,7 +11,7 @@ Requirements
     - **NVIDIA** - Install [CUDA](https://developer.nvidia.com/cuda-downloads)  
     - **Intel** - Install the [OpenCL NEO driver](https://github.com/intel/compute-runtime/releases)  
     - **AMD** - Install the [ROCm stack](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
-    - If none of the above fits, you might want to check out the open source OpenCL implementation [Portable Computing Lanauge (PCOL)](http://portablecl.org), although reduced performance is likely.
+    - If none of the above fits, you might want to check out the open source OpenCL implementation [Portable Computing Language (PoCL)](http://portablecl.org), although reduced performance is likely.
       - `sudo apt install libpocl2`
 
 Some [optional requirements](@ref requirements) are needed for video streaming and GPU neural network inference, these can be installed later.
