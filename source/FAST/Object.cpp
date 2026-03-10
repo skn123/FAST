@@ -71,7 +71,8 @@ Object::Object() {
     static std::once_flag flag;
     std::call_once(flag, []() {
         // Print the splash
-        // TODO Add config option to disable splash
+        auto disableSplashFlag = std::getenv("FAST_DISABLE_SPLASH");
+        if(disableSplashFlag == nullptr) {
 #ifdef WIN32
         CONSOLE_SCREEN_BUFFER_INFO Info;
         HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -91,6 +92,7 @@ Object::Object() {
 #else
         std::cout << "\033[0m" << std::flush; // Reset
 #endif
+        }
     });
     mRuntimeManager = RuntimeMeasurementsManager::New();
 }

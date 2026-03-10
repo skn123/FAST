@@ -67,7 +67,10 @@ throw Exception("Not able to get sharegroup");
 }
 
 DeviceManager* DeviceManager::getInstance() {
-    if(mInstance == NULL) {
+    if(mInstance == nullptr) {
+        auto debugFlag = std::getenv("FAST_DEBUG");
+        if(debugFlag != nullptr)
+            Reporter::setGlobalReportMethod(Reporter::COUT);
 #ifdef FAST_MODULE_VISUALIZATION
         Window::initializeQtApp();
 #endif
@@ -200,6 +203,25 @@ ExecutionDevice::pointer DeviceManager::getDefaultDevice() {
 
 DeviceManager::DeviceManager() {
     cl::Platform::get(&platforms);
+
+    auto platformEnvVar = std::getenv("FAST_OPENCL_PLATFORM");
+    if(platformEnvVar != nullptr) {
+        auto platform = stringToUpper(platformEnvVar);
+        std::map<std::string, DevicePlatform> platformMap = {
+            {"AMD", DEVICE_PLATFORM_AMD},
+            {"NVIDIA", DEVICE_PLATFORM_NVIDIA},
+            {"INTEL", DEVICE_PLATFORM_INTEL},
+            {"APPLE", DEVICE_PLATFORM_APPLE},
+            {"POCL", DEVICE_PLATFORM_POCL},
+            {"MESA", DEVICE_PLATFORM_MESA}
+        };
+        if(platformMap.count(platform) > 0) {
+            reportInfo() << "Selecting OpenCL platform from provided environment variable FAST_OPENCL_PLATFORM." << reportEnd();
+            m_devicePlatform = platformMap[platform];
+        } else {
+            throw Exception("OpenCL platform environment variable specified to an unsupported value: " + std::string(platformEnvVar));
+        }
+    }
 
     // Set one random device as default device
     // First try to get one OpenCL device with OpenGL interop:

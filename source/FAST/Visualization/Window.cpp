@@ -296,8 +296,18 @@ void Window::start() {
         mWidget->resize(mWidth, mHeight);
     }
 
+    auto autoClose = std::getenv("FAST_AUTO_CLOSE");
+    if(autoClose != nullptr) {
+        try {
+            auto timeout = std::stoi(std::string(autoClose));
+            reportInfo() << "FAST_AUTO_CLOSE environment variable set, using it to set window timeout/auto close in milliseconds: " << timeout << reportEnd();
+            mTimeout = timeout;
+        } catch(std::exception &e) {
+            reportWarning() << "FAST_AUTO_CLOSE environment variable set to invalid value, must be integer specifying milliseconds until closing: " << std::string(autoClose) << reportEnd();
+        }
+    }
     if(mTimeout > 0) {
-        QTimer* timer = new QTimer(mWidget);
+        auto timer = new QTimer(mWidget);
         timer->start(mTimeout);
         timer->setSingleShot(true);
         mWidget->connect(timer,SIGNAL(timeout()),mWidget,SLOT(close()));
