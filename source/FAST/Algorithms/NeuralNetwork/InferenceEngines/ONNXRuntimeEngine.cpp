@@ -115,6 +115,9 @@ void ONNXRuntimeEngine::load() {
 #else
         // LINUX (only CPU available)
         Ort::SessionOptions session_options;
+        if(m_deviceType != InferenceDeviceType::CPU) {
+            reportWarning() << "You requested to use the GPU with ONNXRuntime on Linux. However, only the CPU is available on Linux. Proceeding with CPU inference ..." << reportEnd();
+        }
         m_session = std::make_unique<Ort::Session>(*m_env.get(), filename.c_str(), session_options);
 #endif
     }
