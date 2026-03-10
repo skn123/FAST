@@ -54,6 +54,7 @@ void OpenVINOEngine::run() {
 void OpenVINOEngine::load() {
     if(!m_core)
         m_core = std::make_shared<ov::Core>();
+    m_core->set_property("GPU", ov::hint::inference_precision(ov::element::f16));
 
     try {
         for(auto device : m_core->get_available_devices()) {
