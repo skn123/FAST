@@ -670,8 +670,29 @@ void NeuralNetwork::setInferenceEngine(InferenceEngine::pointer engine) {
     m_engine = engine;
 }
 
-void NeuralNetwork::setInferenceEngine(std::string engineName) {
+void NeuralNetwork::setInferenceEngine(std::string id) {
+    auto parts = split(id, ":");
+    auto engineName = parts[0];
     m_engine = InferenceEngineManager::loadEngine(engineName);
+    if(parts.size() > 1) {
+        auto deviceType = stringToUpper(parts[1]);
+        std::map<std::string, InferenceDeviceType> deviceMap = {
+            {"ANY", InferenceDeviceType::ANY},
+            {"CPU", InferenceDeviceType::CPU},
+            {"GPU", InferenceDeviceType::GPU},
+            {"VPU", InferenceDeviceType::VPU},
+            {"OTHER", InferenceDeviceType::OTHER}
+        };
+        int deviceIndex = -1;
+        if(parts.size() > 2) {
+            deviceIndex = std::stoi(parts[2]);
+        }
+        if(deviceMap.count(deviceType) > 0) {
+            m_engine->setDevice(deviceIndex, deviceMap[deviceType]);
+        } else {
+            throw Exception("Unknown inference device type: " + parts[1]);
+        }
+    }
     reportInfo() << "Inference engine " << m_engine->getName() << " selected" << reportEnd();
 }
 
