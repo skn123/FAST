@@ -19,10 +19,21 @@ RemoveRegions::RemoveRegions(bool removeAllButLargest, int largestRegionsToKeep,
 void RemoveRegions::execute() {
     auto input = getInputData<Image>();
 
+    if(input->calculateSumIntensity() == 0) {
+        addOutputData(0, input);
+        return;
+    }
+
     auto regionProperties = RegionProperties::create(false, true)->connect(input);
     regionProperties->run();
 
     auto regions = regionProperties->getOutputData<RegionList>(0);
+
+    if(regions->get().empty()) {
+        addOutputData(0, input);
+        return;
+    }
+
     auto instanceSegmentation = regionProperties->getOutputData<Image>(1);
 
     std::vector<Region> regionList;
