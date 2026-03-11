@@ -13,9 +13,6 @@ namespace fast {
  *
  * Use this process object to render to an Image object instead of a window on screen.
  * Do this by connecting renderers to this object in order.
- * Only supports 2D mode for now.
- *
- * @todo 3D support
  *
  * @ingroup renderers
  */

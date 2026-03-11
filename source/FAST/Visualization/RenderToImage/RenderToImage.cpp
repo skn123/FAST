@@ -5,6 +5,7 @@
 #include <FAST/Data/Image.hpp>
 #include <QGLContext>
 #include <FAST/Algorithms/ImageFlipper/ImageFlipper.hpp>
+#include <FAST/Algorithms/ImageChannelConverter/ImageChannelConverter.hpp>
 
 namespace fast {
 
@@ -126,16 +127,18 @@ void RenderToImage::execute() {
     // Get framebuffer as image
     glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FBO);
     glReadBuffer(GL_COLOR_ATTACHMENT0);
-    auto data = make_uninitialized_unique<uchar[]>(m_width*m_height*3);
+    auto data = make_uninitialized_unique<uchar[]>(m_width*m_height*4);
     glReadPixels(0,
                  0,
                  m_width,
                  m_height,
-                 GL_RGB,
+                 GL_RGBA,
                  GL_UNSIGNED_BYTE,
                  data.get());
-    auto image = Image::create(m_width, m_height, TYPE_UINT8, 3, std::move(data));
-    image = ImageFlipper::create(false, true)->connect(image)->runAndGetOutputData<Image>();
+    auto image = Image::create(m_width, m_height, TYPE_UINT8, 4, std::move(data));
+    auto convert = ImageChannelConverter::create({3})->connect(image); // Remove alpha channel
+    image = ImageFlipper::create(false, true)->connect(convert)
+            ->runAndGetOutputData<Image>();
     if(!doContinue)
         image->setLastFrame("RenderToImage");
     //std::chrono::duration<float, std::milli> duration = std::chrono::high_resolution_clock::now() - start;

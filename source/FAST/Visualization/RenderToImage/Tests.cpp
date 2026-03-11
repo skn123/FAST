@@ -36,6 +36,22 @@ TEST_CASE("RenderToImage", "[fast][RenderToImage]") {
 
     ImageExporter::create("test.png")->connect(image)->run();
 }
+
+TEST_CASE("RenderToImage custom size", "[fast][RenderToImage]") {
+    auto importer = ImageFileImporter::create(Config::getTestDataPath() + "US/US-2D.jpg");
+
+    auto threshold = BinaryThresholding::create(50)->connect(importer);
+
+    auto renderer = ImageRenderer::create()->connect(importer);
+
+    auto segRenderer = SegmentationRenderer::create()->connect(threshold);
+
+    auto toImage = RenderToImage::create(Color::White(), 731, 401)->connect({renderer, segRenderer});
+    auto image = toImage->runAndGetOutputData<Image>();
+
+    ImageExporter::create("test_render_to_image_custom_size.png")->connect(image)->run();
+}
+
 TEST_CASE("RenderToImage on stream", "[fast][RenderToImage]") {
     auto importer = ImageFileStreamer::create(Config::getTestDataPath() + "US/Heart/ApicalFourChamber/US-2D_#.mhd");
 
