@@ -25,6 +25,8 @@ class FAST_EXPORT RemoveRegions : public ProcessObject {
         /**
          * @brief Create instance
          * @param removeAllButLargest Removes all regions except the largest. This is equivalent to setting largestRegionsToKeep = 1.
+         * @param removePerClass Whether to remove all but largest per class or for all classes,
+         *      when removeAllButLargest is set, or largestRegionsToKeep > 0
          * @param largestRegionsToKeep If set to N > 0, all regions except the N largest regions are removed.
          *      This parameter takes precedence over removeAllButLargest. If set, minArea and maxArea are still used if set.
          * @param minArea Minimum area (in millimeters if pixel spacing exist).
@@ -35,6 +37,7 @@ class FAST_EXPORT RemoveRegions : public ProcessObject {
          */
         FAST_CONSTRUCTOR(RemoveRegions,
                          bool, removeAllButLargest, = false,
+                         bool, removePerClass, = true,
                          int, largestRegionsToKeep, = 0,
                          float, minArea, = 0.0f,
                          float, maxArea, = std::numeric_limits<float>::max()
@@ -44,5 +47,6 @@ class FAST_EXPORT RemoveRegions : public ProcessObject {
         float m_minArea;
         float m_maxArea;
         int m_largestRegionsToKeep = 0;
+        bool m_removePerClass = true;
 };
 }

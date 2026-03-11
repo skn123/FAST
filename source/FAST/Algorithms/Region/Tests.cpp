@@ -26,7 +26,7 @@ TEST_CASE("Region properties", "[regionproperties][fast]") {
     }
 }
 
-TEST_CASE("Remove regions remove all but largest", "[RemoveRegions][fast]") {
+TEST_CASE("Remove regions remove all but largest per class", "[RemoveRegions][fast]") {
     auto streamer = ImageFileStreamer::create(Config::getTestDataPath() + "US/JugularVein/US-2D_#.mhd", true, false, 20);
 
     auto segmentation = SegmentationNetwork::create(
@@ -41,6 +41,22 @@ TEST_CASE("Remove regions remove all but largest", "[RemoveRegions][fast]") {
     display2D(args);
 }
 
+
+TEST_CASE("Remove regions remove all but largest for all classes", "[RemoveRegions][fast]") {
+    auto streamer = ImageFileStreamer::create(Config::getTestDataPath() + "US/JugularVein/US-2D_#.mhd", true, false, 20);
+
+    auto segmentation = SegmentationNetwork::create(
+            join(Config::getTestDataPath(), "NeuralNetworkModels/jugular_vein_segmentation.onnx"),
+            1.0f/255.0f)
+            ->connect(streamer);
+    auto removeRegions = RemoveRegions::create(true, false)->connect(segmentation);
+    Display2DArgs args;
+    args.image = streamer;
+    args.segmentation = removeRegions;
+    args.timeout = 1000;
+    display2D(args);
+}
+
 TEST_CASE("Remove regions with min area and max area", "[RemoveRegions][fast]") {
     auto streamer = ImageFileStreamer::create(Config::getTestDataPath() + "US/JugularVein/US-2D_#.mhd", true, false, 20);
 
@@ -48,7 +64,7 @@ TEST_CASE("Remove regions with min area and max area", "[RemoveRegions][fast]") 
             join(Config::getTestDataPath(), "NeuralNetworkModels/jugular_vein_segmentation.onnx"),
             1.0f/255.0f)
                     ->connect(streamer);
-    auto removeRegions = RemoveRegions::create(false, 0, 30, 80)->connect(segmentation);
+    auto removeRegions = RemoveRegions::create(false, true, 0, 30, 80)->connect(segmentation);
     Display2DArgs args;
     args.image = streamer;
     args.segmentation = removeRegions;
