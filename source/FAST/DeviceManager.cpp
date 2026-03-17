@@ -213,10 +213,11 @@ DeviceManager::DeviceManager() {
             {"INTEL", DEVICE_PLATFORM_INTEL},
             {"APPLE", DEVICE_PLATFORM_APPLE},
             {"POCL", DEVICE_PLATFORM_POCL},
-            {"MESA", DEVICE_PLATFORM_MESA}
+            {"MESA", DEVICE_PLATFORM_MESA},
+            {"OPENCLON12", DEVICE_PLATFORM_OPENCL_ON_12}
         };
         if(platformMap.count(platform) > 0) {
-            reportInfo() << "Selecting OpenCL platform from provided environment variable FAST_OPENCL_PLATFORM." << reportEnd();
+            reportInfo() << "Selecting OpenCL platform from provided environment variable FAST_OPENCL_PLATFORM=" + std::string(platformEnvVar) << reportEnd();
             m_devicePlatform = platformMap[platform];
         } else {
             throw Exception("OpenCL platform environment variable specified to an unsupported value: " + std::string(platformEnvVar));
@@ -459,13 +460,15 @@ DevicePlatform DeviceManager::getDevicePlatform(std::string platformVendor) {
         retval = DEVICE_PLATFORM_POCL;
     } else if(platformVendor.find("Mesa") != std::string::npos) {
         retval = DEVICE_PLATFORM_MESA;
-	} else {
+    } else if(platformVendor.find("OpenCLOn12") != std::string::npos) {
+        retval = DEVICE_PLATFORM_OPENCL_ON_12;
+    } else {
         retval = DEVICE_PLATFORM_UNKNOWN;
 	}
     return retval;
 }
 
-std::string DeviceManager::getDevicePlatform(DevicePlatform devicePlatform) {
+std::string DeviceManager::getDevicePlatformVendor(DevicePlatform devicePlatform) {
     std::string retval;
     switch (devicePlatform) {
     case DEVICE_PLATFORM_NVIDIA:
@@ -485,6 +488,9 @@ std::string DeviceManager::getDevicePlatform(DevicePlatform devicePlatform) {
         break;
     case DEVICE_PLATFORM_MESA:
         retval = "mesa";
+        break;
+    case DEVICE_PLATFORM_OPENCL_ON_12:
+        retval = "Microsoft";
         break;
     case DEVICE_PLATFORM_ANY:
         break;
@@ -603,7 +609,7 @@ std::vector<PlatformDevices> DeviceManager::getDevices(
     std::vector<PlatformDevices> platformDevices;
     for (int i = 0; i < validPlatforms.size(); i++) {
         std::vector<cl::Device> devices;
-    	reportInfo() << "Platform " << i << ": " <<  validPlatforms[i].getInfo<CL_PLATFORM_VENDOR>() << Reporter::end();
+    	reportInfo() << "Platform " << i << ": " <<  validPlatforms[i].getInfo<CL_PLATFORM_VENDOR>() << " - " << validPlatforms[i].getInfo<CL_PLATFORM_NAME>() << " - " <<  validPlatforms[i].getInfo<CL_PLATFORM_VERSION>() << Reporter::end();
 
         try {
             validPlatforms[i].getDevices(CL_DEVICE_TYPE_ALL, &devices);
@@ -675,8 +681,9 @@ std::vector<cl::Platform> DeviceManager::getPlatforms(
         retval = this->platforms;
     } else {
         // Find the correct platform and add to validPlatforms
-        std::string find = getDevicePlatform(platformCriteria);
+        std::string find = getDevicePlatformVendor(platformCriteria);
         for (int i = 0; i < platforms.size(); i++) {
+            // TODO match on platform name also
             if (platforms[i].getInfo<CL_PLATFORM_VENDOR>().find(find) != std::string::npos) {
                 retval.push_back(platforms[i]);
                 break;

@@ -103,6 +103,8 @@ class FAST_EXPORT  OpenCLDevice : public ExecutionDevice {
         bool isWritingTo3DTexturesSupported();
         RuntimeMeasurementsManager::pointer getRunTimeMeasurementManager();
         ~OpenCLDevice();
+        bool hasExtension(const std::string& name);
+        std::vector<std::string> getExtensions();
     private:
         OpenCLDevice();
         unsigned long * mGLContext;

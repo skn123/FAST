@@ -98,6 +98,13 @@ OpenCLPlatformVendor OpenCLDevice::getPlatformVendor() {
     return retval;
 }
 
+bool OpenCLDevice::hasExtension(const std::string& name) {
+    return OpenCLDevice::getDevice(0).getInfo<CL_DEVICE_EXTENSIONS>().find(name) != std::string::npos;
+}
+
+std::vector<std::string> OpenCLDevice::getExtensions() {
+    return split(OpenCLDevice::getDevice(0).getInfo<CL_DEVICE_EXTENSIONS>(), " ");
+}
 
 bool OpenCLDevice::isWritingTo3DTexturesSupported() {
 #ifdef WIN32
@@ -324,7 +331,7 @@ cl::CommandQueue OpenCLDevice::getQueue(unsigned int i) {
 
 
 cl::Device OpenCLDevice::getDevice(unsigned int i) {
-    return devices[i];
+    return devices.at(i);
 }
 
 cl::Device getDevice(cl::CommandQueue queue){

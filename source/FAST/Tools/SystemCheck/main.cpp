@@ -35,12 +35,12 @@ std::string doCheck() {
     }
     // Show information on every device in platform
     for(auto&& platform : platforms) {
-        message << "OpenCL Platform: " << platform.getInfo<CL_PLATFORM_NAME>() << "\n";
+        message << "OpenCL Platform: " << platform.getInfo<CL_PLATFORM_VENDOR>() << " " << platform.getInfo<CL_PLATFORM_NAME>() << " " <<  platform.getInfo<CL_PLATFORM_VERSION>() << "\n";
         message << "========================================\n";
         std::vector<cl::Device> devices;
         platform.getDevices(CL_DEVICE_TYPE_ALL, &devices);
         for(auto&& device : devices) {
-            message << device.getInfo<CL_DEVICE_VENDOR>() << ": " << device.getInfo<CL_DEVICE_TYPE>() << " - " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
+            message << "OpenCL Device: " << device.getInfo<CL_DEVICE_VENDOR>() << ": " << device.getInfo<CL_DEVICE_TYPE>() << " - " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
             message << "-----------------------------------------" << std::endl;
             message << "Writing to 3D textures: ";
             if(device.getInfo<CL_DEVICE_EXTENSIONS>().find("cl_khr_3d_image_writes") != std::string::npos) {
@@ -59,6 +59,8 @@ std::string doCheck() {
             } else {
                 message << "NOT SUPPORTED" << std::endl;
             }
+            message << "All device extensions: " << device.getInfo<CL_DEVICE_EXTENSIONS>() << std::endl;
+            message << std::endl;
         }
         message << std::endl;
     }
