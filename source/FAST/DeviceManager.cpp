@@ -263,7 +263,10 @@ bool DeviceManager::deviceSatisfiesCriteria(OpenCLDevice::pointer device,
 
 
 bool DeviceManager::deviceHasOpenGLInteropCapability(const cl::Device &device, const cl::Platform &platform) {
-#ifndef _WIN32
+#ifdef WIN32
+    reportInfo() << "Windows detected, disabling OpenGL interop due to random crashes when rendering image and segmentation at the same time." << reportEnd();
+    return false;
+#else
     if(platform.getInfo<CL_PLATFORM_VENDOR>().find("NVIDIA") != std::string::npos) {
         reportInfo() << "NVIDIA platform was detected on linux, disabling OpenGL interop due to error Xlib extension NV-GLX missing" << reportEnd();
         return false;
