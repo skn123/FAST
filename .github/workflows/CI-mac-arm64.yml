@@ -30,11 +30,11 @@ jobs:
         PYTHON_CONFIGURE_OPTS: "--enable-framework"
         CFLAGS: "-Wno-implicit-function-declaration"
         LDFLAGS: "-L/usr/local/opt/zlib/lib"
-        CPPFLAGS: "-I/usr/local/opt/zlib/include"
+        CPPFLAGS: "-I/usr/local/opt/zlib/include -include Foundation/Foundation.h"
         PKG_CONFIG_PATH: "/usr/local/opt/zlib/lib/pkgconfig"
       uses: "gabrielfalcao/pyenv-action@v18"
       with:
-          default: 3.10.16
+          default: 3.8.18
         
     - name: Install pip dependencies
       run: |
