@@ -28,8 +28,8 @@ jobs:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
         MACOSX_DEPLOYMENT_TARGET: 11.0
         PYTHON_CONFIGURE_OPTS: "--enable-framework"
-        CFLAGS: "-Wno-implicit-function-declaration -DNSIntegerMax=LONG_MAX"
-        LDFLAGS: "-L/usr/local/opt/zlib/lib"
+        CFLAGS: "-Wno-implicit-function-declaration"
+        LDFLAGS: "-L/usr/local/opt/zlib/lib -framework Foundation"
         CPPFLAGS: "-I/usr/local/opt/zlib/include"
         PKG_CONFIG_PATH: "/usr/local/opt/zlib/lib/pkgconfig"
       uses: "gabrielfalcao/pyenv-action@v18"
