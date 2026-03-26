@@ -275,7 +275,11 @@ bool DeviceManager::deviceHasOpenGLInteropCapability(const cl::Device &device, c
     // Get the cl_device_id of the device
     cl_device_id deviceID = device();
     // Get the platform of device
+#if CL_HPP_TARGET_OPENCL_VERSION >= 300
+    cl_platform_id platformId = device.getInfo<CL_DEVICE_PLATFORM>()();
+#else
     cl_platform_id platformId = device.getInfo<CL_DEVICE_PLATFORM>();
+#endif
     // Get all devices that are capable of OpenGL interop with this platform
     // Create properties for CL-GL context
 #ifdef FAST_MODULE_VISUALIZATION

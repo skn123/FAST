@@ -14,8 +14,7 @@ namespace fast {
  * Multi-channel images and 3D images are supported. In this case an SSIM value is calculated per channel, and the
  * final SSIM value is the average of all channel SSIM values.
  *
- * No image cropping is performed when calculating SSIM, out of bounds pixels are handled using mirrored repeat.
- * Note that other SSIM implementations may crop the image which can result in different SSIM values.
+ * No image cropping is performed when calculating SSIM, out of bounds pixels in the Gaussian window are handled using mirrored repeat.
  *
  * Inputs:
  * - 0: Image
@@ -36,8 +35,8 @@ class FAST_EXPORT StructuralSimilarityIndexMeasure : public ProcessObject {
          * @brief Create instance
          * @param maxValue Maximum possible intensity value
          * @param minValue Minimum possible intensity value
-         * @param windowSize Size of Gaussian window
-         * @param stdDev Standard deviation of Gaussian window
+         * @param windowSize Size of Gaussian window (in pixels) for each dimension
+         * @param stdDev Standard deviation of Gaussian window (in pixels) for each dimension
          * @param k1 Algorithm constant
          * @param k2 Algorithm constant
          * @return instance
@@ -55,7 +54,15 @@ class FAST_EXPORT StructuralSimilarityIndexMeasure : public ProcessObject {
          * @return
          */
         float get() const;
+        /**
+         * @brief Set standard deviation of Gaussian window
+         * @param stdDev Standard deviation for each dimension
+         */
         void setStandardDeviation(Vector3f stdDev);
+        /**
+         * @brief Set size (in pixels) of Gaussian window
+         * @param size Size for each dimension
+         */
         void setWindowSize(Vector3i size);
     private:
         StructuralSimilarityIndexMeasure() {};

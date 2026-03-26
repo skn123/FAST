@@ -34,6 +34,7 @@ void CommandLineParser::parse(const int argc, char ** const argv) {
 
             std::string value = argv[i + 1];
             trim(value);
+            value = stringToLower(value);
             if(value == "intel") {
                 DeviceManager::setDefaultPlatform(DEVICE_PLATFORM_INTEL);
             } else if(value == "nvidia") {
@@ -42,6 +43,10 @@ void CommandLineParser::parse(const int argc, char ** const argv) {
                 DeviceManager::setDefaultPlatform(DEVICE_PLATFORM_AMD);
             } else if(value == "pocl") {
                 DeviceManager::setDefaultPlatform(DEVICE_PLATFORM_POCL);
+            } else if(value == "mesa") {
+                DeviceManager::setDefaultPlatform(DEVICE_PLATFORM_MESA);
+            } else if(value == "openclon12") {
+                DeviceManager::setDefaultPlatform(DEVICE_PLATFORM_OPENCL_ON_12);
             }
             ++i;
             ++currentPosition;
