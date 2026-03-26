@@ -1590,6 +1590,22 @@ bool Image::isSegmentationType() const {
     return mType == TYPE_UINT8 && mChannels == 1;
 }
 
+bool Image::hasHostUpToDateData() const {
+    return mHostHasData && mHostDataIsUpToDate;
+}
+
+bool Image::hasOpenCLUpToDateImageData(OpenCLDevice::pointer device) const {
+    if(mCLImagesIsUpToDate.count(device) == 0)
+        return false;
+    return mCLImagesIsUpToDate.at(device);
+}
+
+bool Image::hasOpenCLUpToDateBufferData(OpenCLDevice::pointer device) const {
+    if(mCLBuffersIsUpToDate.count(device) == 0)
+        return false;
+    return mCLBuffersIsUpToDate.at(device);
+}
+
 } // end namespace fast;
 
 

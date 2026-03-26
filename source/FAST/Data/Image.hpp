@@ -289,6 +289,10 @@ class FAST_EXPORT Image : public SpatialDataObject {
 
         void free(ExecutionDevice::pointer device) override;
         void freeAll() override;
+
+        bool hasHostUpToDateData() const;
+        bool hasOpenCLUpToDateImageData(OpenCLDevice::pointer device) const;
+        bool hasOpenCLUpToDateBufferData(OpenCLDevice::pointer device) const;
     protected:
         Image();
         template <class T>
