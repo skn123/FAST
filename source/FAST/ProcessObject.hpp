@@ -62,6 +62,11 @@ namespace fast {
  */
 
 /**
+ * @defgroup image-comparison Image Comparison
+ * Objects for comparing and calculating the similarity of two images.
+ */
+
+/**
  * @brief Abstract base class for all process objects
  */
 class FAST_EXPORT ProcessObject : public AttributeObject {
