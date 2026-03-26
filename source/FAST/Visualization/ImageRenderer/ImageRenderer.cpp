@@ -36,7 +36,7 @@ ImageRenderer::~ImageRenderer() {
     deleteAllTextures();
 }
 
-void ImageRenderer::deleteAllTextures() {
+void ImageRendererBase::deleteAllTextures() {
     // GL cleanup
     for(auto vao : mVAO) {
         glDeleteVertexArrays(1, &vao.second);
@@ -138,7 +138,7 @@ void ImageRenderer::draw(Matrix4f perspectiveMatrix, Matrix4f viewingMatrix, flo
     }
 }
 
-void ImageRenderer::drawTextures(std::unordered_map<uint, std::shared_ptr<SpatialDataObject>> copy, Matrix4f &perspectiveMatrix, Matrix4f &viewingMatrix, bool mode2D, bool useInterpolation, bool useWindowLevel) {
+void ImageRendererBase::drawTextures(std::unordered_map<uint, std::shared_ptr<SpatialDataObject>> copy, Matrix4f &perspectiveMatrix, Matrix4f &viewingMatrix, bool mode2D, bool useInterpolation, bool useWindowLevel) {
     GLuint filterMethod = useInterpolation ? GL_LINEAR : GL_NEAREST;
     for(auto it : copy) {
         auto input = std::static_pointer_cast<Image>(it.second);

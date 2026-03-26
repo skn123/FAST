@@ -29,7 +29,7 @@ jobs:
         MACOSX_DEPLOYMENT_TARGET: 11.0
         PYTHON_CONFIGURE_OPTS: "--enable-framework"
         CFLAGS: "-Wno-implicit-function-declaration"
-        LDFLAGS: "-L/usr/local/opt/zlib/lib"
+        LDFLAGS: "-L/usr/local/opt/zlib/lib -framework Foundation"
         CPPFLAGS: "-I/usr/local/opt/zlib/include"
         PKG_CONFIG_PATH: "/usr/local/opt/zlib/lib/pkgconfig"
       uses: "gabrielfalcao/pyenv-action@v18"
@@ -39,7 +39,7 @@ jobs:
     - name: Install pip dependencies
       run: |
         pip3 install --upgrade pip
-        pip3 install twine wheel==0.37.1
+        pip3 install twine wheel
 
     - name: Debug
       run: |

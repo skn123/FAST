@@ -21,7 +21,7 @@ class ImagePyramid;
  *
  * @ingroup renderers
  */
-class FAST_EXPORT  SegmentationRenderer : public ImageRenderer, public LabelColorRenderer {
+class FAST_EXPORT SegmentationRenderer : public ImageRendererBase, public LabelColorRenderer {
     FAST_PROCESS_OBJECT(SegmentationRenderer)
     public:
         FAST_CONSTRUCTOR(SegmentationRenderer,

@@ -52,6 +52,7 @@ SegmentationRenderer::SegmentationRenderer(std::map<uint, Color> labelColors, fl
     mIsModified = false;
 }
 
+
 void
 SegmentationRenderer::draw(Matrix4f perspectiveMatrix, Matrix4f viewingMatrix, float zNear, float zFar, bool mode2D,
                            int viewWidth,
@@ -506,7 +507,7 @@ void SegmentationRenderer::setOpacity(float opacity, float borderOpacity) {
 }
 
 void SegmentationRenderer::deleteAllTextures() {
-    ImageRenderer::deleteAllTextures();
+    ImageRendererBase::deleteAllTextures();
 
     // Clear buffer. Useful when processing a new image
     // Delete all GL data
