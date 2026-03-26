@@ -314,6 +314,10 @@ class FAST_EXPORT OpenCLBuffer {
                 HostMemoryAccess hostAccess = HostMemoryAccess::UNSPECIFIED,
                 const void* data = nullptr
         );
+        /**
+         * @brief Creates uninitialized OpenCLBuffer object
+         */
+        OpenCLBuffer() {m_initialized = false;};
         cl::Buffer getHandle() const;
         /**
          * @brief Get size of OpenCL buffer in bytes
@@ -325,6 +329,7 @@ class FAST_EXPORT OpenCLBuffer {
         std::size_t m_size;
         HostMemoryAccess m_hostAccess;
         KernelMemoryAccess m_kernelAccess;
+        bool m_initialized;
 
 };
 

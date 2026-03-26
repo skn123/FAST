@@ -312,13 +312,18 @@ OpenCLBuffer::OpenCLBuffer(std::size_t size, OpenCLDevice::pointer device, Kerne
     m_size = size;
     m_hostAccess = hostAccess;
     m_kernelAccess = kernelAccess;
+    m_initialized = true;
 }
 
 cl::Buffer OpenCLBuffer::getHandle() const {
+    if(!m_initialized)
+        throw Exception("OpenCLBuffer was not initialized before being used.");
     return m_buffer;
 }
 
 std::size_t OpenCLBuffer::getSize() const {
+    if(!m_initialized)
+        throw Exception("OpenCLBuffer was not initialized before trying to get size.");
     return m_size;
 }
 
