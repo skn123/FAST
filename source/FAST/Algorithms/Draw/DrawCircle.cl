@@ -1,14 +1,16 @@
 
 __kernel void drawFilledCircles(
     __global float2* centroids,
-    __private int size,
+    __private const int size,
     __write_only image2d_t output,
     __global float2* radii,
-    __private char singleRadius,
-    __private float value,
-    __private float3 color
+    __private const char singleRadius,
+    __private const float value,
+    __private const float3 color
     ) {
     const int index = get_global_id(0);
+    if(index >= size)
+        return;
     float2 centroid = centroids[index];
     float2 radius;
     if(singleRadius == 1) {
@@ -51,14 +53,16 @@ __kernel void drawFilledCircles(
 
 __kernel void drawCircles(
     __global float2* centroids,
-    __private int size,
+    __private const int size,
     __write_only image2d_t output,
     __global float2* radii,
-    __private char singleRadius,
-    __private float value,
-    __private float3 color
+    __private const char singleRadius,
+    __private const float value,
+    __private const float3 color
     ) {
     const int index = get_global_id(0);
+    if(index >= size)
+        return;
     float2 centroid = centroids[index];
     float2 radius;
     if(singleRadius == 1) {

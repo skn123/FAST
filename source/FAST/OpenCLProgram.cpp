@@ -291,8 +291,15 @@ Kernel::Kernel() {
     m_initialized = false;
 }
 
+int Kernel::getPreferredWorkGroupSizeMultiple() const {
+    return m_kernel.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(m_device->getDevice());
+}
+
 OpenCLBuffer::OpenCLBuffer(std::size_t size, OpenCLDevice::pointer device, KernelMemoryAccess kernelAccess,
                            HostMemoryAccess hostAccess, const void *data) {
+    if(size == 0)
+        throw Exception("Trying to create an OpenCLBuffer with size 0!");
+
     std::map<KernelMemoryAccess, cl_mem_flags> kernelMemoryAccessMap = {
         {KernelMemoryAccess::READ_WRITE, CL_MEM_READ_WRITE},
         {KernelMemoryAccess::READ_ONLY, CL_MEM_READ_ONLY},

@@ -31,7 +31,7 @@ DrawCircle::DrawCircle(std::vector<Vector2f> centroids, std::vector<float> radii
 }
 
 void DrawCircle::execute() {
-    auto device = std::dynamic_pointer_cast<OpenCLDevice>(getMainDevice());
+    auto device = getMainOpenCLDevice();
     float value = m_value;
     // Copy input image
     auto image = getInputData<Image>()->copy(device);
@@ -61,8 +61,10 @@ void DrawCircle::execute() {
     auto coordinatesBuffer = createBuffer(m_centroids.size()*sizeof(float), m_centroids.data(), KernelMemoryAccess::READ_ONLY, HostMemoryAccess::NONE);
     auto radiiBuffer = createBuffer(m_radii.size()*sizeof(float), m_radii.data(), KernelMemoryAccess::READ_ONLY, HostMemoryAccess::NONE);
     auto kernel = getKernel(m_fill ? "drawFilledCircles" : "drawCircles");
+    const int size = m_centroids.size()/2;
+    const int workGroupSize = kernel.getPreferredWorkGroupSizeMultiple();
     kernel.setArg(0, coordinatesBuffer);
-    kernel.setArg(1, (int)m_centroids.size()/2);
+    kernel.setArg(1, size);
     kernel.setArg(2, image);
     kernel.setArg(3, radiiBuffer);
     kernel.setArg(4, (char)(m_radii.size() == 2 ? 1 : 0));

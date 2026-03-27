@@ -151,6 +151,12 @@ class FAST_EXPORT Kernel {
          * @brief Clear list of buffers assigned to arguments in this kernel.
          */
         void clearBuffers();
+        /**
+         * @brief Get device's preferred work group size multiple.
+         *
+         * @return
+         */
+        int getPreferredWorkGroupSizeMultiple() const;
     private:
         int m_argCounter = 0;
         template <class T>
