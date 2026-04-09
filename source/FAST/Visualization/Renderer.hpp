@@ -23,6 +23,8 @@ class DataBoundingBox;
  *
  * Renderers are process objects which can visualize data in a View, typically using OpenGL.
  * They should inherit from this class.
+ *
+ * @ingroup renderers
  */
 class FAST_EXPORT  Renderer : public ProcessObject, protected QOpenGLFunctions_3_3_Core {
     public:
@@ -47,12 +49,12 @@ class FAST_EXPORT  Renderer : public ProcessObject, protected QOpenGLFunctions_3
         virtual void stopPipeline();
         virtual void reset();
         /**
-         * Set renderer to disabled or enabled. A disabled renderer will not draw.
+         * @brief Set renderer to disabled or enabled. A disabled renderer will not draw, but it will execute.
          * @param disabled
          */
         virtual void setDisabled(bool disabled);
         /**
-         * Get whether this renderer is disabled or not
+         * @brief Get whether this renderer is disabled or not
          * @return
          */
         virtual bool isDisabled() const;
@@ -67,7 +69,7 @@ class FAST_EXPORT  Renderer : public ProcessObject, protected QOpenGLFunctions_3
         void clearDataToRender();
 
         /**
-         * Creates an OpenGL shader program. Should be used in the renderer constructor.
+         * @brief Creates an OpenGL shader program. Should be used in the renderer constructor.
          * @param shaderFilenames
          * @param programName
          */
@@ -91,9 +93,9 @@ class FAST_EXPORT  Renderer : public ProcessObject, protected QOpenGLFunctions_3
         std::mutex mMutex;
 
         /**
-         * A disabled renderer will not draw
+         * @brief A disabled renderer will not draw, but it will execute
          */
-        bool m_disabled = false;
+        std::atomic_bool m_disabled = false;
 
         /**
          * Whether this renderer is only capable of 2D rendering

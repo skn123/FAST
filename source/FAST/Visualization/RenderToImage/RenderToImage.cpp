@@ -489,8 +489,8 @@ void RenderToImage::paintGL() {
             for(auto& renderer : mNonVolumeRenderers) {
                 if(!renderer->isDisabled()) {
                     renderer->draw(mPerspectiveMatrix, m3DViewingTransformation.matrix(), zNear, zFar, true, m_width, m_height);
-                    renderer->postDraw();
                 }
+                renderer->postDraw();
             }
             mRuntimeManager->stopRegularTimer("draw2D");
 
@@ -506,16 +506,16 @@ void RenderToImage::paintGL() {
             for(auto& renderer : mNonVolumeRenderers) {
                 if(!renderer->isDisabled()) {
                     renderer->draw(mPerspectiveMatrix, m3DViewingTransformation.matrix(), zNear, zFar, false, m_width, m_height);
-                    renderer->postDraw();
                 }
+                renderer->postDraw();
             }
 
             if(!mVolumeRenderers.empty()) {
                 for(auto& renderer : mVolumeRenderers) {
                     if(!renderer->isDisabled()) {
                         renderer->draw(mPerspectiveMatrix, m3DViewingTransformation.matrix(), zNear, zFar, false, m_width, m_height);
-                        renderer->postDraw();
                     }
+                    renderer->postDraw();
                 }
 
                 // Blit/copy the framebuffer to the default framebuffer (window)

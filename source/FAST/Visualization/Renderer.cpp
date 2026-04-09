@@ -38,14 +38,13 @@ void Renderer::stopPipeline() {
 
 void Renderer::postDraw() {
     std::lock_guard<std::mutex> lock(mMutex);
+    // It is important that this happens in this function, since postDraw is called even though it is disabled:
     mHasRendered = true;
 }
 
 void Renderer::execute() {
     {
         std::lock_guard<std::mutex> lock(mMutex);
-        if(m_disabled)
-            return;
         if(mStop) {
             return;
         }

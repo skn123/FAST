@@ -477,9 +477,8 @@ void View::initializeGL() {
     // Update all renderes, so that getBoundingBox works
     std::vector<Renderer::pointer> renderers = getRenderers();
     try {
-        for (int i = 0; i < renderers.size(); i++) {
-            if (!renderers[i]->isDisabled())
-                renderers[i]->update(0);
+        for(int i = 0; i < renderers.size(); i++) {
+            renderers[i]->update(0);
         }
     } catch (ThreadStopped& e) {
         // TODO What to do in this case?
@@ -554,8 +553,8 @@ void View::paintGL() {
         for(auto renderer : mNonVolumeRenderers) {
             if(!renderer->isDisabled()) {
                 renderer->draw(mPerspectiveMatrix, m3DViewingTransformation.matrix(), zNear, zFar, true, width(), height());
-                renderer->postDraw();
             }
+            renderer->postDraw(); // Call postDraw even though it is disabled, so that it is marked as hasRendered
         }
 
         if(m_showScalebar)
@@ -574,8 +573,8 @@ void View::paintGL() {
         for(auto renderer : mNonVolumeRenderers) {
             if(!renderer->isDisabled()) {
                 renderer->draw(mPerspectiveMatrix, m3DViewingTransformation.matrix(), zNear, zFar, false, width(), height());
-                renderer->postDraw();
             }
+            renderer->postDraw(); // Call postDraw even though it is disabled, so that it is marked as hasRendered
         }
 
         if(!mVolumeRenderers.empty()) {
@@ -583,8 +582,8 @@ void View::paintGL() {
             for(auto renderer : mVolumeRenderers) {
                 if(!renderer->isDisabled()) {
                     renderer->draw(mPerspectiveMatrix, m3DViewingTransformation.matrix(), zNear, zFar, false, width(), height());
-                    renderer->postDraw();
                 }
+                renderer->postDraw(); // Call postDraw even though it is disabled, so that it is marked as hasRendered
             }
 
             // Blit/copy the framebuffer to the default framebuffer (window)
