@@ -653,7 +653,7 @@ static float* _intToFloatPointer(std::size_t intPointer) {
         def getDataStream(self):
             return DataStream(self)
 
-        def __call__(self, *args: Tuple[Union[DataObject, 'ProcessObject', Tuple[Union[DataObject, 'ProcessObject', int], ...]], ...]) -> Union[DataObject, List[DataObject]]:
+        def __call__(self, *args: Union[DataObject, 'ProcessObject', Tuple[int, Union[DataObject, 'ProcessObject']], Tuple[int, 'ProcessObject', int]]) -> Union[DataObject, List[DataObject]]:
             """
             Connect input data to this process object, run, and return all output data.
             Input data must be a list of data or process objects. Input and output ports can be provided using a tuple.
