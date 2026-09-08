@@ -116,7 +116,7 @@ jobs:
           df -h
           
           echo "===========> Build Python Wheel"
-          
+          export FAST_DISABLE_PYTHON_INIT_ON_IMPORT=1
           cmake --build build --config ${{env.BUILD_TYPE}} --target python-wheel -j 4
           cp build/python/dist/pyfast-*.whl build/
           
