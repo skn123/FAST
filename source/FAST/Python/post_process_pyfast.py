@@ -50,7 +50,7 @@ for name, cls in classes:
 
 print(f'Found {len(target_classes)} classes to modify.')
 
-input_file = open('fast/fast.py', 'r')
+input_file = open('fast/fast.py', 'r', encoding='utf-8')
 
 processClass = False
 lines_for_new_file = []
@@ -86,7 +86,7 @@ input_file.close()
 
 if not line.startswith('# Post processing done'):
     lines_for_new_file.append('# Post processing done.')
-    output_file = open('fast/fast_post_processed.py', 'w')
+    output_file = open('fast/fast_post_processed.py', 'w', encoding='utf-8')
     output_file.writelines(lines_for_new_file)
     output_file.close()
     shutil.move('fast/fast_post_processed.py', 'fast/fast.py')
