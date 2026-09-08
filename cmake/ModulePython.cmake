@@ -120,7 +120,7 @@ if(FAST_MODULE_Python)
         COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH="${PROJECT_BINARY_DIR}/python/" ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/source/FAST/Python/post_process_pyfast.py
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/python/
     )
-    add_dependencies(python-post-process _fast)
+    add_dependencies(python-post-process install_to_wheel)
 
     add_custom_target(python-wheel
         COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/source/FAST/Python/__init__fast.py ${PROJECT_BINARY_DIR}/python/fast/__init__.py
