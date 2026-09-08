@@ -1,4 +1,6 @@
+import sys
 try:
+    sys.path.insert(0, '.')
     import fast
 except Exception as e:
     print('Failed to import fast')
@@ -8,7 +10,7 @@ import shutil
 import inspect
 
 classes = inspect.getmembers(fast, inspect.isclass)
-print(f'Found total of {len(classes)}')
+print(f'Found total of {len(classes)} classes')
 
 target_classes = {}
 for name, cls in classes:
