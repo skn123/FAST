@@ -16,11 +16,11 @@ target_classes = {}
 for name, cls in classes:
     is_fast_object = issubclass(cls, fast.Object)
     has_create_method = hasattr(cls, 'create') and callable(getattr(cls, 'create'))
-    print(name, is_fast_object, has_create_method)
+    #print(name, is_fast_object, has_create_method)
 
     if is_fast_object and has_create_method:
         create_method_is_static = '@staticmethod' in inspect.getsource(cls.create)
-        print('Is static?', create_method_is_static)
+        #print('Is static?', create_method_is_static)
         if create_method_is_static:
             create_method_source = inspect.getsource(cls.create).replace('@staticmethod', '')
             new_method = create_method_source.replace('def create(', 'def __new__(cls, ')
