@@ -27,5 +27,6 @@ os.environ['PATH'] = path + os.pathsep + os.environ['PATH'] # This is needed in 
 from .fast import *
 fast.Config.setBasePath(bin_path)
 fast.Config.setTerminateHandlerDisabled(True)
-if True not in [x in sys.argv[0] for x in ['UFFviewer', 'runPipeline', 'systemCheck']]:
-    fast.ImageFileImporter.create('') # Trigger splash, GL context initialization etc.
+if 'FAST_DISABLE_PYTHON_INIT_ON_IMPORT' not in os.environ:
+    if True not in [x in sys.argv[0] for x in ['UFFviewer', 'runPipeline', 'systemCheck']]:
+        fast.ImageFileImporter.create('') # Trigger splash, GL context initialization etc.

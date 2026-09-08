@@ -72,6 +72,7 @@ jobs:
     - name: Build Python wheel
       env:
         MACOSX_DEPLOYMENT_TARGET: 11.0
+        FAST_DISABLE_PYTHON_INIT_ON_IMPORT: "true"
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target python-wheel -j 4
 
     - name: Package
