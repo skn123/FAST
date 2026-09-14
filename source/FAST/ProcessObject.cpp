@@ -28,13 +28,20 @@ void ProcessObject::update(int executeToken) {
     // Call update on all parents
     bool newInputData = false;
     bool inputMarkedAsLastFrame = false;
-    for(auto parent : mInputConnections) {
+    decltype(mInputConnections) parents;
+    decltype(mLastProcessed) lastProcessed;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        parents = mInputConnections;
+        lastProcessed = mLastProcessed;
+    }
+    for(auto parent : parents) {
         auto port = parent.second;
         port->getProcessObject()->update(executeToken);
 
-        if(mLastProcessed.count(parent.first) > 0) {
+        if(lastProcessed.count(parent.first) > 0) {
             // Compare the last processed data with the new data for this data port
-            std::pair<DataObject::pointer, uint64_t> data = mLastProcessed[parent.first];
+            std::pair<DataObject::pointer, uint64_t> data = lastProcessed[parent.first];
             if(port->hasCurrentData()) {
                 auto previousData = data.first;
                 auto previousTimestamp = data.second;
@@ -163,14 +170,17 @@ DataChannel::pointer ProcessObject::getOutputPort(uint portID) {
 }
 
 DataChannel::pointer ProcessObject::getInputPort(uint portID) {
+    std::lock_guard<std::mutex> lock(m_mutex);
     return mInputConnections.at(portID);
 }
 
 void ProcessObject::setInputConnection(uint portID, DataChannel::pointer port) {
+    std::lock_guard<std::mutex> lock(m_mutex);
     validateInputPortExists(portID);
     if(port->getProcessObject().get() == this)
         throw Exception("Can't set setInputConnection on self");
     mInputConnections[portID] = port;
+    mLastProcessed.erase(portID);
     mIsModified = true;
 }
 
@@ -236,6 +246,7 @@ void ProcessObject::setInputData(uint portID, DataObject::pointer data) {
 }
 
 void ProcessObject::preExecute() {
+    std::lock_guard<std::mutex> lock(m_mutex);
     // Validate that all required input connections have been set
     for(auto input : mInputPorts) {
         if(input.second.required) { // if required
@@ -349,7 +360,12 @@ int ProcessObject::getNrOfInputConnections() const {
 }
 
 void ProcessObject::stopPipeline() {
-    for(auto input : mInputConnections) {
+    decltype(mInputConnections) parents;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        parents = mInputConnections;
+    }
+    for(auto input : parents) {
         input.second->stop();
         input.second->getProcessObject()->stopPipeline(); // Stop parent POs
     }
@@ -357,6 +373,7 @@ void ProcessObject::stopPipeline() {
 }
 
 bool ProcessObject::hasNewInputData(uint portID) {
+    std::lock_guard<std::mutex> lock(m_mutex);
     return mInputConnections.at(portID)->hasCurrentData();
 }
 
