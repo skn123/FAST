@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QWidget>
+#include <FAST/Visualization/Widgets/Widget.hpp>
 #include <string>
 #include <FASTExport.hpp>
 #include <iostream>
@@ -52,7 +52,7 @@ using TableData = std::vector<std::pair<std::string, std::vector<std::string>>>;
  * @brief A table widget for displaying tabular data
  * @ingroup widgets
  */
-class FAST_EXPORT TableWidget : public QWidget {
+class FAST_EXPORT TableWidget : public Widget {
     Q_OBJECT
     public:
 #ifndef SWIG

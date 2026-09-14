@@ -31,13 +31,13 @@ class ComboBox : public QComboBox {
         };
 };
 OptionsWidget::OptionsWidget(const std::vector<std::string> &options, const std::string &name, const std::string& placeholder, int selected,
-                           OptionsWidgetCallback *callback, QWidget *parent) : QWidget(parent) {
+                           OptionsWidgetCallback *callback, QWidget *parent) : Widget(parent) {
     init(name, placeholder, options, selected);
     m_callbackClass = callback;
 }
 
 OptionsWidget::OptionsWidget(const std::vector<std::string> &options, const std::string &name, const std::string& placeholder, int selected,
-                           std::function<void(int, std::string)> callback, QWidget *parent) : QWidget(parent) {
+                           std::function<void(int, std::string)> callback, QWidget *parent) : Widget(parent) {
     init(name, placeholder, options, selected);
     m_callbackFunction = std::move(callback);
 }

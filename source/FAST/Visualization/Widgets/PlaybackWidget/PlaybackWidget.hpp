@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QWidget>
+#include <FAST/Visualization/Widgets/Widget.hpp>
 #include <FAST/Streamers/RandomAccessStreamer.hpp>
 
 class QSlider;
@@ -21,7 +21,7 @@ namespace fast {
  * @brief A widget to control playback of a RandomAccessStreamer
  * @ingroup widgets
  */
-class FAST_EXPORT PlaybackWidget : public QWidget {
+class FAST_EXPORT PlaybackWidget : public Widget {
     public:
         PlaybackWidget(std::shared_ptr<RandomAccessStreamer> streamer, QWidget* parent = nullptr);
         void show() { QWidget::show(); };

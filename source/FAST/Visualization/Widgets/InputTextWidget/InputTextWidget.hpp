@@ -1,7 +1,7 @@
 #pragma once
 
+#include <FAST/Visualization/Widgets/Widget.hpp>
 #include <string>
-#include <QWidget>
 #include <FASTExport.hpp>
 #include <mutex>
 #include <iostream>
@@ -63,7 +63,7 @@ public:
  * @brief A input text widget
  * @ingroup widgets
  */
-class FAST_EXPORT InputTextWidget : public QWidget {
+class FAST_EXPORT InputTextWidget : public Widget {
     Q_OBJECT
     public:
 #ifndef SWIG
@@ -75,7 +75,7 @@ class FAST_EXPORT InputTextWidget : public QWidget {
          * @param callback Callback function for when text is changed
          * @param parent
          */
-        InputTextWidget(const std::string& title = "", const std::string& text = "", bool singleLine = true, std::function<void(std::string)> callback = {}, QWidget* parent = nullptr) : QWidget(parent) {
+        InputTextWidget(const std::string& title = "", const std::string& text = "", bool singleLine = true, std::function<void(std::string)> callback = {}, QWidget* parent = nullptr) : Widget(parent) {
             m_callbackFunction = callback;
             init(title, text, singleLine);
         }

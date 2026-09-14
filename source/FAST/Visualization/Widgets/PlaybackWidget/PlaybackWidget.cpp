@@ -9,7 +9,7 @@
 
 namespace fast {
 
-PlaybackWidget::PlaybackWidget(std::shared_ptr<RandomAccessStreamer> streamer, QWidget *parent) : QWidget(parent) {
+PlaybackWidget::PlaybackWidget(std::shared_ptr<RandomAccessStreamer> streamer, QWidget *parent) : Widget(parent) {
     m_streamer = streamer;
     m_streamer->setMaximumNrOfFrames(1); // To avoid glitches in playback we set the queue size to 1
 

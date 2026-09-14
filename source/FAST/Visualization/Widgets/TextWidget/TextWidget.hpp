@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <QWidget>
+#include <FAST/Visualization/Widgets/Widget.hpp>
 #include <FASTExport.hpp>
 
 class QLabel;
@@ -21,7 +21,7 @@ namespace fast {
  * @brief A text widget
  * @ingroup widgets
  */
-class FAST_EXPORT TextWidget : public QWidget {
+class FAST_EXPORT TextWidget : public Widget {
     Q_OBJECT
     public:
         /**

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <QWidget>
+#include <FAST/Visualization/Widgets/Widget.hpp>
 #include <FASTExport.hpp>
 
 class QLabel;
@@ -50,7 +50,7 @@ class ButtonWidgetCallback {
  * @brief A button widget
  * @ingroup widgets
  */
-class FAST_EXPORT ButtonWidget : public QWidget {
+class FAST_EXPORT ButtonWidget : public Widget {
     Q_OBJECT
     public:
 #ifndef SWIG

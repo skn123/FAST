@@ -41,7 +41,7 @@ void TableWidget::init(const TableData& data) {
 
 TableWidget::TableWidget(const TableData& data,
                          TableWidgetCallback *clickCallback,
-                         QWidget *parent) : QWidget(parent) {
+                         QWidget *parent) : Widget(parent) {
     init(data);
     if(clickCallback != nullptr) {
         m_clickCallbackClass = clickCallback;
@@ -56,7 +56,7 @@ TableWidget::TableWidget(const TableData& data,
 
 TableWidget::TableWidget(const TableData& data,
                          std::function<void(TableWidget*,int,int,bool)> clickCallback,
-                         QWidget *parent) : QWidget(parent) {
+                         QWidget *parent) : Widget(parent) {
     init(data);
     m_clickCallbackFunction = clickCallback;
     QObject::connect(m_tableWidget, &QTableWidget::cellClicked, [=](int row, int column) {

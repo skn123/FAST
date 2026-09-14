@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <QWidget>
+#include <FAST/Visualization/Widgets/Widget.hpp>
 #include <FASTExport.hpp>
 #include <iostream>
 
@@ -50,7 +50,7 @@ class SliderWidgetCallback {
  * @brief A slider widget to change a numerical parameter
  * @ingroup widgets
  */
-class FAST_EXPORT SliderWidget : public QWidget {
+class FAST_EXPORT SliderWidget : public Widget {
     public:
 #ifndef SWIG
         SliderWidget(std::string name, float initial, float min, float max, float step, std::function<void(float)> callback, QWidget* parent = nullptr);

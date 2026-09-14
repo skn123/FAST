@@ -5,7 +5,7 @@
 
 namespace fast {
 
-TextWidget::TextWidget(std::string text, QWidget *parent) : QWidget(parent) {
+TextWidget::TextWidget(std::string text, QWidget *parent) : Widget(parent) {
     m_text = text;
     m_label = new QLabel();
     auto layout = new QVBoxLayout;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QWidget>
+#include <FAST/Visualization/Widgets/Widget.hpp>
 #include <FASTExport.hpp>
 #include <iostream>
 
@@ -48,7 +48,7 @@ class OptionsWidgetCallback {
  * @brief A widget for selecting one of several options in a dropdown box
  * @ingroup widgets
  */
-class FAST_EXPORT OptionsWidget : public QWidget {
+class FAST_EXPORT OptionsWidget : public Widget {
     Q_OBJECT
     public:
 #ifndef SWIG

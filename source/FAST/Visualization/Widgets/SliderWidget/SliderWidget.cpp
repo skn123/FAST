@@ -49,7 +49,7 @@ void SliderWidget::valueChanged(int value) {
 }
 
 SliderWidget::SliderWidget(std::string name, float initial, float min, float max, float step,
-                           std::function<void(float)> callback, QWidget *parent) : QWidget(parent) {
+                           std::function<void(float)> callback, QWidget *parent) : Widget(parent) {
     m_callbackFunction = callback;
     init(name, initial, min, max, step);
 }

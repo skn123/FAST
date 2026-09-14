@@ -33,13 +33,13 @@ void ButtonWidget::clicked(bool checked) {
 }
 
 ButtonWidget::ButtonWidget(std::string text, bool checkable,
-                           std::function<void(bool)> callback, bool checked, QWidget *parent) : QWidget(parent) {
+                           std::function<void(bool)> callback, bool checked, QWidget *parent) : Widget(parent) {
     m_callbackFunction = callback;
     init(text, checkable, checked);
 }
 
 ButtonWidget::ButtonWidget(std::string text, bool checkable,
-                           ButtonWidgetCallback *callback, bool checked, QWidget *parent) {
+                           ButtonWidgetCallback *callback, bool checked, QWidget *parent) : Widget(parent) {
     m_callbackClass = callback;
     init(text, checkable, checked);
 }
