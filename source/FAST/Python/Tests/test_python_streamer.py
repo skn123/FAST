@@ -30,7 +30,7 @@ class MyStreamer(fast.PythonStreamer):
             print('Streaming', frame)
 
             # Read frame from disk
-            importer = fast.ImageFileImporter.create(path.replace('#', str(frame)))
+            importer = fast.ImageFileImporter(path.replace('#', str(frame)))
             image = importer.runAndGetOutputData()
 
             # Check if this was the last frame
@@ -67,9 +67,9 @@ class Inverter(fast.PythonProcessObject):
 
 
 def test_python_streamer():
-    streamer = MyStreamer.create()
+    streamer = MyStreamer()
 
-    inverter = Inverter.create().connect(streamer)
+    inverter = Inverter().connect(streamer)
 
     counter = 0
     previousImage = ''
@@ -126,7 +126,7 @@ class MyRandomAccessStreamer(fast.PythonRandomAccessStreamer):
             print('Streaming', frame)
 
             # Read frame from disk
-            importer = fast.ImageFileImporter.create(path.replace('#', str(frame)))
+            importer = fast.ImageFileImporter(path.replace('#', str(frame)))
             image = importer.runAndGetOutputData()
             if frame == self.getNrOfFrames()-1: # If this is last frame, mark it as such
                 image.setLastFrame('MyRandomAccessStreamer')
@@ -143,9 +143,9 @@ class MyRandomAccessStreamer(fast.PythonRandomAccessStreamer):
 
 
 def test_python_random_access_streamer():
-    streamer = MyRandomAccessStreamer.create()
+    streamer = MyRandomAccessStreamer()
 
-    inverter = Inverter.create().connect(streamer)
+    inverter = Inverter().connect(streamer)
 
     counter = 0
     previousImage = ''

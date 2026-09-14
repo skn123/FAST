@@ -33,9 +33,9 @@ def test_inference_engine_tensorflow_download():
 
 
 def segmentation_inference(engine: str, extension: str):
-    importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'US/JugularVein/US-2D_100.mhd')
+    importer = fast.ImageFileImporter(fast.Config.getTestDataPath() + 'US/JugularVein/US-2D_100.mhd')
 
-    segmentationNetwork = fast.SegmentationNetwork.create(
+    segmentationNetwork = fast.SegmentationNetwork(
         fast.Config.getTestDataPath() + 'NeuralNetworkModels/jugular_vein_segmentation' + extension,
         scaleFactor=1./255.,
         inferenceEngine=engine

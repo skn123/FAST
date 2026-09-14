@@ -4,7 +4,7 @@ import pytest
 
 
 def test_vector3f():
-    image = fast.Image.create(512, 512, fast.TYPE_UINT8, 3)
+    image = fast.Image(512, 512, fast.TYPE_UINT8, 3)
     s = image.getSpacing()
     assert s == pytest.approx((1,1,1))
     # Test tuple
@@ -35,7 +35,7 @@ def test_vector3i():
 
 
 def test_vector3ui():
-    image = fast.Image.create(512, 512, 32, fast.TYPE_UINT8, 1)
+    image = fast.Image(512, 512, 32, fast.TYPE_UINT8, 1)
     size = image.getSize()
     assert size == (512, 512, 32)
 
@@ -60,7 +60,7 @@ def test_vector2i():
 
 
 def test_vectorXi():
-    image = fast.Image.create(512, 512, fast.TYPE_UINT8, 3)
+    image = fast.Image(512, 512, fast.TYPE_UINT8, 3)
     image.fill(0)
 
     cropped_image = image.crop((0, 0), (128, 128))
@@ -76,7 +76,7 @@ def test_vectorXi():
 
 
 def test_vector_of_eigen_vectors():
-    rg = fast.SeededRegionGrowing.create(0, 1, [(23, 2, 1), (23, 43, 1)])
+    rg = fast.SeededRegionGrowing(0, 1, [(23, 2, 1), (23, 43, 1)])
     points = rg.getSeedPoints()
     assert points[0] == (23, 2, 1)
     assert points[1] == (23, 43, 1)
@@ -91,7 +91,7 @@ def test_vector_of_eigen_vectors():
 
 
 def test_vector_of_vector_of_eigen_vectors():
-    bbn = fast.TensorToBoundingBoxSet.create(anchors=[
+    bbn = fast.TensorToBoundingBoxSet(anchors=[
         [(1.1, 2.2), (1.1, 2.2)],
         [(3.1, 3.2)],
         [(3.1, 3.2), (23, 23)],
@@ -104,7 +104,7 @@ def test_vector_of_vector_of_eigen_vectors():
 
 
 def test_eigen_matrix_typemaps():
-    transform = fast.Transform.create()
+    transform = fast.Transform()
 
     # Matrix4f:
     m = [

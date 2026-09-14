@@ -55,26 +55,26 @@ class OpenCLProcessObject(fast.PythonProcessObject):
 
 
 def test_simple_image_kernel():
-    importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_0.mhd')
-    inverter = fast.ImageInverter.create(min=0, max=255).connect(importer)
+    importer = fast.ImageFileImporter(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_0.mhd')
+    inverter = fast.ImageInverter(min=0, max=255).connect(importer)
     result2 = inverter.runAndGetOutputData()
 
-    PO = OpenCLProcessObject.create(useIndex=False).connect(importer)
+    PO = OpenCLProcessObject(useIndex=False).connect(importer)
     result = PO.runAndGetOutputData()
     assert (np.asarray(result) == np.asarray(result2)).all()
 
-    PO = OpenCLProcessObject.create(useIndex=True).connect(importer)
+    PO = OpenCLProcessObject(useIndex=True).connect(importer)
     result = PO.runAndGetOutputData()
     assert (np.asarray(result) == np.asarray(result2)).all()
 
-    PO = OpenCLProcessObject.create(loadFromFile=True).connect(importer)
+    PO = OpenCLProcessObject(loadFromFile=True).connect(importer)
     result = PO.runAndGetOutputData()
     assert (np.asarray(result) == np.asarray(result2)).all()
 
 
 def test_missing_argument():
-    importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_0.mhd')
-    PO = OpenCLProcessObject.create(missingArgument=True).connect(importer)
+    importer = fast.ImageFileImporter(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_0.mhd')
+    PO = OpenCLProcessObject(missingArgument=True).connect(importer)
     with pytest.raises(RuntimeError):
         result = PO.runAndGetOutputData()
 
@@ -132,19 +132,19 @@ class OpenCLProcessObject2(fast.PythonProcessObject):
 
 
 def test_image_kernel_with_buffer():
-    importer = fast.ImageFileImporter.create(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_0.mhd')
-    inverter = fast.ImageInverter.create(min=0, max=255).connect(importer)
+    importer = fast.ImageFileImporter(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_0.mhd')
+    inverter = fast.ImageInverter(min=0, max=255).connect(importer)
     result2 = inverter.runAndGetOutputData()
 
-    PO = OpenCLProcessObject2.create().connect(importer)
+    PO = OpenCLProcessObject2().connect(importer)
     result = PO.runAndGetOutputData()
     assert (np.asarray(result) == np.asarray(result2)).all()
 
-    PO = OpenCLProcessObject2.create(useNumpy=True).connect(importer)
+    PO = OpenCLProcessObject2(useNumpy=True).connect(importer)
     result = PO.runAndGetOutputData()
     assert (np.asarray(result) == np.asarray(result2)).all()
 
-    PO = OpenCLProcessObject2.create(createBuffer=True).connect(importer)
+    PO = OpenCLProcessObject2(createBuffer=True).connect(importer)
     result = PO.runAndGetOutputData()
     assert (np.asarray(result) == np.asarray(result2)).all()
 

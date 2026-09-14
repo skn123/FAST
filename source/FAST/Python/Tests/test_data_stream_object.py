@@ -3,11 +3,11 @@ import pytest
 
 
 def test_data_stream_empty_generator():
-    importer = fast.WholeSlideImageImporter.create(fast.Config.getTestDataPath() + '/WSI/CMU-1.svs')
+    importer = fast.WholeSlideImageImporter(fast.Config.getTestDataPath() + '/WSI/CMU-1.svs')
 
-    segmentation = fast.TissueSegmentation.create(True).connect(importer).runAndGetOutputData()
+    segmentation = fast.TissueSegmentation(True).connect(importer).runAndGetOutputData()
     segmentation.fill(0) # Empty segmentation, means no patches
-    generator = fast.PatchGenerator.create(256, 256, level=2).connect(importer).connect(1, segmentation)
+    generator = fast.PatchGenerator(256, 256, level=2).connect(importer).connect(1, segmentation)
 
     counter = 0
     with pytest.raises(RuntimeError):
@@ -17,8 +17,7 @@ def test_data_stream_empty_generator():
 
 
 def test_data_stream_empty_file_streamer():
-    streamer = fast.ImageFileStreamer \
-        .create(fast.Config.getTestDataPath() + "/US/Heart/ApicalFourChamber/US-2D_#.mhd",)
+    streamer = fast.ImageFileStreamer(fast.Config.getTestDataPath() + "/US/Heart/ApicalFourChamber/US-2D_#.mhd",)
     streamer.setStartNumber(200) # Incorrect start number, will result in no frames
 
     counter = 0
@@ -29,8 +28,7 @@ def test_data_stream_empty_file_streamer():
 
 
 def test_data_stream_single():
-    streamer = fast.ImageFileStreamer\
-        .create(fast.Config.getTestDataPath() + "/US/Heart/ApicalFourChamber/US-2D_#.mhd")
+    streamer = fast.ImageFileStreamer(fast.Config.getTestDataPath() + "/US/Heart/ApicalFourChamber/US-2D_#.mhd")
 
     dataStream = fast.DataStream(streamer)
     previousImage = ''
@@ -45,12 +43,9 @@ def test_data_stream_single():
 
 
 def test_data_stream_multiple():
-    streamer1 = fast.ImageFileStreamer \
-        .create(fast.Config.getTestDataPath() + "/US/Heart/ApicalFourChamber/US-2D_#.mhd")
-    streamer2 = fast.ImageFileStreamer \
-        .create(fast.Config.getTestDataPath() + "/US/Heart/ApicalTwoChamber/US-2D_#.mhd")
-    streamer3 = fast.ImageFileStreamer \
-        .create(fast.Config.getTestDataPath() + "/US/Heart/ApicalLongAxis/US-2D_#.mhd")
+    streamer1 = fast.ImageFileStreamer(fast.Config.getTestDataPath() + "/US/Heart/ApicalFourChamber/US-2D_#.mhd")
+    streamer2 = fast.ImageFileStreamer(fast.Config.getTestDataPath() + "/US/Heart/ApicalTwoChamber/US-2D_#.mhd")
+    streamer3 = fast.ImageFileStreamer(fast.Config.getTestDataPath() + "/US/Heart/ApicalLongAxis/US-2D_#.mhd")
 
     dataStream = fast.DataStream(streamer1, streamer2, streamer3)
     previousImage1 = ''

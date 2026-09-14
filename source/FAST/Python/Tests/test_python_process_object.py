@@ -23,10 +23,9 @@ class Rotate(fast.PythonProcessObject):
 
 
 def test_python_process_object_single():
-    importer = fast.ImageFileStreamer \
-        .create(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_#.mhd')
+    importer = fast.ImageFileStreamer(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_#.mhd')
 
-    inverter = Rotate.create().connect(importer)
+    inverter = Rotate().connect(importer)
     dataStream = fast.DataStream(inverter)
     previousImage = ''
     counter = 0
@@ -40,11 +39,10 @@ def test_python_process_object_single():
 
 
 def test_python_process_object_multiple():
-    importer = fast.ImageFileStreamer \
-        .create(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_#.mhd')
+    importer = fast.ImageFileStreamer(fast.Config.getTestDataPath() + 'US/Heart/ApicalFourChamber/US-2D_#.mhd')
 
-    inverter = Rotate.create().connect(importer)
-    inverter2 = Rotate.create().connect(inverter)
+    inverter = Rotate().connect(importer)
+    inverter2 = Rotate().connect(inverter)
     dataStream = fast.DataStream(inverter2)
     previousImage = ''
     counter = 0
