@@ -67,6 +67,26 @@ for line in input_file:
             for x in target_classes[currentClassName]['metaclass'].split('\n'):
                 lines_for_new_file.append(x + '\n')
             line = line.replace('):', f',metaclass={currentClassName}MetaClass):')
+        elif currentClassName in ('PythonProcessObject', 'PythonStreamer', 'PythonRandomAccessStreamer'):
+            # This is hack for solving the problem with PythonProcessObjects being deleted too early
+            # For instance in this case:
+            # a = SomePythonPO.create()
+            # b = SomeOtherPO.create().connect(a)
+            # a = SomeOtherPO.create().connect(b) # Variable is overwritten, and gets deleted here, even though b has a reference to it..
+            # This hack will however result in the PO never being deleted..
+            # See section 32.5.3 here: https://swig.org/Doc4.0/Python.html
+            processClass = False
+            metaclass = \
+f'''
+class {currentClassName}MetaClass(type):
+	def __call__(cls, *args, **kwargs):
+		instance = cls.__new__(cls, *args, **kwargs)
+		instance.__init__(*args, **kwargs)
+		return instance.__disown__()
+'''
+            for x in metaclass.split('\n'):
+                lines_for_new_file.append(x + '\n')
+            line = line.replace('):', f',metaclass={currentClassName}MetaClass):')
     if processClass:
         if line.strip().startswith('def create('):
             staticmethod_line = lines_for_new_file.pop() # Remove @staticmethod
