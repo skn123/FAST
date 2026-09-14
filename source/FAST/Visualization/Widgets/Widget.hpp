@@ -36,7 +36,7 @@ void Widget::setProperty(const std::string& name, T value) {
 }
 
 template<>
-void Widget::setProperty(const std::string &name, std::string value);
+FAST_EXPORT void Widget::setProperty(const std::string &name, std::string value);
 
 #ifdef SWIG
 %template(setPropertyInt) Widget::setProperty<int>;
