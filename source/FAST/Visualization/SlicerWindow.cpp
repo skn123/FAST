@@ -279,4 +279,12 @@ int SlicerWindow::getBorderRadius() const {
     return m_borderRadius;
 }
 
+std::shared_ptr<SlicerWindow> SlicerWindow::connect(QWidget *widget, WidgetPosition position) {
+    return std::dynamic_pointer_cast<SlicerWindow>(Window::connect(widget, position));
+}
+
+std::shared_ptr<SlicerWindow> SlicerWindow::connect(std::vector<QWidget *> widgets, WidgetPosition position) {
+    return std::dynamic_pointer_cast<SlicerWindow>(Window::connect(widgets, position));
+}
+
 }

@@ -95,6 +95,8 @@ class FAST_EXPORT SlicerWindow : public Window {
 
     std::shared_ptr<Window> connect(uint id, std::shared_ptr<DataObject> data) override;
     std::shared_ptr<Window> connect(uint id, std::shared_ptr<ProcessObject> PO, uint portID = 0) override;
+    std::shared_ptr<SlicerWindow> connect(QWidget* widget, WidgetPosition position = WidgetPosition::BOTTOM);
+    std::shared_ptr<SlicerWindow> connect(std::vector<QWidget*> widgets, WidgetPosition position = WidgetPosition::BOTTOM);
     std::string getNameOfClass() {
         return "SlicerWindow";
     }
