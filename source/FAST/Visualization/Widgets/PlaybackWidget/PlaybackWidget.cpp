@@ -91,7 +91,7 @@ PlaybackWidget::PlaybackWidget(std::shared_ptr<RandomAccessStreamer> streamer, Q
     });
 
     // Playback slider update
-    auto timer = new QTimer;
+    auto timer = new QTimer(this); // must set this to parent, or this timer will cause seg faults
     timer->setInterval(10);
     timer->setSingleShot(false);
     QObject::connect(timer, &QTimer::timeout, [this]() {
