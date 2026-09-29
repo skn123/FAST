@@ -17,6 +17,7 @@ class QOffscreenSurface;
 namespace fast {
 
 class ProcessObject;
+class TimerCallbackClass;
 
 enum class WidgetPosition {
     BOTTOM,
@@ -132,6 +133,12 @@ class FAST_EXPORT  Window : public QObject, public AttributeObject {
         std::string getNameOfClass() {
             return "Window";
         }
+        /**
+         * @brief Perform callback after a given time
+         * @param callback Callback class to use
+         * @param milliseconds Timeout in milliseconds
+         */
+        void timerCallback(TimerCallbackClass* callback, int milliseconds);
     protected:
         void startComputationThread();
         void stopComputationThread();
@@ -174,6 +181,18 @@ class FAST_EXPORT  Window : public QObject, public AttributeObject {
  */
 FAST_EXPORT void showMessage(const std::string& message, const std::string& title = "");
 
+/**
+ * @brief Show a notification on screen
+ *
+ * A notification is not something the users need to interact with, and will disappear after a timeout.
+ *
+ * @param message Message to display
+ * @param timeout Timeout to remove notification in seconds
+ *
+ * @ingroup window
+ */
+FAST_EXPORT void showNotification(const std::string& message, float timeout = 3.0f);
+
 #ifdef SWIG
 %rename(_cpp_showFileDialog) showFileDialog;
 #endif
@@ -206,5 +225,34 @@ def showFileDialog(files=True, folders=False, forSaving=False, allowMultiple=Fal
 showFileDialog.__doc__ = _cpp_showFileDialog.__doc__
 %}
 #endif
+
+#ifdef SWIG
+%feature("director") TimerCallbackClass;
+%pythoncode %{
+_timer_callbacks = [] # Hack to avoid callbacks being deleted
+def TimerCallback(func):
+    global _timer_callbacks
+    class CB(TimerCallbackClass):
+        def __init__(self):
+            super().__init__()
+
+        def handle(self):
+            func()
+    obj = CB()
+    _timer_callbacks.append(obj)
+    return obj
+%}
+#endif
+
+/**
+ * @brief Timer callback class
+ * Used primarily by pyFAST
+ */
+class TimerCallbackClass {
+public:
+    virtual void handle() = 0;
+    virtual ~TimerCallbackClass() { std::cout << "Destroying TimerCallbackClass" << std::endl;};
+};
+
 } // end namespace fast
 

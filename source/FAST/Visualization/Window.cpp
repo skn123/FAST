@@ -9,6 +9,10 @@
 #include <QGridLayout>
 #include <QPluginLoader>
 #include <QFileDialog>
+#include <QPainterPath>
+#include <QAbstractAnimation>
+#include <QGraphicsOpacityEffect>
+#include <QPropertyAnimation>
 #ifndef WIN32
 #ifndef __APPLE__
 #include <X11/Xlib.h>
@@ -591,6 +595,80 @@ std::vector<std::string> showFileDialog(bool files, bool folders, bool forSaving
     }
 
     return paths;
+}
+
+void showNotification(const std::string& text, float timeout) {
+    class TransparentLabel : public QLabel {
+    public:
+        using QLabel::QLabel;
+
+    protected:
+        void paintEvent(QPaintEvent *event) override {
+            QPainter painter(this);
+            painter.setRenderHint(QPainter::Antialiasing);
+
+            // Draw background
+            int borderRadius = 20;
+            int borderWidth = 4;
+            QRectF drawingRect = QRectF(rect()).adjusted(borderWidth/2, borderWidth/2, -borderWidth/2, -borderWidth/2);
+            QPainterPath path;
+            path.addRoundedRect(drawingRect, borderRadius, borderRadius);
+            painter.fillPath(path, QBrush(QColor(0, 0, 0, 150)));
+
+            // Draw border
+            QPen pen;
+            pen.setColor(QColor(255, 255, 255, 150));
+            pen.setWidth(borderWidth);
+            painter.setPen(pen);
+            painter.drawPath(path);
+
+            // Draw rest of label
+            QLabel::paintEvent(event);
+        }
+    };
+    Window::initializeQtApp();
+    auto label = new TransparentLabel(QString::fromStdString(text));
+    label->setWindowFlags(Qt::WindowTransparentForInput | Qt::ToolTip | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    label->setAttribute(Qt::WA_ShowWithoutActivating);
+    label->setAttribute(Qt::WA_TranslucentBackground); // This is needed for opacity, but it makes the background go away.
+    label->setStyleSheet("font-size: 48px; color: white; padding: 16px;");
+    label->adjustSize();
+    label->move(label->screen()->geometry().center() - label->frameGeometry().center());
+
+    auto opacityEffect = new QGraphicsOpacityEffect(label);
+    opacityEffect->setOpacity(1.0);
+    label->setGraphicsEffect(opacityEffect);
+
+    auto fadeAnimation = new QPropertyAnimation(opacityEffect, "opacity", label);
+    fadeAnimation->setDuration(2000);
+    fadeAnimation->setStartValue(1.0f);
+    fadeAnimation->setEndValue(0.0);
+    QObject::connect(fadeAnimation, &QPropertyAnimation::finished, label, &QLabel::close);
+    QObject::connect(fadeAnimation, &QPropertyAnimation::finished, label, &QLabel::deleteLater);
+
+    QTimer::singleShot((int)round(timeout*1000), label, [fadeAnimation]() {
+        fadeAnimation->start(QPropertyAnimation::DeleteWhenStopped);
+    });
+    label->show();
+    if(QThread::currentThread()->loopLevel() <= 0) {
+        auto loop = new QEventLoop;
+        QObject::connect(fadeAnimation, &QPropertyAnimation::finished, loop, &QEventLoop::quit);
+        loop->exec();
+        delete loop;
+    }
+}
+
+void Window::timerCallback(TimerCallbackClass* callback, int milliseconds) {
+    if(callback == nullptr)
+        throw Exception("Invalid callback to timerCallback");
+
+    auto timer = new QTimer(mWidget);
+    timer->setSingleShot(true);
+    timer->setInterval(milliseconds);
+    QObject::connect(timer, &QTimer::timeout, [callback]() {
+        callback->handle();
+    });
+    timer->start();
 }
 
 } // end namespace fast
