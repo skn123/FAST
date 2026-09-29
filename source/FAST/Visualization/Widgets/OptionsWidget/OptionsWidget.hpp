@@ -5,6 +5,7 @@
 #include <iostream>
 
 class QLabel;
+class QButtonGroup;
 
 namespace fast {
 
@@ -45,29 +46,35 @@ class OptionsWidgetCallback {
 };
 
 /**
- * @brief A widget for selecting one of several options in a dropdown box
+ * @brief A widget for selecting one of several options.
  * @ingroup widgets
  */
 class FAST_EXPORT OptionsWidget : public Widget {
     Q_OBJECT
     public:
+        enum Type {
+            DROPDOWN = 0,
+            BUTTONS
+        };
 #ifndef SWIG
-        OptionsWidget(const std::vector<std::string>& options, const std::string& name = "", const std::string& placeholder = "", int selected = -1, std::function<void(int, std::string)> callback = nullptr, QWidget* parent = nullptr);
+        OptionsWidget(const std::vector<std::string>& options, const std::string& name = "", Type type = DROPDOWN, const std::string& placeholder = "", int selected = -1, std::function<void(int, std::string)> callback = nullptr, QWidget* parent = nullptr);
 #endif
-        OptionsWidget(const std::vector<std::string>& options, const std::string& name = "", const std::string& placeholder = "", int selected = -1, OptionsWidgetCallback* callback = nullptr, QWidget* parent = nullptr);
+        OptionsWidget(const std::vector<std::string>& options, const std::string& name = "", Type type = DROPDOWN, const std::string& placeholder = "", int selected = -1, OptionsWidgetCallback* callback = nullptr, QWidget* parent = nullptr);
         void setSelected(int index);
         void setSelected(std::string value);
         int getSelected();
         std::string getOption(int index) const;
     private:
-        void init(const std::string& name, const std::string& placeholder, const std::vector<std::string>& options, int selected);
+        void init(Type type, const std::string& name, const std::string& placeholder, const std::vector<std::string>& options, int selected);
         std::function<void(int, std::string)> m_callbackFunction;
         OptionsWidgetCallback* m_callbackClass = nullptr;
 
         QLabel* m_label;
         ComboBox* m_comboBox;
+        QButtonGroup* m_buttonGroup;
         std::string m_name;
         std::vector<std::string> m_options;
+        Type m_type;
 };
 
 
